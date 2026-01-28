@@ -1,20 +1,19 @@
 {
-  "marketplace": {
-    "name": "pyf-claude-plugins",
-    "displayName": "本地插件市场",
-    "description": "本地插件市场",
-    "version": "1.0.0"
+  "name": "pyf-claude-plugins",
+  "displayName": "本地插件市场",
+  "description": "本地插件市场",
+  "version": "1.0.0",
+  "owner": {
+    "name": "pyf"
   },
   "plugins": [
     {
       "name": "agile-flow",
-      "path": "plugins/claude-bot",
-      "version": "1.0.0",
+      "source": "./plugins/claude-bot",
       "description": "AI驱动的敏捷开发闭环插件：Stop hook持续运行、TDD开发、自动化测试、进度看板、三层存储架构",
-      "author": "claude-bot",
-      "license": "MIT",
-      "homepage": "https://github.com/claude-bot/agile-flow",
-      "repository": "https://github.com/claude-bot/agile-flow"
+      "author": {
+        "name": "claude-bot"
+      }
     }
   ]
 }
