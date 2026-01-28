@@ -1,0 +1,11 @@
+{
+  "name": "agile-flow",
+  "version": "1.0.0",
+  "description": "AI驱动的敏捷开发闭环插件：Stop hook持续运行、TDD开发、自动化测试、进度看板、三层存储架构",
+  "author": {
+    "name": "claude-bot"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/claude-bot/agile-flow",
+  "repository": "https://github.com/claude-bot/agile-flow"
+}
