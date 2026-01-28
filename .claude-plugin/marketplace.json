@@ -1,0 +1,9 @@
+{
+  "marketplace": {
+    "name": "pyf-claude-plugins",
+    "displayName": "本地插件市场",
+    "description": "本地插件市场",
+    "version": "1.0.0"
+  },
+  "plugins": []
+}

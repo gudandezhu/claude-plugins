@@ -1,0 +1,18 @@
+# 插件目录
+
+将您的插件放置在此目录中，每个插件一个子目录。
+
+例如：
+```
+plugins/
+├── my-first-plugin/
+│   ├── plugin.json
+│   ├── commands/
+│   ├── skills/
+│   └── ...
+└── another-plugin/
+    ├── plugin.json
+    └── ...
+```
+
+在添加新插件后，请记得更新 `.claude-plugin/marketplace.json` 中的 `plugins` 数组。
