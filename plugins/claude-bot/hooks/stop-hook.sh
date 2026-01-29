@@ -6,14 +6,33 @@ LOG_FILE="/tmp/agile-stop-hook.log"
 echo "=== Stop Hook at $(date) ===" >> "$LOG_FILE"
 echo "Working directory: $(pwd)" >> "$LOG_FILE"
 
-# 获取项目根目录 - 使用用户的workspace目录
-# hook执行时的工作目录应该是用户的项目目录
-PROJECT_ROOT="${PROJECT_ROOT:-${CLAUDE_WORKSPACE:-$(pwd)}}"
+# 查找项目根目录 - 向上查找包含 projects/active/iteration.txt 的目录
+find_project_root() {
+    local current_dir="$(pwd)"
+    local checked_dir="$current_dir"
 
-# 检查项目是否已初始化
-if [ ! -f "$PROJECT_ROOT/projects/active/iteration.txt" ]; then
+    while [ "$checked_dir" != "/" ]; do
+        if [ -f "$checked_dir/projects/active/iteration.txt" ]; then
+            echo "$checked_dir"
+            return 0
+        fi
+        checked_dir="$(dirname "$checked_dir")"
+    done
+
+    # 如果没找到，返回空
+    echo ""
+    return 1
+}
+
+# 获取项目根目录
+PROJECT_ROOT="${PROJECT_ROOT:-$(find_project_root)}"
+
+if [ -z "$PROJECT_ROOT" ]; then
+    # 没有找到项目根目录，退出
     exit 0
 fi
+
+echo "PROJECT_ROOT: $PROJECT_ROOT" >> "$LOG_FILE"
 
 # 读取当前迭代
 iteration=$(cat "$PROJECT_ROOT/projects/active/iteration.txt")

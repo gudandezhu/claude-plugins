@@ -14,18 +14,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start-hook.sh"
+            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/session-start-hook.sh"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use-hook.sh"
+            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/post-tool-use-hook.sh"
           }
         ]
       }
@@ -35,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh"
+            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/stop-hook.sh"
           }
         ]
       }
