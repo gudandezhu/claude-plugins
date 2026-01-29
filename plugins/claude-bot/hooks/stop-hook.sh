@@ -44,16 +44,25 @@ if [ ! -f "$status_file" ]; then
 fi
 
 # 提取进度信息
-tasks_total=$(jq -r '.progress.tasks_total // 0' "$status_file" 2>/dev/null)
-tasks_completed=$(jq -r '.progress.tasks_completed // 0' "$status_file" 2>/dev/null)
-completion=$(jq -r '.progress.completion_percentage // 0' "$status_file" 2>/dev/null)
+if command -v jq >/dev/null 2>&1; then
+    tasks_total=$(jq -r '.progress.tasks_total // 0' "$status_file" 2>/dev/null)
+    tasks_completed=$(jq -r '.progress.tasks_completed // 0' "$status_file" 2>/dev/null)
+    completion=$(jq -r '.progress.completion_percentage // 0' "$status_file" 2>/dev/null)
 
-# 读取当前任务
-current_task_id=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
-current_task_name=$(jq -r '.current_task.name // empty' "$status_file" 2>/dev/null)
+    # 读取当前任务
+    current_task_id=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
+    current_task_name=$(jq -r '.current_task.name // empty' "$status_file" 2>/dev/null)
 
-# 读取待办任务数
-pending_count=$(jq -r '.pending_tasks | length' "$status_file" 2>/dev/null || echo "0")
+    # 读取待办任务数
+    pending_count=$(jq -r '.pending_tasks | length' "$status_file" 2>/dev/null || echo "0")
+else
+    tasks_total=0
+    tasks_completed=0
+    completion=0
+    current_task_id=""
+    current_task_name=""
+    pending_count=0
+fi
 
 # 记录到日志
 echo "Progress: ${tasks_completed}/${tasks_total} (${completion}%)" >> "$LOG_FILE"
@@ -95,9 +104,14 @@ cat >> "$SESSION_SUMMARY" << EOF
 
 EOF
 
-if [ "$pending_count" -gt 0 ]; then
-    next_task_id=$(jq -r '.pending_tasks[0].id' "$status_file" 2>/dev/null)
-    next_task_name=$(jq -r '.pending_tasks[0].name' "$status_file" 2>/dev/null)
+if [ "$pending_count" -gt 0 ] && [ -n "$current_task_id" ]; then
+    if command -v jq >/dev/null 2>&1; then
+        next_task_id=$(jq -r '.pending_tasks[0].id' "$status_file" 2>/dev/null)
+        next_task_name=$(jq -r '.pending_tasks[0].name' "$status_file" 2>/dev/null)
+    else
+        next_task_id="未知"
+        next_task_name="未知任务"
+    fi
     cat >> "$SESSION_SUMMARY" << EOF
 1. 继续下一个任务: ${next_task_id} - ${next_task_name}
 2. 或添加新任务

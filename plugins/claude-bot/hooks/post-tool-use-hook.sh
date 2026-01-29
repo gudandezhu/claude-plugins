@@ -55,7 +55,11 @@ if [ ! -f "$status_file" ]; then
 fi
 
 # 读取当前任务
-current_task_id=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
+if command -v jq >/dev/null 2>&1; then
+    current_task_id=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
+else
+    current_task_id=""
+fi
 
 # 如果没有当前任务，退出
 if [ -z "$current_task_id" ] || [ "$current_task_id" = "null" ]; then
