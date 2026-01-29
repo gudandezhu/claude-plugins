@@ -1,10 +1,5 @@
 #!/bin/bash
-# Stop Hook - 保存进度、生成会话总结、更新文档
-
-# 日志文件
-LOG_FILE="/tmp/agile-stop-hook.log"
-echo "=== Stop Hook at $(date) ===" >> "$LOG_FILE"
-echo "Working directory: $(pwd)" >> "$LOG_FILE"
+# Stop Hook - 强制返回状态2，提示继续迭代或规划新迭代
 
 # 查找项目根目录 - 向上查找包含 projects/active/iteration.txt 的目录
 find_project_root() {
@@ -19,126 +14,40 @@ find_project_root() {
         checked_dir="$(dirname "$checked_dir")"
     done
 
-    # 如果没找到，返回空
     echo ""
     return 1
 }
 
 # 获取项目根目录
-PROJECT_ROOT="${PROJECT_ROOT:-$(find_project_root)}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(find_project_root || true)}"
 
 if [ -z "$PROJECT_ROOT" ]; then
-    # 没有找到项目根目录，退出
-    exit 0
+    # 没有找到项目根目录，直接返回状态2
+    exit 2
 fi
-
-echo "PROJECT_ROOT: $PROJECT_ROOT" >> "$LOG_FILE"
 
 # 读取当前迭代
-iteration=$(cat "$PROJECT_ROOT/projects/active/iteration.txt")
-status_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/status.json"
+iteration=$(cat "$PROJECT_ROOT/projects/active/iteration.txt" 2>/dev/null || echo "")
+status_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/status.json" 2>/dev/null
 
-# 检查状态文件
-if [ ! -f "$status_file" ]; then
-    exit 0
-fi
-
-# 提取进度信息
-if command -v jq >/dev/null 2>&1; then
-    tasks_total=$(jq -r '.progress.tasks_total // 0' "$status_file" 2>/dev/null)
-    tasks_completed=$(jq -r '.progress.tasks_completed // 0' "$status_file" 2>/dev/null)
-    completion=$(jq -r '.progress.completion_percentage // 0' "$status_file" 2>/dev/null)
-
-    # 读取当前任务
-    current_task_id=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
-    current_task_name=$(jq -r '.current_task.name // empty' "$status_file" 2>/dev/null)
-
-    # 读取待办任务数
+# 检查状态文件和待办任务
+pending_count=0
+if [ -f "$status_file" ] && command -v jq >/dev/null 2>&1; then
     pending_count=$(jq -r '.pending_tasks | length' "$status_file" 2>/dev/null || echo "0")
+fi
+
+# 输出提示到 stderr
+if [ "$pending_count" -gt 0 ]; then
+    echo "" >&2
+    echo "🔄 当前迭代还有 ${pending_count} 个待办任务，请继续执行迭代任务。" >&2
+    echo "   使用 agile-continue 继续下一个任务" >&2
+    echo "" >&2
 else
-    tasks_total=0
-    tasks_completed=0
-    completion=0
-    current_task_id=""
-    current_task_name=""
-    pending_count=0
+    echo "" >&2
+    echo "✅ 当前迭代所有任务已完成！" >&2
+    echo "   请规划新迭代或进行回顾总结" >&2
+    echo "" >&2
 fi
 
-# 记录到日志
-echo "Progress: ${tasks_completed}/${tasks_total} (${completion}%)" >> "$LOG_FILE"
-echo "Iteration: ${iteration}" >> "$LOG_FILE"
-
-# 生成会话总结
-SESSION_SUMMARY="$PROJECT_ROOT/projects/active/last_session_summary.md"
-
-cat > "$SESSION_SUMMARY" << EOF
-# 会话总结
-
-**时间**: $(date '+%Y-%m-%d %H:%M:%S')
-**迭代**: ${iteration}
-
-## 进度概览
-
-- 总任务数: ${tasks_total}
-- 已完成: ${tasks_completed}
-- 完成率: ${completion}%
-- 待办任务: ${pending_count}个
-
-EOF
-
-# 如果有当前任务，添加到总结
-if [ -n "$current_task_id" ] && [ "$current_task_id" != "null" ]; then
-    cat >> "$SESSION_SUMMARY" << EOF
-## 当前任务
-
-- **ID**: ${current_task_id}
-- **名称**: ${current_task_name}
-- **状态**: 进行中
-
-EOF
-fi
-
-# 添加下一步行动
-cat >> "$SESSION_SUMMARY" << EOF
-## 下一步行动
-
-EOF
-
-if [ "$pending_count" -gt 0 ] && [ -n "$current_task_id" ]; then
-    if command -v jq >/dev/null 2>&1; then
-        next_task_id=$(jq -r '.pending_tasks[0].id' "$status_file" 2>/dev/null)
-        next_task_name=$(jq -r '.pending_tasks[0].name' "$status_file" 2>/dev/null)
-    else
-        next_task_id="未知"
-        next_task_name="未知任务"
-    fi
-    cat >> "$SESSION_SUMMARY" << EOF
-1. 继续下一个任务: ${next_task_id} - ${next_task_name}
-2. 或添加新任务
-
-EOF
-else
-    cat >> "$SESSION_SUMMARY" << EOF
-1. 添加新任务
-2. 或生成迭代回顾
-
-EOF
-fi
-
-# 输出会话总结到 stderr（显示给用户）
-echo "" >&2
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-echo "📊 会话总结" >&2
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-echo "迭代: ${iteration}" >&2
-echo "进度: ${tasks_completed}/${tasks_total} (${completion}%)" >&2
-echo "待办: ${pending_count} 个任务" >&2
-
-if [ -n "$current_task_id" ] && [ "$current_task_id" != "null" ]; then
-    echo "当前: ${current_task_id} - ${current_task_name}" >&2
-fi
-
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-echo "" >&2
-
-exit 0
+# 强制返回状态2，告诉 Claude Code 继续执行
+exit 2
