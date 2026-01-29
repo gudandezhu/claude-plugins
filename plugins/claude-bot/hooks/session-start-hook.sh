@@ -1,107 +1,73 @@
 #!/bin/bash
-# SessionStart Hook - 会话开始时执行
-# 功能：检测继续状态并自动恢复任务
+# SessionStart Hook - 自动检测并恢复项目状态
 
-set -euo pipefail
+# 日志文件
+LOG_FILE="/tmp/agile-session-start.log"
+echo "=== SessionStart Hook at $(date) ===" >> "$LOG_FILE"
 
-# 项目根目录
+# 获取项目根目录
 PROJECT_ROOT="${PROJECT_ROOT:-.}"
 
-continuation_file="$PROJECT_ROOT/projects/active/continuation_state.json"
-
-# 第一步：检测继续状态
-if [ ! -f "$continuation_file" ]; then
-    # 无继续状态，正常启动
+# 检查项目是否已初始化
+if [ ! -f "$PROJECT_ROOT/projects/active/iteration.txt" ]; then
+    echo "📋 Agile Flow: 项目未初始化" >&2
+    echo "   提示: 告诉 AI \"开始\" 或使用 /agile-start 初始化项目" >&2
     exit 0
 fi
 
-echo ""
-echo "🔄 检测到继续状态，准备自动恢复..."
-echo ""
-
-# 第二步：读取继续状态
-if ! command -v jq &> /dev/null; then
-    echo "⚠️  jq 未安装，无法读取继续状态"
+# 检查是否暂停
+if [ -f "$PROJECT_ROOT/projects/active/pause.flag" ]; then
+    echo "⏸️  Agile Flow: 项目已暂停" >&2
+    echo "   提示: 告诉 AI \"继续\" 或使用 /agile-start 恢复开发" >&2
     exit 0
 fi
 
-iteration=$(jq -r '.iteration' "$continuation_file")
-next_task_id=$(jq -r '.next_task.id // empty' "$continuation_file")
-next_task_name=$(jq -r '.next_task.name // empty' "$continuation_file")
-timestamp=$(jq -r '.timestamp // empty' "$continuation_file")
-
-if [ -z "$next_task_id" ]; then
-    echo "⚠️  继续状态无效，清理状态文件"
-    rm -f "$continuation_file"
-    exit 0
-fi
-
-# 第三步：加载上下文
+# 读取当前迭代
+iteration=$(cat "$PROJECT_ROOT/projects/active/iteration.txt")
 status_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/status.json"
-task_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/tasks/${next_task_id}.md"
-summary_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/summary.md"
 
-# 读取状态信息
-if [ -f "$status_file" ]; then
-    tasks_completed=$(jq -r '.progress.tasks_completed // 0' "$status_file")
-    tasks_total=$(jq -r '.progress.tasks_total // 0' "$status_file")
+# 检查状态文件
+if [ ! -f "$status_file" ]; then
+    echo "⚠️  Agile Flow: 状态文件不存在" >&2
+    echo "   提示: 告诉 AI \"查看进度\" 重新生成状态" >&2
+    exit 0
+fi
+
+# 读取当前任务
+current_task=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
+current_task_name=$(jq -r '.current_task.name // empty' "$status_file" 2>/dev/null)
+
+# 读取待办任务
+pending_count=$(jq -r '.pending_tasks | length' "$status_file" 2>/dev/null || echo "0")
+
+# 读取进度
+tasks_total=$(jq -r '.progress.tasks_total // 0' "$status_file" 2>/dev/null)
+tasks_completed=$(jq -r '.progress.tasks_completed // 0' "$status_file" 2>/dev/null)
+
+# 输出状态到 stderr（显示给用户）
+echo "" >&2
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+echo "🚀 Agile Flow: 项目已运行" >&2
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+
+if [ -n "$current_task" ] && [ "$current_task" != "null" ]; then
+    echo "🔄 当前任务: $current_task - $current_task_name" >&2
+    echo "   技能将自动继续执行" >&2
+elif [ "$pending_count" -gt 0 ]; then
+    next_task=$(jq -r '.pending_tasks[0].id' "$status_file" 2>/dev/null)
+    next_task_name=$(jq -r '.pending_tasks[0].name' "$status_file" 2>/dev/null)
+    next_priority=$(jq -r '.pending_tasks[0].priority' "$status_file" 2>/dev/null)
+    echo "📋 待办任务: $pending_count 个" >&2
+    echo "   下一个: $next_task - $next_task_name (优先级: $next_priority)" >&2
+    echo "   提示: 告诉 AI 你想做什么，或等待自动执行" >&2
 else
-    tasks_completed=0
-    tasks_total=0
+    echo "✅ 所有任务已完成" >&2
+    echo "   提示: 告诉 AI 添加新任务，例如 \"p0: 实现新功能\"" >&2
 fi
 
-# 第四步：生成自动执行提示
-cat << EOF
-
-╔════════════════════════════════════════════════════════════╗
-║         🔄 Agile Flow - 自动继续模式                      ║
-╚════════════════════════════════════════════════════════════╝
-
-检测到上次的会话未完成，将继续执行下一个任务。
-
-📊 当前进度
-  迭代: ${iteration}
-  完成度: ${tasks_completed}/${tasks_total} 任务完成
-
-📋 下一个任务
-  ID: ${next_task_id}
-  名称: ${next_task_name}
-  状态: pending
-
-🕒 上次保存时间: ${timestamp}
-
-EOF
-
-# 显示任务详情（如果存在）
-if [ -f "$task_file" ]; then
-    echo "📄 任务详情"
-    echo "----------------------------------------"
-    # 提取任务描述的前几行
-    sed -n '/^## 任务描述/,/^## /p' "$task_file" | head -20
-    echo ""
-fi
-
-# 显示项目摘要（如果存在）
-if [ -f "$summary_file" ]; then
-    echo "📖 项目摘要"
-    echo "----------------------------------------"
-    head -30 "$summary_file"
-    echo ""
-fi
-
-cat << EOF
-▶️  请继续执行此任务:
-    /agile-develop-task ${next_task_id}
-
-💡 如需暂停自动继续，请运行: /agile-pause
-
-╔════════════════════════════════════════════════════════════╗
-╚════════════════════════════════════════════════════════════╝
-
-EOF
-
-# 第五步：清理继续状态文件
-rm -f "$continuation_file"
-echo "✅ 继续状态已加载"
+echo "" >&2
+echo "📊 当前进度: $tasks_completed / $tasks_total 任务完成" >&2
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+echo "" >&2
 
 exit 0

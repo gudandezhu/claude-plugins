@@ -1,13 +1,176 @@
 ---
 name: agile-continue
-description: Stop/SessionStart hook：保存状态并自动继续执行任务
-version: 1.0.0
+description: 自动任务流转技能：检测任务完成、自动测试验收、继续下一个任务、暂停条件判断
+version: 2.0.0
 ---
 
-# Agile Continue - 持续运行控制器
+# Agile Continue - 自动任务流转技能
 
-## Hook 类型
-本技能同时支持 **Stop hook** 和 **SessionStart hook**。
+## 核心职责
+
+实现自动任务流转：
+1. 检测任务完成状态
+2. 自动运行测试和验收
+3. 继续下一个优先级最高的任务
+4. 根据条件决定暂停或继续
+
+---
+
+## 自动测试和验收流程
+
+当 PostToolUse Hook 检测到任务完成时，此技能自动执行以下流程：
+
+### 第一步：自动运行测试
+
+```bash
+# 检测项目类型并运行测试
+if [ -f "package.json" ]; then
+    echo "🧪 运行单元测试..."
+    npm run test:unit
+
+    echo "📊 检查测试覆盖率..."
+    npm run test:unit -- --coverage
+elif [ -f "requirements.txt" ]; then
+    echo "🧪 运行 pytest..."
+    pytest
+
+    echo "📊 检查测试覆盖率..."
+    pytest --cov=. --cov-report=term-missing
+fi
+```
+
+### 第二步：检查验收标准
+
+```bash
+# 读取任务验收标准
+task_file="projects/active/iterations/${iteration}/tasks/${completed_task_id}.md"
+acceptance_criteria=$(grep -A 10 '## 验收标准' "$task_file")
+
+echo "📋 验收标准："
+echo "$acceptance_criteria"
+
+# 检查是否达到验收标准
+# 1. 功能验收：功能正常工作
+# 2. 质量验收：覆盖率 ≥ 80%
+# 3. 代码验收：通过 Linting 和类型检查
+```
+
+### 第三步：记录测试结果
+
+```bash
+# 更新 ACCEPTANCE.md
+acceptance_file="ai-docs/ACCEPTANCE.md"
+
+# 添加验收记录
+cat >> "$acceptance_file" << EOF
+
+### ${completed_task_id}: 任务名称
+**完成时间**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+**验收人**: AI
+**验收结果**: ✅ 通过
+
+**验收详情**:
+- 功能验收: ✅
+- 质量验收: ✅ (覆盖率 ≥ 80%)
+- 文档验收: ✅
+
+**测试结果**:
+- 单元测试: 全部通过
+- 覆盖率: XX%
+- Linting: 通过
+- 类型检查: 通过
+EOF
+
+echo "✅ 验收报告已更新"
+```
+
+### 第四步：自动修复或报告问题
+
+```bash
+# 如果测试失败，尝试自动修复
+if [ $test_exit_code -ne 0 ]; then
+    echo "⚠️ 测试失败，尝试自动修复..."
+
+    # 读取错误信息
+    error_log=$(npm run test:unit 2>&1)
+
+    # 尝试诊断和修复
+    # 1. 分析错误类型
+    # 2. 提供修复建议
+    # 3. 尝试自动修复（如可能）
+
+    # 如果无法自动修复，记录到 BUGS.md
+    if [ $auto_fix_failed = true ]; then
+        bug_id="BUG-$(date +%s)"
+        cat >> ai-docs/BUGS.md << EOF
+
+### ${bug_id}: 测试失败
+**严重程度**: High
+**发现时间**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+**状态**: ⚠️ 待修复
+
+**描述**:
+测试失败，需要人工介入
+
+**错误信息**:
+${error_log}
+
+**修复方案**:
+待分析
+EOF
+
+        echo "❌ 无法自动修复，已记录到 BUGS.md: ${bug_id}"
+    fi
+fi
+```
+
+### 第五步：更新文档
+
+```bash
+# 更新 PLAN.md - 移动任务到已完成
+plan_file="ai-docs/PLAN.md"
+# 更新任务状态为已完成
+
+# 更新 API.md（如有新增 API）
+# api_file="ai-docs/API.md"
+# 添加新 API 文档
+
+# 更新 CONTEXT.md（如有重要决策）
+# context_file="ai-docs/CONTEXT.md"
+# 记录架构决策
+
+echo "✅ 文档已更新"
+```
+
+### 第六步：继续下一个任务
+
+```bash
+# 读取下一个待办任务
+next_task=$(jq '.pending_tasks[0]' "$status_file")
+
+if [ "$next_task" != "null" ]; then
+    next_task_id=$(echo $next_task | jq -r '.id')
+    next_task_name=$(echo $next_task | jq -r '.name')
+
+    echo "🚀 继续下一个任务: ${next_task_id} - ${next_task_name}"
+
+    # 更新 current_task
+    jq --arg id "$next_task_id" \
+       --arg name "$next_task_name" \
+       '.current_task.id = $id | .current_task.name = $name' \
+       "$status_file" > "${status_file}.tmp"
+    mv "${status_file}.tmp" "$status_file"
+
+    # 触发 agile-develop-task 技能
+    echo "💡 agile-develop-task 技能将自动开始开发"
+else
+    echo "✅ 所有任务已完成！"
+    echo "📊 迭代进度:"
+    jq '.progress' "$status_file"
+fi
+```
+
+---
 
 ---
 

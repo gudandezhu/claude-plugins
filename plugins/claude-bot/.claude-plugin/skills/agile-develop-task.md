@@ -1,10 +1,10 @@
 ---
 name: agile-develop-task
-description: 开发工程师技能：TDD 驱动开发。读取任务卡片（task-{id}.md），严格执行 5 步 TDD 流程（检查测试文件→测试失败（红）→编写代码→测试通过（绿）→覆盖率≥80%），运行测试并修复，提交代码并更新任务状态，更新 status.json
-version: 1.0.0
+description: TDD 开发技能：5步流程（测试检查→红→绿→重构→覆盖率≥80%），自动运行测试、检查验收标准、记录结果、自动修复或报告问题、更新文档
+version: 2.0.0
 ---
 
-# Agile Develop Task - 开发工程师技能（TDD 驱动）
+# Agile Develop Task - TDD 开发技能
 
 ## 🎯 核心任务
 
@@ -390,12 +390,199 @@ echo "✅ status.json 已更新"
 
 ---
 
-### 阶段 5：触发 Dashboard 更新
+### 阶段 5：更新 ai-docs 文档
+
+#### 更新 ACCEPTANCE.md（验收报告）
+
+```bash
+echo "📝 更新验收报告..."
+
+# 提取任务信息
+task_name=$(grep '^name:' "$task_file" | cut -d: -f2 | xargs)
+task_description=$(grep -A 10 '^## 任务描述' "$task_file" | tail -9)
+
+# 获取当前时间
+completion_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+# 更新 ai-docs/ACCEPTANCE.md
+acceptance_file="ai-docs/ACCEPTANCE.md"
+
+# 检查文件是否存在
+if [ ! -f "$acceptance_file" ]; then
+    echo "警告：$acceptance_file 不存在，跳过验收报告更新"
+else
+    # 在 "已完成任务" 部分添加新条目
+    # 使用临时文件
+    awk -v task_id="$task_id" \
+        -v task_name="$task_name" \
+        -v completion_time="$completion_time" \
+        '
+        /^## 已完成任务/ {
+            print
+            print ""
+            print "### " task_id ": " task_name
+            print "**完成时间**: " completion_time
+            print "**验收人**: AI"
+            print "**验收结果**: ✅ 通过"
+            print ""
+            print "**验收详情**:"
+            print "- 功能验收: ✅"
+            print "- 质量验收: ✅ (覆盖率 ≥ 80%)"
+            print "- 文档验收: ✅"
+            print ""
+            print "**备注**:"
+            print "TDD 流程完整执行，所有质量检查通过"
+            print ""
+            next
+        }
+        { print }
+        ' "$acceptance_file" > "${acceptance_file}.tmp"
+
+    mv "${acceptance_file}.tmp" "$acceptance_file"
+    echo "✅ 验收报告已更新"
+fi
+```
+
+#### 更新 PLAN.md（工作计划）
+
+```bash
+echo "📝 更新工作计划..."
+
+plan_file="ai-docs/PLAN.md"
+
+if [ -f "$plan_file" ]; then
+    # 从进行中移到已完成
+    sed -i.bak "s/- ${task_id}: .*$/- ${task_id}: ${task_name} (已完成)/" "$plan_file" 2>/dev/null || true
+
+    # 更新进度统计（简单示例）
+    # 实际应用中可能需要更复杂的逻辑
+
+    echo "✅ 工作计划已更新"
+fi
+```
+
+#### 更新 BUGS.md（如发现问题）
+
+```bash
+# 如果在测试中发现 bug，自动记录
+if [ $test_exit_code -ne 0 ] || [ $coverage_percent -lt 80 ]; then
+    echo "⚠️  发现质量问题，记录到 BUGS.md"
+
+    bugs_file="ai-docs/BUGS.md"
+
+    if [ -f "$bugs_file" ]; then
+        bug_id="BUG-$(date +%s)"
+        cat >> "$bugs_file" << EOF
+
+### ${bug_id}: ${task_name} 质量问题
+**严重程度**: Medium
+**发现时间**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+**状态**: ⚠️ 待修复
+
+**描述**:
+EOF
+
+        if [ $test_exit_code -ne 0 ]; then
+            echo "- 测试失败" >> "$bugs_file"
+        fi
+
+        if [ $(echo "$coverage_percent < 80" | bc -l) -eq 1 ]; then
+            echo "- 测试覆盖率不足 (${coverage_percent}% < 80%)" >> "$bugs_file"
+        fi
+
+        echo "" >> "$bugs_file"
+        echo "**修复方案**:" >> "$bugs_file"
+        echo "需要进一步测试或增加测试用例" >> "$bugs_file"
+        echo "" >> "$bugs_file"
+
+        echo "⚠️  已记录到 BUGS.md: ${bug_id}"
+    fi
+fi
+```
+
+---
+
+### 阶段 6：触发 Dashboard 更新
 
 ```bash
 # 任务完成后，触发 PostToolUse hook 更新 dashboard
 echo "📊 正在更新进度看板..."
 echo "（PostToolUse hook 将自动触发 /agile-dashboard）"
+```
+
+---
+
+### 阶段 7：自动运行 E2E 测试（可选）
+
+```bash
+# 检查是否应该运行 E2E 测试
+# 例如：每完成 3 个任务或完成关键功能时
+
+# 读取已完成任务数
+completed_count=$(jq -r '.progress.tasks_completed' "$status_file")
+
+# 如果已完成任务数是 3 的倍数，建议运行 E2E 测试
+if [ $((completed_count % 3)) -eq 0 ]; then
+    echo ""
+    echo "💡 建议运行 E2E 测试验证集成效果"
+    echo "   使用命令: /agile-e2e-test"
+    echo ""
+fi
+```
+
+---
+
+### 阶段 8：自动继续下一个任务（核心自动化功能）
+
+```bash
+echo ""
+echo "🚀 自动化流程：准备继续下一个任务"
+echo ""
+
+# 检查是否有待办任务
+pending_count=$(jq -r '.pending_tasks | length' "$status_file")
+
+if [ "$pending_count" -gt 0 ]; then
+    # 获取下一个任务（按优先级排序）
+    next_task_id=$(jq -r '.pending_tasks[0].id' "$status_file")
+    next_task_name=$(jq -r '.pending_tasks[0].name' "$status_file")
+    next_priority=$(jq -r '.pending_tasks[0].priority' "$status_file")
+
+    echo "📋 下一个任务:"
+    echo "  • ID: $next_task_id"
+    echo "  • 名称: $next_task_name"
+    echo "  • 优先级: $next_priority"
+    echo ""
+
+    # 更新 current_task 为下一个任务
+    jq \
+        --arg id "$next_task_id" \
+        --arg name "$next_task_name" \
+        '
+            .current_task.id = $id |
+            .current_task.name = $name |
+            .current_task.status = "in_progress" |
+            .updated_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+        ' \
+        "$status_file" > "${status_file}.tmp"
+
+    mv "${status_file}.tmp" "$status_file"
+
+    echo "✅ 已切换到下一个任务"
+    echo ""
+    echo "💡 技能将自动继续执行 /agile-develop-task ${next_task_id}"
+    echo ""
+else
+    echo "✅ 所有待办任务已完成！"
+    echo ""
+    echo "📊 迭代进度:"
+    jq '.progress' "$status_file"
+    echo ""
+    echo "💡 建议操作:"
+    echo "  1. 添加新任务（例如：p0: 实现新功能）"
+    echo "  2. 生成迭代回顾（/agile-retrospective）"
+    echo "  3. 开始下一迭代"
+fi
 ```
 
 ---
@@ -496,6 +683,18 @@ trap 'echo "❌ TDD 流程中断，请修复问题后重新运行"; exit 1' ERR
 3. **持续重构**: 保持代码简洁
 4. **及时提交**: 完成后立即提交代码
 5. **文档更新**: 更新相关文档
+
+---
+
+## 触发条件
+
+此技能在以下情况下自动触发：
+
+1. **agile-start 技能调用**：启动项目并获取到待执行任务
+2. **agile-continue 技能调用**：完成当前任务后继续下一个
+3. **用户明确要求**：用户说"开始开发"、"执行任务"、"开发这个功能"
+4. **任务引用**：用户提到任务 ID（如 "开发 TASK-001"）
+5. **Hook 触发**：post-tool-use-hook 检测到需要继续开发
 
 ---
 

@@ -1,105 +1,74 @@
 #!/bin/bash
-# PostToolUse Hook - 工具执行后自动更新状态
-# 功能：在任务完成后自动生成 status.json 和进度看板
+# PostToolUse Hook - 自动化任务管理：检测任务完成、触发 agile-continue 技能
 
-set -euo pipefail
+# 日志文件
+LOG_FILE="/tmp/agile-post-tool-use.log"
+echo "=== PostToolUse Hook at $(date) ===" >> "$LOG_FILE"
+echo "Tool: $TOOL_NAME" >> "$LOG_FILE"
 
-# 项目根目录
+# 获取项目根目录
 PROJECT_ROOT="${PROJECT_ROOT:-.}"
 
-# 第一步：检查是否在活跃项目中
+# 检查项目是否已初始化
 if [ ! -f "$PROJECT_ROOT/projects/active/iteration.txt" ]; then
     exit 0
 fi
 
-# 第二步：检查是否触发了状态更新
-# 只在特定的工具执行后更新（Write、Edit、Bash）
-# 通过检查是否有最近修改的任务文件来判断
+# 检查是否暂停
+if [ -f "$PROJECT_ROOT/projects/active/pause.flag" ]; then
+    exit 0
+fi
+
+# 读取当前迭代
 iteration=$(cat "$PROJECT_ROOT/projects/active/iteration.txt")
-tasks_dir="$PROJECT_ROOT/projects/active/iterations/${iteration}/tasks"
-
-if [ ! -d "$tasks_dir" ]; then
-    exit 0
-fi
-
-# 第三步：生成状态索引
-# 检查 jq 是否可用
-if ! command -v jq &> /dev/null; then
-    echo "⚠️  jq 未安装，无法生成状态索引"
-    exit 0
-fi
-
-# 统计任务状态
-pending_count=0
-in_progress_count=0
-completed_count=0
-
-current_task="{}"
-next_task="{}"
-
-# 临时数组存储任务
-pending_tasks=()
-
-# 遍历任务文件
-for task_file in "$tasks_dir"/TASK-*.md "$tasks_dir"/task-*.md; do
-    if [ -f "$task_file" ]; then
-        # 提取 YAML frontmatter 中的 status
-        status=$(grep "^status:" "$task_file" | sed 's/status: *//;s/"//g' | head -1)
-
-        task_id=$(basename "$task_file" .md)
-
-        case "$status" in
-            "pending")
-                pending_count=$((pending_count + 1))
-                pending_tasks+=("\"$task_id\"")
-                ;;
-            "in_progress")
-                in_progress_count=$((in_progress_count + 1))
-                current_task="\"$task_id\""
-                ;;
-            "completed"|"accepted")
-                completed_count=$((completed_count + 1))
-                ;;
-        esac
-    fi
-done
-
-total_tasks=$((pending_count + in_progress_count + completed_count))
-
-# 确定下一个任务（优先 in_progress，否则第一个 pending）
-if [ $in_progress_count -gt 0 ]; then
-    next_task="$current_task"
-elif [ $pending_count -gt 0 ]; then
-    next_task="\"${pending_tasks[0]}\""
-fi
-
-# 第四步：更新 status.json
 status_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/status.json"
 
-# 构造 pending_tasks 数组
-pending_tasks_json=$(printf '%s\n' "${pending_tasks[@]}" | jq -R . | jq -s .)
+# 检查状态文件
+if [ ! -f "$status_file" ]; then
+    exit 0
+fi
 
-cat > "$status_file" << EOF
+# 读取当前任务
+current_task_id=$(jq -r '.current_task.id // empty' "$status_file" 2>/dev/null)
+
+# 如果没有当前任务，退出
+if [ -z "$current_task_id" ] || [ "$current_task_id" = "null" ]; then
+    exit 0
+fi
+
+# 读取任务状态
+task_file="$PROJECT_ROOT/projects/active/iterations/${iteration}/tasks/${current_task_id}.md"
+if [ ! -f "$task_file" ]; then
+    exit 0
+fi
+
+task_status=$(grep '^status:' "$task_file" | cut -d: -f2 | xargs)
+
+# 如果任务已完成，触发后续流程
+if [ "$task_status" = "completed" ]; then
+    echo "" >&2
+    echo "✅ 任务完成: $current_task_id" >&2
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+
+    # 记录到日志
+    echo "Task completed: $current_task_id" >> "$LOG_FILE"
+
+    # 创建自动继续标记
+    cat > "$PROJECT_ROOT/projects/active/auto_continue.flag" << EOF
 {
-  "iteration": $iteration,
-  "current_task": $current_task,
-  "pending_tasks": $pending_tasks_json,
-  "progress": {
-    "tasks_total": $total_tasks,
-    "tasks_completed": $completed_count,
-    "tasks_in_progress": $in_progress_count,
-    "tasks_pending": $pending_count,
-    "completion_percentage": $((completed_count * 100 / total_tasks))
-  },
-  "bugs": [],
-  "blockers": [],
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "completed_task": "$current_task_id",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "iteration": "$iteration"
 }
 EOF
 
-# 第五步：生成简洁的输出提示
-if [ $completed_count -gt 0 ] && [ $completed_count -lt $total_tasks ]; then
-    echo "📊 任务完成，状态已更新 ($completed_count/$total_tasks 完成，$((completed_count * 100 / total_tasks))%)"
+    # 输出提示信息
+    echo "🧪 自动化流程已触发:" >&2
+    echo "  - agile-continue 技能将自动运行测试和验收" >&2
+    echo "  - 更新文档（ACCEPTANCE.md、PLAN.md）" >&2
+    echo "  - 继续下一个优先级最高的任务" >&2
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+    echo "" >&2
 fi
 
 exit 0

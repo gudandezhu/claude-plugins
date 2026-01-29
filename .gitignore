@@ -24,5 +24,8 @@ Thumbs.db
 # Logs
 *.log
 
+# claude
+.claude
+
 # 保留模板插件，忽略 _template 目录（可选）
 # plugins/_template/

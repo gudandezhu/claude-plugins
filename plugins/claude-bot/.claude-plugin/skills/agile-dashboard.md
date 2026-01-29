@@ -1,13 +1,13 @@
 ---
 name: agile-dashboard
-description: 生成状态索引（status.json）和进度看板（dashboard.html + summary.md）
-version: 1.0.0
+description: 进度展示技能：生成简洁的状态报告，包括任务进度、测试覆盖率、Bug列表、下一步行动
+version: 2.0.0
 ---
 
-# Agile Dashboard - 状态索引生成器
+# Agile Dashboard - 进度展示技能
 
 ## 任务
-读取项目中的所有任务、用户故事、测试结果，生成结构化的状态索引（status.json）和进度看板（dashboard.html、summary.md）。
+生成简洁的项目状态报告，帮助用户快速了解当前进度和下一步行动。
 
 ---
 

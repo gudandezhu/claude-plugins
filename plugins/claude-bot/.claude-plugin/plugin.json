@@ -1,11 +1,45 @@
 {
   "name": "agile-flow",
-  "version": "1.0.0",
-  "description": "AI驱动的敏捷开发闭环插件：Stop hook持续运行、TDD开发、自动化测试、进度看板、三层存储架构",
+  "version": "2.0.0",
+  "description": "AI驱动的敏捷开发插件：只需 start/stop 命令，技能自动完成初始化、任务管理、TDD开发、测试验收、文档更新",
   "author": {
     "name": "claude-bot"
   },
   "license": "MIT",
   "homepage": "https://github.com/claude-bot/agile-flow",
-  "repository": "https://github.com/claude-bot/agile-flow"
+  "repository": "https://github.com/claude-bot/agile-flow",
+  "hooks": {
+    "description": "Agile Flow - 自动化任务管理 hooks",
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash hooks/session-start-hook.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash hooks/post-tool-use-hook.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash hooks/stop-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
