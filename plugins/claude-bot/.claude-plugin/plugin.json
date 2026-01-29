@@ -12,18 +12,18 @@
     {
       "type": "command",
       "event": "SessionStart",
-      "command": "bash hooks/session-start-hook.sh"
+      "command": "./hooks/session-start-hook.sh"
     },
     {
       "type": "command",
       "event": "PostToolUse",
-      "matcher": "Write|Edit|Bash",
-      "command": "bash hooks/post-tool-use-hook.sh"
+      "command": "./hooks/post-tool-use-hook.sh",
+      "matcher": "Write|Edit|Bash"
     },
     {
       "type": "command",
       "event": "Stop",
-      "command": "bash hooks/stop-hook.sh"
+      "command": "./hooks/stop-hook.sh"
     }
   ]
 }
