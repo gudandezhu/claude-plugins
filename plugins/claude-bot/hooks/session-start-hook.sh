@@ -21,7 +21,7 @@ find_project_root() {
 }
 
 # 获取项目根目录
-PROJECT_ROOT="${PROJECT_ROOT:-$(find_project_root)}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(find_project_root || true)}"
 
 if [ -z "$PROJECT_ROOT" ]; then
     # 没有找到项目根目录，退出
@@ -33,8 +33,12 @@ auto_continue_flag="$PROJECT_ROOT/projects/active/auto_continue.flag"
 if [ -f "$auto_continue_flag" ]; then
     echo "" >&2
     echo "🔄 检测到待处理的任务完成" >&2
-    completed_task=$(jq -r '.completed_task' "$auto_continue_flag" 2>/dev/null)
-    echo "   任务: $completed_task" >&2
+    if command -v jq >/dev/null 2>&1; then
+        completed_task=$(jq -r '.completed_task' "$auto_continue_flag" 2>/dev/null || echo "未知任务")
+        echo "   任务: $completed_task" >&2
+    else
+        echo "   任务标记已存在" >&2
+    fi
     echo "   提示: agile-continue 技能将自动运行测试和验收" >&2
     echo "" >&2
 fi
