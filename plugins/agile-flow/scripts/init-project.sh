@@ -1,16 +1,23 @@
 #!/bin/bash
 # Agile Flow 项目初始化脚本
+# 优化版本：支持灵活文档配置和按需创建
+
 set -e
+
+# 颜色输出
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
 echo "=== 初始化 Agile Flow 项目 ==="
 
 # 确保项目目录存在
 if [ ! -d "projects/active" ]; then
-    echo "创建项目目录结构..."
+    echo -e "${GREEN}创建项目目录结构...${NC}"
     mkdir -p projects/active/{iterations,backlog,knowledge-base}
     mkdir -p ai-docs
 
-    # 初始化配置
+    # 初始化配置（增加文档配置）
     cat > projects/active/config.json << EOF
 {
   "defaultIterationLength": "1-week",
@@ -28,6 +35,13 @@ if [ ! -d "projects/active" ]; then
     "statusJsonMax": 500,
     "summaryMax": 300,
     "taskMax": 1000
+  },
+  "docs": {
+    "mode": "flexible",
+    "enabled": ["PLAN.md", "ACCEPTANCE.md", "BUGS.md"],
+    "optional": ["PRD.md", "OPS.md", "CONTEXT.md", "API.md"],
+    "custom_mappings": {},
+    "auto_create": true
   }
 }
 EOF
@@ -61,15 +75,71 @@ EOF
         echo "ai-docs/" >> .gitignore
     fi
 
-    echo "✅ 项目结构已创建"
+    echo -e "${GREEN}✅ 项目结构已创建${NC}"
 fi
 
-# 检查并创建文档模板
-if [ ! -f "ai-docs/PRD.md" ]; then
-    echo "创建文档模板..."
+# 检测现有文档
+echo ""
+echo "检测现有文档..."
 
-    # PRD.md
-    cat > ai-docs/PRD.md << 'EOF'
+# 检测项目中可能存在的文档
+declare -A existing_docs
+for doc in "PROJECT_STATUS.md" "COMPLETION_REPORT.md" "CLAUDE.md" "AI_CONTEXT.md" "README.md"; do
+    if [ -f "$doc" ]; then
+        existing_docs["$doc"]=1
+        echo -e "  ${YELLOW}发现已有文档: $doc${NC}"
+    fi
+done
+
+# 如果有现有文档，询问用户是否创建映射
+if [ ${#existing_docs[@]} -gt 0 ]; then
+    echo ""
+    echo "检测到项目中已有文档，agile-flow 可以使用这些文档。"
+    echo "将在 config.json 中创建文档映射。"
+
+    # 更新配置，添加文档映射
+    if command -v jq >/dev/null 2>&1; then
+        # 使用 jq 更新配置（如果已有 jq）
+        jq --arg key "custom_mappings" \
+           --argjson value '{}' \
+           '.docs[$key] = $value' \
+           projects/active/config.json > "${TMP:-/tmp}/config.json.tmp" && \
+           mv "${TMP:-/tmp}/config.json.tmp" projects/active/config.json
+    fi
+fi
+
+# 按需创建文档模板
+echo ""
+echo "创建文档模板..."
+
+# 文档模板创建函数
+create_doc_if_missing() {
+    local doc_name=$1
+    local doc_file="ai-docs/$doc_name"
+    local is_optional=$2
+
+    if [ -f "$doc_file" ]; then
+        echo "  ✓ $doc_name 已存在，跳过"
+        return 0
+    fi
+
+    # 检查是否应该创建（enabled 列表中）
+    if [ "$is_optional" = "true" ]; then
+        echo "  ○ $doc_name (可选)，未创建"
+        echo "    如需创建，请运行: touch ai-docs/$doc_name"
+        return 0
+    fi
+
+    # 创建文档
+    create_doc_template "$doc_name" > "$doc_file"
+    echo "  + $doc_name 已创建"
+}
+
+# 创建单个文档模板
+create_doc_template() {
+    case "$1" in
+        "PRD.md")
+            cat << 'EOF'
 # 项目需求文档 (PRD)
 
 ## 项目概述
@@ -126,9 +196,9 @@ if [ ! -f "ai-docs/PRD.md" ]; then
 ### 依赖
 - 外部依赖 1
 EOF
-
-    # PLAN.md
-    cat > ai-docs/PLAN.md << 'EOF'
+            ;;
+        "PLAN.md")
+            cat << 'EOF'
 # 工作计划和任务清单
 
 ## 当前迭代
@@ -170,9 +240,9 @@ p1: 添加数据导出功能
 - 已完成: 0
 - 完成率: 0%
 EOF
-
-    # OPS.md
-    cat > ai-docs/OPS.md << 'EOF'
+            ;;
+        "OPS.md")
+            cat << 'EOF'
 # 操作指南 (OPS)
 
 ## 快速启动
@@ -220,9 +290,9 @@ A: 直接告诉 AI 你想做什么，例如 "p0: 添加用户登录功能"
 ### Q: 如何查看进度？
 A: 运行 /agile-dashboard 查看进度看板
 EOF
-
-    # CONTEXT.md
-    cat > ai-docs/CONTEXT.md << 'EOF'
+            ;;
+        "CONTEXT.md")
+            cat << 'EOF'
 # 项目上下文和记忆 (CONTEXT)
 
 ## 项目概述
@@ -263,9 +333,9 @@ EOF
 - `tests/`: 测试代码目录
 - `projects/active/`: 敏捷开发数据
 EOF
-
-    # ACCEPTANCE.md
-    cat > ai-docs/ACCEPTANCE.md << 'EOF'
+            ;;
+        "ACCEPTANCE.md")
+            cat << 'EOF'
 # 任务验收报告 (ACCEPTANCE)
 
 ## 验收标准
@@ -301,9 +371,9 @@ EOF
 - 测试覆盖率目标: ≥ 80%
 - 代码通过率目标: 100%
 EOF
-
-    # BUGS.md
-    cat > ai-docs/BUGS.md << 'EOF'
+            ;;
+        "BUGS.md")
+            cat << 'EOF'
 # Bug 列表 (BUGS)
 
 ## 严重程度说明
@@ -328,9 +398,9 @@ EOF
 3. 尝试自动修复
 4. 如无法自动修复，报告给用户
 EOF
-
-    # API.md
-    cat > ai-docs/API.md << 'EOF'
+            ;;
+        "API.md")
+            cat << 'EOF'
 # API 清单 (API)
 
 ## REST API
@@ -377,9 +447,29 @@ interface User {
 - 新添加的 API
 - API 变更记录
 EOF
+            ;;
+        *)
+            echo "# $1"
+            echo ""
+            echo "待添加内容"
+            ;;
+    esac
+}
 
-    echo "✅ 文档模板已创建"
-fi
+# 根据配置创建文档（enabled 列表）
+enabled_docs=("PLAN.md" "ACCEPTANCE.md" "BUGS.md")
+optional_docs=("PRD.md" "OPS.md" "CONTEXT.md" "API.md")
+
+for doc in "${enabled_docs[@]}"; do
+    create_doc_if_missing "$doc" "false"
+done
+
+for doc in "${optional_docs[@]}"; do
+    create_doc_if_missing "$doc" "true"
+done
+
+echo ""
+echo -e "${GREEN}✅ 文档模板创建完成${NC}"
 
 # 检查迭代状态
 if [ ! -f "projects/active/iteration.txt" ]; then
@@ -414,7 +504,7 @@ if [ ! -f "projects/active/iteration.txt" ]; then
 }
 EOF
 
-    echo "✅ 迭代 ${iteration} 已创建"
+    echo -e "${GREEN}✅ 迭代 ${iteration} 已创建${NC}"
 else
     iteration=$(cat projects/active/iteration.txt)
     echo "当前迭代: ${iteration}"
@@ -422,11 +512,16 @@ fi
 
 echo ""
 echo "=== 项目初始化完成 ==="
-echo "📁 项目目录: projects/active/"
-echo "📚 文档目录: ai-docs/"
-echo "🔢 当前迭代: ${iteration}"
+echo -e "📁 项目目录: projects/active/"
+echo -e "📚 文档目录: ai-docs/"
+echo -e "🔢 当前迭代: ${iteration}"
 echo ""
 echo "💡 下一步:"
 echo "  - 查看文档: cat ai-docs/PLAN.md"
 echo "  - 添加任务: 告诉 AI 'p0: 实现新功能'"
 echo "  - 查看进度: /agile-dashboard"
+echo ""
+echo "💡 提示: agile-flow 与其他插件协同工作"
+echo "  - 需求优化: /prompt-enhancer"
+echo "  - 功能开发: /feature-dev"
+echo "  - 架构优化: /code-simplifier"

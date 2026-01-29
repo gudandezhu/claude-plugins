@@ -1,7 +1,7 @@
 {
   "name": "agile-flow",
-  "version": "2.0.0",
-  "description": "AI驱动的敏捷开发插件：只需 start/stop 命令，技能自动完成初始化、任务管理、TDD开发、测试验收、文档更新",
+  "version": "2.1.0",
+  "description": "AI驱动的敏捷开发插件：轻量级任务管理，与现有插件协同工作",
   "author": {
     "name": "agile-flow"
   },
@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/session-start-hook.sh"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start-hook.sh"
           }
         ]
       }
@@ -23,17 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/post-tool-use-hook.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/stop-hook.sh"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use-hook.sh"
           }
         ]
       }
