@@ -4,9 +4,13 @@ set -e
 
 LOG_FILE="/tmp/agile-post-tool-use.log"
 echo "=== PostToolUse Hook at $(date) ===" >> "$LOG_FILE"
+echo "PWD: $(pwd)" >> "$LOG_FILE"
+echo "CLAUDE_WORKSPACE: ${CLAUDE_WORKSPACE:-not set}" >> "$LOG_FILE"
 
-# 获取项目根目录
-PROJECT_ROOT="${PROJECT_ROOT:-.}"
+# 获取项目根目录 - 使用用户的workspace目录
+# hook执行时的工作目录应该是用户的项目目录
+PROJECT_ROOT="${PROJECT_ROOT:-${CLAUDE_WORKSPACE:-$(pwd)}}"
+echo "PROJECT_ROOT: $PROJECT_ROOT" >> "$LOG_FILE"
 
 # 检查项目是否已初始化
 if [ ! -f "$PROJECT_ROOT/projects/active/iteration.txt" ]; then

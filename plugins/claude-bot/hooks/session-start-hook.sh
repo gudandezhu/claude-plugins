@@ -2,8 +2,9 @@
 # SessionStart Hook - 显示项目状态
 set -e
 
-# 获取项目根目录
-PROJECT_ROOT="${PROJECT_ROOT:-.}"
+# 获取项目根目录 - 使用用户的workspace目录
+# hook执行时的工作目录应该是用户的项目目录
+PROJECT_ROOT="${PROJECT_ROOT:-${CLAUDE_WORKSPACE:-$(pwd)}}"
 
 # 检查项目是否已初始化
 if [ ! -f "$PROJECT_ROOT/projects/active/iteration.txt" ]; then
