@@ -3,11 +3,9 @@
   "version": "2.0.0",
   "description": "AI驱动的敏捷开发插件：只需 start/stop 命令，技能自动完成初始化、任务管理、TDD开发、测试验收、文档更新",
   "author": {
-    "name": "claude-bot"
+    "name": "agile-flow"
   },
   "license": "MIT",
-  "homepage": "https://github.com/claude-bot/agile-flow",
-  "repository": "https://github.com/claude-bot/agile-flow",
   "hooks": {
     "SessionStart": [
       {

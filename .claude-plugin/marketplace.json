@@ -9,10 +9,10 @@
   "plugins": [
     {
       "name": "agile-flow",
-      "source": "./plugins/claude-bot",
+      "source": "./plugins/agile-flow",
       "description": "AI驱动的敏捷开发闭环插件：Stop hook持续运行、TDD开发、自动化测试、进度看板、三层存储架构",
       "author": {
-        "name": "claude-bot"
+        "name": "agile-flow"
       }
     },
     {
