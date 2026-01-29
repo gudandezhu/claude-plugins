@@ -1,69 +1,20 @@
 ---
 name: agile-stop
-description: 停止敏捷开发流程 - 创建暂停标记、保存进度、生成会话总结
+description: 停止敏捷开发流程
 version: 2.0.0
 ---
 
-# Agile Stop - 停止敏捷开发流程
+# Agile Stop
 
-## 任务
-
-创建暂停标记，触发 agile-stop 技能保存进度并生成会话总结。
-
----
-
-## 执行流程
-
-### 第一步：创建暂停标记
+创建暂停标记，停止自动继续模式。
 
 ```bash
-# 创建暂停标记，阻止自动继续
 if [ -d "projects/active" ]; then
-    cat > projects/active/pause.flag << EOF
-{
-  "paused_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "reason": "user_requested"
-}
-EOF
+    echo "{\"paused_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"reason\": \"user_requested\"}" > projects/active/pause.flag
     echo "✅ 已创建暂停标记"
+else
+    echo "⚠️  项目未初始化"
 fi
 ```
 
-### 第二步：触发 agile-stop 技能
-
-此命令只负责创建暂停标记，剩余工作由 agile-stop 技能自动完成：
-- 保存当前进度
-- 生成会话总结
-- 更新文档
-
----
-
-## 输出结果
-
-```markdown
-✅ Agile Flow 已停止
-
-📊 技能将自动执行以下操作：
-- 保存当前进度
-- 生成会话总结
-- 更新 PLAN.md
-
-💡 恢复开发: 使用 /agile-start 或告诉我"继续"
-```
-
----
-
-## 注意事项
-
-1. **命令职责**：只负责创建暂停标记
-2. **技能驱动**：所有保存和总结工作由技能自动完成
-3. **状态保存**：不会丢失任何进度
-
----
-
-## 自动触发场景
-
-- 用户说"停止"
-- 用户说"暂停"
-- 用户说"agile-stop"
-- 用户说"休息一下"
+使用 `/agile-start` 可恢复开发流程。
