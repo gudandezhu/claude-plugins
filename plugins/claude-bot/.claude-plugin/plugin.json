@@ -7,23 +7,5 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/claude-bot/agile-flow",
-  "repository": "https://github.com/claude-bot/agile-flow",
-  "hooks": [
-    {
-      "type": "command",
-      "event": "SessionStart",
-      "command": "./hooks/session-start-hook.sh"
-    },
-    {
-      "type": "command",
-      "event": "PostToolUse",
-      "command": "./hooks/post-tool-use-hook.sh",
-      "matcher": "Write|Edit|Bash"
-    },
-    {
-      "type": "command",
-      "event": "Stop",
-      "command": "./hooks/stop-hook.sh"
-    }
-  ]
+  "repository": "https://github.com/claude-bot/agile-flow"
 }
