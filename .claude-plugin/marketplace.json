@@ -15,8 +15,9 @@
         "name": "claude-bot"
       }
     },
-  {
+    {
       "name": "prompt-enhancer",
+      "source": "./plugins/prompt-enhancer",
       "version": "1.0.0",
       "description": "智能提示词优化器 - 自动选择最佳框架并优化你的prompt。Intelligent prompt optimizer that automatically selects the best framework and enhances your prompts.",
       "author": {
