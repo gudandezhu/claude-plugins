@@ -14,7 +14,6 @@ prompt-enhancer → agile-flow → feature-dev → agile-flow → code-simplifie
 |------|------|
 | **prompt-enhancer** | 需求优化，使用 BROKE/RTF 等框架优化需求描述 |
 | **agile-flow** | 任务管理和流转，测试验收，文档更新 |
-| **feature-dev** | 功能开发，技术设计，代码实现 |
 | **code-simplifier** | 架构优化，代码重构 |
 
 ---
@@ -35,7 +34,7 @@ prompt-enhancer → agile-flow → feature-dev → agile-flow → code-simplifie
 ##### 任务阶段
 ```
 1. 任务全部记录在PLAN.md
-2. 接收到任务后,使用/feature-dev插件完成任务
+2. 接收到任务后,请自主规划完成任务
 3. 如果任务是编程,使用/code-review和/code-simplifier对代码进行审核,优化和修改,必须完全符合要求才能通过
 4. 提交git commit
 5. 任务完成后，PLAN.md中该任务状态改为 `待测试`
@@ -54,7 +53,7 @@ prompt-enhancer → agile-flow → feature-dev → agile-flow → code-simplifie
 
 ##### BUG修复
 ```
-1. 使用/feature-dev插件修复PLAN.md中状态为`BUG`的任务
+1. 修复PLAN.md中状态为`BUG`的任务
 2. 如果任务是编程,使用/code-review和/code-simplifier对代码进行审核,优化和修改,必须完全符合要求才能通过
 3. 提交git commit
 4. 任务完成后，PLAN.md中该任务状态改为 `待测试`, 跳转到测试阶段
