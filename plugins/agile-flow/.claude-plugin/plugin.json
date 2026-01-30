@@ -7,23 +7,12 @@
   },
   "license": "MIT",
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start-hook.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
+    "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use-hook.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh"
           }
         ]
       }
