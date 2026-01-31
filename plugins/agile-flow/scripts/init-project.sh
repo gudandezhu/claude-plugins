@@ -82,17 +82,17 @@ fi
 echo ""
 echo "检测现有文档..."
 
-# 检测项目中可能存在的文档
-declare -A existing_docs
+# 检测项目中可能存在的文档（使用普通数组代替关联数组以兼容 bash 3.2）
+existing_docs=""
 for doc in "PROJECT_STATUS.md" "COMPLETION_REPORT.md" "CLAUDE.md" "AI_CONTEXT.md" "README.md"; do
     if [ -f "$doc" ]; then
-        existing_docs["$doc"]=1
+        existing_docs="${existing_docs}${doc} "
         echo -e "  ${YELLOW}发现已有文档: $doc${NC}"
     fi
 done
 
 # 如果有现有文档，询问用户是否创建映射
-if [ ${#existing_docs[@]} -gt 0 ]; then
+if [ -n "$existing_docs" ]; then
     echo ""
     echo "检测到项目中已有文档，agile-flow 可以使用这些文档。"
     echo "将在 config.json 中创建文档映射。"
