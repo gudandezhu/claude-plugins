@@ -72,12 +72,31 @@ echo "" >> "$plan_file"
 echo "### 待办 (Pending)" >> "$plan_file"
 echo "" >> "$plan_file"
 
-# 读取待办任务
-pending_count=$(jq -r '.pending_tasks | length' "$status_file")
-if [ "$pending_count" -gt 0 ]; then
-    jq -r '.pending_tasks[] | "- **\(.id)**: \(.name) (优先级: \(.priority))"' "$status_file" >> "$plan_file"
+# 读取待办任务（排除当前任务）
+if [ -n "$current_task_id" ] && [ "$current_task_id" != "null" ]; then
+    # 排除当前任务
+    jq -r ".pending_tasks[] | select(.id != \"$current_task_id\") | \"**\(.id)**: \(.name) (优先级: \(.priority))\"" "$status_file" | while read -r task; do
+        echo "- $task"
+    done >> "$plan_file"
+
+    # 检查是否有待办任务
+    pending_filtered=$(jq -r ".pending_tasks[] | select(.id != \"$current_task_id\")" "$status_file")
+    if [ -z "$pending_filtered" ]; then
+        # 如果没有待办任务，移除"待办"部分
+        sed -i '' '/^### 待办 (Pending)/,/^### 已完成/d' "$plan_file"
+        sed -i '' '/^### 进行中 (In Progress)/a\
+\
+### 已完成 (Completed)
+' "$plan_file"
+    fi
 else
-    echo "- 无" >> "$plan_file"
+    # 没有当前任务，显示所有待办任务
+    pending_count=$(jq -r '.pending_tasks | length' "$status_file")
+    if [ "$pending_count" -gt 0 ]; then
+        jq -r '.pending_tasks[] | "- **\(.id)**: \(.name) (优先级: \(.priority))"' "$status_file" >> "$plan_file"
+    else
+        echo "- 无" >> "$plan_file"
+    fi
 fi
 
 echo "" >> "$plan_file"
