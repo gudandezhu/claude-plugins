@@ -86,6 +86,13 @@ echo "   文件: ${task_file}"
 # 更新状态文件（如果存在）
 status_file="$iteration_dir/status.json"
 if [ -f "$status_file" ]; then
+    # 检查 pending_tasks 是否包含字符串，如果有则先转换为对象格式
+    if jq -e '.pending_tasks[0] | type == "string"' "$status_file" > /dev/null 2>&1; then
+        # 将字符串任务转换为对象格式
+        jq '.pending_tasks = [.pending_tasks[] | {"id": "", "name": ., "priority": "P2"}]' \
+           "$status_file" > "${status_file}.tmp" && mv "${status_file}.tmp" "$status_file"
+    fi
+
     # 添加新任务到 pending_tasks
     jq --arg id "$task_id" \
        --arg name "$description" \

@@ -17,8 +17,7 @@ status_file="$iteration_dir/status.json"
 
 # 读取状态
 if [ -f "$status_file" ]; then
-    current_task=$(jq -r '.current_task.id // empty' "$status_file")
-    current_task_name=$(jq -r '.current_task.name // empty' "$status_file")
+    current_task=$(jq -r '.current_task // empty' "$status_file")
     tasks_total=$(jq -r '.progress.tasks_total // 0' "$status_file")
     tasks_completed=$(jq -r '.progress.tasks_completed // 0' "$status_file")
     test_coverage=$(jq -r '.progress.test_coverage // 0' "$status_file")
@@ -50,8 +49,7 @@ echo ""
 
 if [ -n "$current_task" ] && [ "$current_task" != "null" ]; then
     echo "🔄 当前任务"
-    echo "  ID: ${current_task}"
-    echo "  名称: ${current_task_name}"
+    echo "  ${current_task}"
     echo ""
 fi
 
