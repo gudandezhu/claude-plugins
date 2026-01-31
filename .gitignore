@@ -2,3 +2,5 @@
 .claude
 # Agile Flow - AI 生成的文档
 ai-docs/
+node_modules
+package-lock.json
