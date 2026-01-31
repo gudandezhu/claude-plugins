@@ -20,7 +20,21 @@ const PRD_FILE = path.join(AI_DOCS_PATH, 'PRD.md');
 
 // 中间件
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname)));
+
+// 设置 CSP header，允许 DevTools 连接
+app.use((req, res, next) => {
+    // 设置宽松的 CSP 策略，允许同源连接和 DevTools
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; connect-src 'self' http://localhost:3737 http://127.0.0.1:3737; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+    );
+    next();
+});
+
+// 静态文件服务，设置 index 文件为 dashboard.html
+app.use(express.static(path.join(__dirname), {
+    index: 'dashboard.html'
+}));
 
 /**
  * HTML 转义函数（防止 XSS）
