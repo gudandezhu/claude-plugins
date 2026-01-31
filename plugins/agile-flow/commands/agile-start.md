@@ -28,8 +28,8 @@ allowed-tools: [Bash, Skill]
 
 1. 设置并启动 Dashboard：
    ```bash
-   # 设置 Dashboard
-   bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh
+   # 设置 AI_DOCS_PATH 环境变量
+   export AI_DOCS_PATH=$(pwd)/ai-docs
 
    # 启动服务器（后台运行，记录 PID）
    cd ${CLAUDE_PLUGIN_ROOT}/web
@@ -51,6 +51,7 @@ allowed-tools: [Bash, Skill]
    ```
 
 3. Dashboard 将运行在：http://localhost:3737
+4. 服务器将读取 `ai-docs/TASKS.json` 作为数据源
 
 ### 第三步：验证服务状态
 

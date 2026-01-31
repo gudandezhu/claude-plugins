@@ -56,17 +56,19 @@ function escapeHtml(unsafe) {
 }
 
 /**
- * 解析 PLAN.md 中的任务数据
+ * 解析 TASKS.json 中的任务数据
  */
-async function parsePlan() {
+const TASKS_FILE = path.join(AI_DOCS_PATH, 'TASKS.json');
+
+async function parseTasks() {
     try {
-        const content = await fs.readFile(PLAN_FILE, 'utf-8');
-        const lines = content.split('\n');
+        const content = await fs.readFile(TASKS_FILE, 'utf-8');
+        const data = JSON.parse(content);
 
         const result = {
-            iteration: '1',
+            iteration: data.iteration?.toString() || '1',
             total: 0,
-            completed: 0,
+            completedCount: 0,
             pending: [],
             inProgress: [],
             testing: [],
@@ -75,48 +77,49 @@ async function parsePlan() {
             completed: []
         };
 
-        let currentSection = null;
+        if (!Array.isArray(data.tasks)) {
+            return { ...result, progress: 0 };
+        }
 
-        for (const line of lines) {
-            // 提取迭代编号
-            const iterMatch = line.match(/\*\*迭代编号\*\*:\s*(\d+)/);
-            if (iterMatch) {
-                result.iteration = iterMatch[1];
-            }
+        // 按状态分组任务
+        for (const task of data.tasks) {
+            const taskObj = {
+                priority: task.priority || 'P2',
+                id: task.id || `TASK-${result.total + 1}`,
+                description: task.description || ''
+            };
 
-            // 识别章节（使用严格匹配）
-            const trimmedLine = line.trim();
-            if (trimmedLine === '### 待办' || trimmedLine === '### 待办') currentSection = 'pending';
-            else if (trimmedLine === '### 进行中' || trimmedLine === '### 进行中') currentSection = 'inProgress';
-            else if (trimmedLine === '### 待测试' || trimmedLine === '### 待测试') currentSection = 'testing';
-            else if (trimmedLine === '### 已测试' || trimmedLine === '### 已测试') currentSection = 'tested';
-            else if (trimmedLine === '### BUG' || trimmedLine === '### BUG') currentSection = 'bug';
-            else if (trimmedLine === '### 已完成' || trimmedLine === '### 已完成') currentSection = 'completed';
+            result.total++;
 
-            // 提取任务
-            if (currentSection && line.trim().startsWith('-')) {
-                // 支持两种格式：[- [P0]] 和 [- [P0] ]
-                const match = line.match(/\[([P0-3])\]\s*\[?\s*(TASK-\d+)\]?\s*:\s*(.+)/);
-                if (match) {
-                    const task = {
-                        priority: match[1],
-                        id: match[2] || `TASK-${result.total + 1}`,
-                        description: match[3].trim()
-                    };
-                    result[currentSection].push(task);
-                    result.total++;
-                    if (currentSection === 'completed') {
-                        result.completed++;
-                    }
-                }
+            switch (task.status) {
+                case 'pending':
+                    result.pending.push(taskObj);
+                    break;
+                case 'inProgress':
+                    result.inProgress.push(taskObj);
+                    break;
+                case 'testing':
+                    result.testing.push(taskObj);
+                    break;
+                case 'tested':
+                    result.tested.push(taskObj);
+                    break;
+                case 'bug':
+                    result.bug.push(taskObj);
+                    break;
+                case 'completed':
+                    result.completed.push(taskObj);
+                    result.completedCount++;
+                    break;
             }
         }
 
-        const progress = result.total > 0 ? Math.round((result.completed / result.total) * 100) : 0;
+        const progress = result.total > 0 ? Math.round((result.completedCount / result.total) * 100) : 0;
 
         return { ...result, progress };
     } catch (error) {
-        console.error('Error parsing PLAN.md:', error.message);
+        console.error('Error parsing TASKS.json:', error.message);
+        // 文件不存在时返回空数据
         return {
             iteration: '1',
             total: 0,
@@ -137,7 +140,7 @@ async function parsePlan() {
  */
 app.get('/api/dashboard', async (req, res) => {
     try {
-        const data = await parsePlan();
+        const data = await parseTasks();
 
         // 转义所有输出内容，防止 XSS
         const sanitizedData = {

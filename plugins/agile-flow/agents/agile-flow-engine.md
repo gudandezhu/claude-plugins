@@ -21,6 +21,7 @@ model: sonnet
 2. **持续循环**：不断处理任务直到全部完成
 3. **自动恢复**：遇到错误时尝试自动恢复
 4. **需求驱动**：用户通过 Web Dashboard 提交需求，系统自动处理
+5. **统一目录**：所有数据在 `ai-docs/` 目录管理，不使用 `projects/` 目录
 
 ## 自动化流程循环
 
@@ -38,30 +39,34 @@ model: sonnet
 
 从 `ai-docs/PRD.md` 读取新需求：
 - 使用 `${CLAUDE_PLUGIN_ROOT}/scripts/utils/priority-evaluator.sh` 评估优先级
-- 自动转换为任务添加到 `ai-docs/PLAN.md`
-- 格式：`[- [P0-P3]] TASK-XXX: 需求描述`
+- 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add <P0|P1|P2|P3> "描述"` 添加到 `ai-docs/TASKS.json`
+- 状态默认为 `pending`
 
 ### 步骤 2：选择下一个任务
 
-按优先级顺序选择：
+使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-next` 获取下一个任务。
+
+工具会按以下优先级自动选择：
 1. BUG 任务（最高优先级）
 2. 进行中任务
 3. 待测试任务
 4. 已测试任务
 5. 待办任务（按 P0 → P1 → P2 → P3）
 
+如果没有待处理任务，返回步骤 1。
+
 ### 步骤 3：执行任务
 
 **如果任务在待办状态**：
-- 移动到"进行中"
-- 使用 `/feature-dev` 进行开发
+- 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> inProgress` 更新状态
+- 使用 `/python-development 或 /typescript` 进行开发
 - 如果是编程，使用 `/pr-review-toolkit:review-pr` 审核代码
 - 提交 git commit
-- 移动到"待测试"
+- 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> testing` 更新到待测试
 
 **如果任务在进行中状态**：
 - 检查是否已完成
-- 完成后移动到"待测试"
+- 完成后使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> testing`
 
 ### 步骤 4：自动测试
 
@@ -81,8 +86,8 @@ model: sonnet
    - 使用 Playwright 进行功能验证
 
 4. **处理结果**
-   - 发现 Bug：记录到 BUGS.md，移动到 BUG 状态
-   - 测试通过：移动到"已测试"状态
+   - 发现 Bug：记录到 BUGS.md，使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> bug`
+   - 测试通过：使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> tested`
 
 ### 步骤 5：验收
 
@@ -90,8 +95,7 @@ model: sonnet
 1. 总结核心内容（200字）到 `ai-docs/ACCEPTANCE.md`
 2. 更新 `ai-docs/CONTEXT.md`（50字）
 3. 如果有 API 变更，记录到 `ai-docs/API.md`
-4. 移动到"已完成"状态
-5. 使用 `${CLAUDE_PLUGIN_ROOT}/scripts/utils/sync-plan.sh` 同步时间戳
+4. 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> completed` 移动到已完成
 
 ### 步骤 6：继续循环
 
@@ -138,3 +142,8 @@ Web Dashboard 运行在 http://localhost:3737：
 2. **自动处理错误**：如果遇到错误，尝试恢复或记录到 BUGS.md
 3. **保持循环运行**：除非遇到停止条件，否则持续运行
 4. **使用绝对路径**：使用 `${CLAUDE_PLUGIN_ROOT}` 引用插件资源
+5. **统一数据目录**：所有数据都在 `ai-docs/` 目录，不使用 `projects/` 目录
+   - 任务数据：`ai-docs/TASKS.json`
+   - 需求数据：`ai-docs/PRD.md`
+   - 验收报告：`ai-docs/ACCEPTANCE.md`
+   - Bug 列表：`ai-docs/BUGS.md`

@@ -37,6 +37,35 @@ if ! grep -q "^.hooks/" .gitignore; then
     echo ".hooks/" >> .gitignore
 fi
 
+# 忽略其他插件的 projects 目录，统一使用 ai-docs
+if ! grep -q "^projects/" .gitignore; then
+    echo "" >> .gitignore
+    echo "# 其他插件的项目目录（统一使用 ai-docs 管理）" >> .gitignore
+    echo "projects/" >> .gitignore
+fi
+
+# 迁移 projects/active 内容到 ai-docs
+if [ -d "projects/active" ]; then
+    echo ""
+    echo -e "${YELLOW}发现 projects/active 目录，正在迁移到 ai-docs...${NC}"
+
+    # 迁移 PLAN.md
+    if [ -f "projects/active/PLAN.md" ] && [ ! -f "ai-docs/PLAN.md" ]; then
+        cp "projects/active/PLAN.md" "ai-docs/PLAN.md"
+        echo "  + 已迁移 PLAN.md"
+    fi
+
+    # 迁移任务文档
+    if [ -d "projects/active/tasks" ]; then
+        mkdir -p "ai-docs/tasks-detail"
+        cp -r projects/active/tasks/* ai-docs/tasks-detail/ 2>/dev/null || true
+        echo "  + 已迁移任务详情文档"
+    fi
+
+    echo -e "${GREEN}✅ 迁移完成，可以删除 projects/active 目录${NC}"
+    echo "   建议: rm -rf projects/active"
+fi
+
 # 文档模板创建函数
 create_doc_template() {
     local doc_name=$1
@@ -107,51 +136,12 @@ create_doc_template() {
 - 外部依赖 1
 EOF
             ;;
-        "PLAN.md")
+        "TASKS.json")
             cat > "$doc_file" << 'EOF'
-# 工作计划和任务清单
-
-## 当前迭代
-
-**迭代编号**: 1
-**时间范围**: 待定义
-**目标**: 待定义
-
-## 任务清单
-
-### 待办 (Pending)
-- 无
-
-### 进行中 (In Progress)
-- 无
-
-### 待测试 (Testing)
-- 无
-
-### 已测试 (Tested)
-- 无
-
-### BUG (Bug)
-- 无
-
-### 已完成 (Completed)
-- 无
-
-## 优先级说明
-
-- **P0**: 关键任务，阻塞其他功能
-- **P1**: 高优先级，重要但不阻塞
-- **P2**: 中等优先级，可以延后
-- **P3**: 低优先级，有时间再做
-
-## 进度跟踪
-
-- 总任务数: 0
-- 已完成: 0
-- 完成率: 0%
-
----
-**最后更新**: $(date '+%Y-%m-%d %H:%M:%S')
+{
+  "iteration": 1,
+  "tasks": []
+}
 EOF
             ;;
         "ACCEPTANCE.md")
@@ -266,10 +256,15 @@ pytest --cov
 ## 常见问题
 
 ### Q: 如何添加新任务？
-A: 直接告诉 AI 你想做什么，例如 "p0: 添加用户登录功能"
+A: 通过 Web Dashboard (http://localhost:3737) 提交需求，系统会自动转换为任务
 
-### Q: 如何查看进度？
-A: 运行 /agile-dashboard 查看进度看板
+### Q: 如何查看任务？
+A:
+- Web Dashboard: http://localhost:3737
+- 命令行: node \${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list
+
+### Q: 如何更新任务状态？
+A: node \${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <task_id> <status>
 EOF
             ;;
         "CONTEXT.md")
@@ -385,9 +380,9 @@ echo ""
 echo "创建文档模板..."
 
 # 必需文档
-required_docs=("PLAN.md" "ACCEPTANCE.md" "BUGS.md")
+required_docs=("TASKS.json" "ACCEPTANCE.md" "BUGS.md")
 # 可选文档
-optional_docs=("PRD.md" "OPS.md" "CONTEXT.md" "API.md")
+optional_docs=("PRD.md" "OPS.md" "CONTEXT.md" "API.md" "PLAN.md")
 
 for doc in "${required_docs[@]}"; do
     create_doc_template "$doc"
@@ -403,6 +398,7 @@ echo ""
 echo "💡 提示："
 echo "  - 所有文档位于 ai-docs/ 目录"
 echo "  - hook脚本在.hooks目录"
-echo "  - 添加任务: 直接在 PLAN.md 中添加或告诉 AI"
-echo "  - 查看进度: /agile-dashboard"
+echo "  - 任务数据: ai-docs/TASKS.json (不要手动编辑，使用工具脚本)"
+echo "  - 添加任务: node \${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add <P0|P1|P2|P3> \"描述\""
+echo "  - 查看进度: /agile-dashboard 或访问 http://localhost:3737"
 echo "  - 更多信息: 查看 ai-docs/OPS.md"

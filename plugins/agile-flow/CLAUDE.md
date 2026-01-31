@@ -6,14 +6,14 @@
 
 ### 插件协同
 ```
-用户需求 → PRD.md → agile-flow-engine → feature-dev → agile-flow-engine → pr-review-toolkit
+用户需求 → PRD.md → agile-flow-engine → /python-development 或 /typescript → agile-flow-engine → pr-review-toolkit
   (Web)     需求池      自动流程引擎       功能开发        测试验收         代码审核
 ```
 
 | 插件 | 职责 |
 |------|------|
 | **agile-flow** | 自动化任务流程管理、测试验收、文档更新 |
-| **feature-dev** | 功能开发、技术设计、代码实现 |
+| **/python-development 或 /typescript** | 功能开发、技术设计、代码实现 |
 | **pr-review-toolkit** | 代码审核、简化、优化 |
 | **typescript** | TypeScript 代码实现 |
 | **python-development** | Python 代码实现 |
@@ -71,7 +71,7 @@
 #### 任务执行阶段
 ```
 1. 自动选择最高优先级任务（BUG > 进行中 > 待测试 > 待办）
-2. 使用 /feature-dev 插件完成任务
+2. 使用 /python-development 或 /typescript 插件完成任务
 3. 如果是编程，使用 /pr-review-toolkit:review-pr 审核代码
 4. 提交 git commit
 5. 自动将状态改为 `待测试`
@@ -95,7 +95,7 @@
 
 #### BUG修复
 ```
-1. 自动使用 /feature-dev 插件修复BUG任务
+1. 自动使用 /python-development 或 /typescript 插件修复BUG任务
 2. 使用 /pr-review-toolkit:review-pr 审核代码
 3. 提交 git commit
 4. 自动将状态改为 `待测试`
@@ -119,12 +119,46 @@
 | 文档 | 类型 | 用途 |
 |------|--|------|
 | PRD.md | 必需 | 项目需求文档（需求池） |
-| PLAN.md | 必需 | 工作计划和任务清单 |
+| TASKS.json | 必需 | 任务数据（JSON格式） |
 | ACCEPTANCE.md | 必需 | 任务验收报告 |
 | BUGS.md | 必需 | Bug 列表 |
 | OPS.md | 必需 | 操作指南 |
 | CONTEXT.md | 必需 | 项目上下文 |
 | API.md | 必需 | API 清单 |
+| tasks-detail/ | 可选 | 任务详情文档目录 |
+| PLAN.md | 可选 | 工作计划（Markdown格式，供阅读） |
+
+### 重要说明
+
+**所有项目数据统一在 `ai-docs/` 目录管理**：
+- ❌ **不要**使用 `projects/` 目录
+- ❌ **不要**在项目根目录创建任务文档
+- ✅ 所有任务数据使用 `ai-docs/TASKS.json`
+- ✅ 所有需求使用 `ai-docs/PRD.md`
+- ✅ 所有文档统一在 `ai-docs/` 目录
+
+**.gitignore 配置**：
+- `ai-docs/` - AI 生成的文档
+- `.hooks/` - Hook 脚本
+- `projects/` - 忽略其他插件的项目目录
+
+### TASKS.json 格式
+
+```json
+{
+  "iteration": 1,
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "priority": "P0",
+      "status": "pending",
+      "description": "任务描述"
+    }
+  ]
+}
+```
+
+**状态值**：`pending`, `inProgress`, `testing`, `tested`, `bug`, `completed`
 
 如果项目已有文档（如 `PROJECT_STATUS.md`、`AI_CONTEXT.md`），agile-flow 可以使用它们。
 

@@ -4,3 +4,7 @@
 ai-docs/
 node_modules
 package-lock.json
+.hooks/
+
+# 其他插件的项目目录（统一使用 ai-docs 管理）
+projects/
