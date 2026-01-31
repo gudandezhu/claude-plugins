@@ -15,7 +15,6 @@ echo "=== 初始化 Agile Flow 项目 ==="
 if [ ! -d "projects/active" ]; then
     echo -e "${GREEN}创建项目目录结构...${NC}"
     mkdir -p projects/active/{iterations,backlog,knowledge-base}
-    mkdir -p ai-docs
 
     # 初始化配置（增加文档配置）
     cat > projects/active/config.json << EOF
@@ -76,6 +75,11 @@ EOF
     fi
 
     echo -e "${GREEN}✅ 项目结构已创建${NC}"
+fi
+
+# 确保 ai-docs 目录存在（无论项目是否已初始化）
+if [ ! -d "ai-docs" ]; then
+    mkdir -p ai-docs
 fi
 
 # 检测现有文档
