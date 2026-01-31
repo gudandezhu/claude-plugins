@@ -1,14 +1,14 @@
 ---
 name: agile-product-analyze
 description: 产品需求分析技能：分析PRD、创建用户故事
-version: 2.0.0
+version: 3.0.0
 ---
 
 # Agile Product Analyze - 产品需求分析
 
 ## 任务
 
-分析项目需求文档（PRD），创建用户故事。
+分析项目需求文档（PRD），创建用户任务。
 
 ---
 
@@ -25,37 +25,29 @@ version: 2.0.0
 - 优先级
 - 用户故事
 
-### 第三步：创建用户故事
+### 第三步：创建用户任务
 
-为每个功能创建用户故事文件：
-`projects/active/backlog/STORY-XXX.md`
+为每个功能创建任务，添加到 `ai-docs/PLAN.md` 的待办列表。
+
+**代码实现规范**：
+- 后续任务代码实现：
+  - TypeScript 代码使用 `/typescript`
+  - Python 代码使用 `/python-development`
+  - Shell 脚本使用 `/shell-scripting`
 
 ---
 
-## 用户故事模板
+## 用户任务模板
 
 ```markdown
----
-id: STORY-001
-name: 用户认证
-status: pending
-priority: P0
-acceptance_criteria:
-  - 用户可以注册账户
-  - 用户可以登录
-  - 用户可以登出
----
-
 ## 用户故事
 
-作为 用户，我想要 注册和登录账户，以便 访问个性化功能。
+作为 [用户类型]，我想要 [功能]，以便 [价值]
 
 ## 验收标准
 
-- [ ] 用户可以使用邮箱注册
-- [ ] 用户可以使用邮箱和密码登录
-- [ ] 用户可以登出
-- [ ] 密码加密存储
+- [ ] 标准 1
+- [ ] 标准 2
 ```
 
 ---
@@ -72,8 +64,8 @@ acceptance_criteria:
 - P1: 报表生成
 - P2: 系统设置
 
-创建的用户故事: 5 个
-- STORY-001: 用户认证
-- STORY-002: 数据管理
+创建的任务: 5 个
+- TASK-001: 用户认证
+- TASK-002: 数据管理
 ...
 ```

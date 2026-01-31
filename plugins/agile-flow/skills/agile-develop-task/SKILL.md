@@ -1,7 +1,7 @@
 ---
 name: agile-develop-task
 description: TDD 开发技能：5步流程（测试检查→红→绿→重构→覆盖率≥80%）
-version: 2.0.0
+version: 3.0.0
 ---
 
 # Agile Develop Task - TDD 开发
@@ -29,6 +29,11 @@ version: 2.0.0
 ### 步骤 3：编写最小代码（绿）
 
 编写最少量的代码使测试通过（Green Phase）。
+
+**重要**：
+- 如果是 TypeScript 代码实现，使用 `/typescript`
+- 如果是 Python 代码实现，使用 `/python-development`
+- 如果是 Shell 脚本实现，使用 `/shell-scripting`
 
 ### 步骤 4：重构
 

@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# PID files
+*.pid
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local configuration
+.claude/*.local.md
+
+# Backup files
+*.backup
+*.bak

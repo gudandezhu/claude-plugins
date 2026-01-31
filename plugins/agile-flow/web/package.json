@@ -1,0 +1,12 @@
+{
+  "name": "agile-flow-web",
+  "version": "1.0.0",
+  "description": "Agile Flow Web Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

@@ -1,7 +1,7 @@
 ---
 name: agile-tech-design
 description: 技术设计技能：拆分用户故事为技术任务
-version: 2.0.0
+version: 3.0.0
 ---
 
 # Agile Tech Design - 技术设计
@@ -16,7 +16,7 @@ version: 2.0.0
 
 ### 第一步：读取用户故事
 
-从 `projects/active/backlog/` 读取用户故事。
+从 `ai-docs/PRD.md` 读取用户需求。
 
 ### 第二步：分析技术需求
 
@@ -28,14 +28,18 @@ version: 2.0.0
 
 ### 第三步：创建技术任务
 
-为每个技术需求创建任务卡片：
-`projects/active/iterations/{iteration}/tasks/TASK-XXX.md`
+为每个技术需求创建任务，添加到 `ai-docs/PLAN.md` 的待办列表。
+
+**重要**：技术任务代码实现：
+- TypeScript 代码使用 `/typescript`
+- Python 代码使用 `/python-development`
+- Shell 脚本使用 `/shell-scripting`
 
 ---
 
 ## 任务拆分示例
 
-### 用户故事：用户认证
+### 用户需求：用户认证
 
 拆分为：
 - TASK-001: 设计用户数据模型 (P0)
@@ -53,7 +57,7 @@ version: 2.0.0
 ```
 ✅ 技术设计完成
 
-用户故事: STORY-001 - 用户认证
+用户需求: 用户认证
 
 创建的技术任务: 7 个
 - TASK-001: 设计用户数据模型 (P0)

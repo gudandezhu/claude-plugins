@@ -1,21 +1,20 @@
 {
   "name": "agile-flow",
-  "version": "2.1.0",
-  "description": "AI驱动的敏捷开发插件：轻量级任务管理，与现有插件协同工作",
+  "version": "4.0.0",
+  "description": "AI驱动的自动化敏捷开发插件：完全自动化的任务管理与流转",
   "author": {
     "name": "agile-flow"
   },
+  "homepage": "https://github.com/your-org/agile-flow",
+  "repository": "https://github.com/your-org/agile-flow",
   "license": "MIT",
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh"
-          }
-        ]
-      }
-    ]
-  }
+  "keywords": [
+    "agile",
+    "automation",
+    "workflow",
+    "project-management",
+    "testing",
+    "ci-cd"
+  ],
+  "hooks": "./hooks/hooks.json"
 }

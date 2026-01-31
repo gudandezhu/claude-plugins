@@ -1,7 +1,7 @@
 ---
 name: agile-e2e-test
 description: 端到端测试技能：运行完整功能测试、记录结果
-version: 2.0.0
+version: 3.0.0
 ---
 
 # Agile E2E Test - 端到端测试
@@ -24,6 +24,11 @@ version: 2.0.0
 - Node.js (Playwright): `npm run test:e2e`
 - Node.js (Cypress): `npm run cypress:run`
 - Python: `pytest tests/e2e/`
+
+**重要**：如果需要编写新的测试代码：
+- TypeScript 测试代码实现使用 `/typescript`
+- Python 测试代码实现使用 `/python-development`
+- Shell 脚本实现使用 `/shell-scripting`
 
 ### 第三步：记录测试结果
 

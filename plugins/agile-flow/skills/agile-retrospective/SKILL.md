@@ -1,7 +1,7 @@
 ---
 name: agile-retrospective
 description: 迭代回顾技能：总结成果、分析问题、改进建议
-version: 2.0.0
+version: 3.0.0
 ---
 
 # Agile Retrospective - 迭代回顾
@@ -16,10 +16,9 @@ version: 2.0.0
 
 ### 第一步：读取迭代数据
 
-读取：
+从 `ai-docs/PLAN.md` 和 `ai-docs/BUGS.md` 读取：
 - 已完成任务列表
 - Bug 列表
-- 测试覆盖率
 - 完成时间
 
 ### 第二步：总结成果
@@ -38,6 +37,12 @@ version: 2.0.0
 
 更新 `ai-docs/PLAN.md` 和创建回顾报告。
 
+**代码实现规范**：
+- 如果需要编写脚本生成报告：
+  - TypeScript 脚本使用 `/typescript`
+  - Python 脚本使用 `/python-development`
+  - Shell 脚本使用 `/shell-scripting`
+
 ---
 
 ## 输出结果
@@ -49,7 +54,6 @@ version: 2.0.0
 
 🎯 成果
 - 完成任务: 10/10 (100%)
-- 测试覆盖率: 85%
 - 发现 Bug: 3 个 (全部修复)
 - 完成功能:
   • 用户认证
@@ -59,7 +63,6 @@ version: 2.0.0
 📈 质量指标
 - 代码覆盖率: 85% ✅
 - Linting 通过率: 100% ✅
-- 平均任务时间: 2 天
 
 💡 改进建议
 - 添加更多集成测试
