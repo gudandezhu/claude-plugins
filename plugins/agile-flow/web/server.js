@@ -32,9 +32,15 @@ app.use((req, res, next) => {
 });
 
 // 静态文件服务，设置 index 文件为 dashboard.html
-app.use(express.static(path.join(__dirname), {
+const staticOptions = {
     index: 'dashboard.html'
-}));
+};
+app.use(express.static(path.join(__dirname), staticOptions));
+
+// 显式处理根路径
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
 
 /**
  * HTML 转义函数（防止 XSS）

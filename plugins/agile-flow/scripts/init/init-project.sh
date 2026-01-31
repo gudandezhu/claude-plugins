@@ -12,22 +12,29 @@ NC='\033[0m'
 
 echo "=== 初始化 Agile Flow 项目 ==="
 
+#添加stop hook脚本到项目目录
+mkdir -p .hooks
+cp ${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh .hooks/
+
 # 确保 ai-docs 目录存在
-if [ ! -d "ai-docs" ]; then
-    echo -e "${GREEN}创建 ai-docs 目录...${NC}"
-    mkdir -p ai-docs
-fi
+mkdir -p ai-docs
 
 # 添加 ai-docs 到 .gitignore
 if [ -f ".gitignore" ]; then
-    if ! grep -q "^ai-docs/" .gitignore; then
-        echo "" >> .gitignore
-        echo "# Agile Flow - AI 生成的文档" >> .gitignore
-        echo "ai-docs/" >> .gitignore
-    fi
+    echo ".gitignore已存在"
 else
-    echo "# Agile Flow - AI 生成的文档" > .gitignore
+    touch .gitignore
+fi
+
+if ! grep -q "^ai-docs/" .gitignore; then
+    echo "" >> .gitignore
+    echo "# Agile Flow - AI 生成的文档" >> .gitignore
     echo "ai-docs/" >> .gitignore
+fi
+
+if ! grep -q "^.hooks/" .gitignore; then
+    echo "" >> .gitignore
+    echo ".hooks/" >> .gitignore
 fi
 
 # 文档模板创建函数
@@ -395,6 +402,7 @@ echo -e "${GREEN}✅ 项目初始化完成${NC}"
 echo ""
 echo "💡 提示："
 echo "  - 所有文档位于 ai-docs/ 目录"
+echo "  - hook脚本在.hooks目录"
 echo "  - 添加任务: 直接在 PLAN.md 中添加或告诉 AI"
 echo "  - 查看进度: /agile-dashboard"
 echo "  - 更多信息: 查看 ai-docs/OPS.md"
