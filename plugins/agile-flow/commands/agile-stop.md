@@ -11,10 +11,10 @@ allowed-tools: [Bash]
 
 ## 执行步骤
 
-### 第一步：停止产品观察者
+### 第一步：停止产品观察者 Agent
 
 ```bash
-OBSERVER_PID_FILE="${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid"
+OBSERVER_PID_FILE="${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs/observer.pid"
 
 # 检查 PID 文件是否存在
 if [[ -f "$OBSERVER_PID_FILE" ]]; then
@@ -23,13 +23,13 @@ if [[ -f "$OBSERVER_PID_FILE" ]]; then
 
     # 检查进程是否运行
     if kill -0 $OBSERVER_PID 2>/dev/null; then
-        echo "🛑 停止产品观察者 (PID: $OBSERVER_PID)"
+        echo "🛑 停止产品观察者 Agent (PID: $OBSERVER_PID)"
         kill $OBSERVER_PID
 
         # 等待进程结束
         for i in {1..3}; do
             if ! kill -0 $OBSERVER_PID 2>/dev/null; then
-                echo "✅ 产品观察者已停止"
+                echo "✅ 产品观察者 Agent 已停止"
                 break
             fi
             sleep 1
@@ -37,23 +37,23 @@ if [[ -f "$OBSERVER_PID_FILE" ]]; then
 
         # 如果仍未停止，强制终止
         if kill -0 $OBSERVER_PID 2>/dev/null; then
-            echo "⚠️  强制终止产品观察者"
+            echo "⚠️  强制终止产品观察者 Agent"
             kill -9 $OBSERVER_PID
         fi
     else
-        echo "⚠️  产品观察者进程不存在 (PID: $OBSERVER_PID)"
+        echo "⚠️  产品观察者 Agent 进程不存在 (PID: $OBSERVER_PID)"
     fi
 
     # 清理 PID 文件
     rm -f "$OBSERVER_PID_FILE"
 else
     # 如果没有 PID 文件，尝试查找并终止进程
-    echo "ℹ️  未找到产品观察者 PID 文件"
+    echo "ℹ️  未找到产品观察者 Agent PID 文件"
 
-    # 查找并终止 product-observer.js 进程
-    if pgrep -f "product-observer.js" > /dev/null; then
-        pkill -f "product-observer.js"
-        echo "✅ 已终止产品观察者进程"
+    # 查找并终止 Python main.py 进程
+    if pgrep -f "product-observer.*main.py" > /dev/null; then
+        pkill -f "product-observer.*main.py"
+        echo "✅ 已终止产品观察者 Agent 进程"
     fi
 fi
 ```
@@ -199,14 +199,14 @@ fi
 ### 无法停止进程
 ```bash
 # 查看所有相关进程
-ps aux | grep -E "node.*server.js|product-observer.js"
+ps aux | grep -E "node.*server.js|product-observer.*main.py"
 
 # 手动终止
 kill -9 <PID>
 
 # 或使用 pkill
 pkill -9 -f "node.*server.js"
-pkill -9 -f "product-observer.js"
+pkill -9 -f "product-observer.*main.py"
 ```
 
 ### 端口无法释放
@@ -225,11 +225,11 @@ sudo ufw status
 ```bash
 # 删除 PID 文件
 rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid
-rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid
+rm -f ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs/observer.pid
 
 # 手动查找并终止进程
 pkill -f "node.*server.js"
-pkill -f "product-observer.js"
+pkill -f "product-observer.*main.py"
 ```
 
 ## 清理选项
@@ -239,14 +239,14 @@ pkill -f "product-observer.js"
 ```bash
 # 停止所有相关进程
 pkill -f "node.*server.js"
-pkill -f "product-observer.js"
+pkill -f "product-observer.*main.py"
 
 # 清理所有文件
 rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid
 rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.log
-rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid
-rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.log
+rm -f ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs/observer.pid
+rm -f ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs/observer.log
 
 # 确认清理完成
-! pgrep -f "node.*server.js\|product-observer.js"
+! pgrep -f "node.*server.js|product-observer.*main.py"
 ```

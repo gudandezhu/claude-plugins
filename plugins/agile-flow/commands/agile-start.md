@@ -81,25 +81,46 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
        fi
    fi
 
-   # 启动产品观察者
-   if [ ! -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid ] || ! kill -0 $(cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid) 2>/dev/null; then
-       echo "👁️  正在启动产品观察者..."
+   # 启动产品观察者 Agent（Python Agent SDK）
+   if [ ! -f ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs/observer.pid ] || ! kill -0 $(cat ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs/observer.pid) 2>/dev/null; then
+       echo "👁️  正在启动产品观察者 Agent..."
 
-       # 启动产品观察者（后台运行，记录 PID）
-       nohup node ${CLAUDE_PLUGIN_ROOT}/web/product-observer.js > .logs/observer.log 2>&1 &
+       # 创建日志目录
+       mkdir -p ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/.logs
+
+       # 检查 Python 环境
+       if ! command -v python3 &> /dev/null; then
+           echo "❌ 未找到 python3，请先安装 Python 3.10+"
+           exit 1
+       fi
+
+       # 检查并安装依赖
+       cd ${CLAUDE_PLUGIN_ROOT}/agents/product-observer
+       if ! python3 -c "import claude_agent_sdk" 2>/dev/null; then
+           echo "📦 安装 Agent SDK 依赖..."
+           pip3 install -q -r requirements.txt || {
+               echo "❌ 依赖安装失败"
+               exit 1
+           }
+       fi
+
+       # 启动 Agent（后台运行，记录 PID）
+       nohup python3 main.py > .logs/observer.log 2>&1 &
        OBSERVER_PID=$!
        echo $OBSERVER_PID > .logs/observer.pid
 
        # 等待启动
-       sleep 1
+       sleep 2
 
        # 验证运行
        if kill -0 $OBSERVER_PID 2>/dev/null; then
-           echo "✅ 产品观察者已启动 (PID: $OBSERVER_PID)"
+           echo "✅ 产品观察者 Agent 已启动 (PID: $OBSERVER_PID)"
        else
-           echo "⚠️ 产品观察者启动失败，查看日志："
+           echo "⚠️ 产品观察者 Agent 启动失败，查看日志："
            cat .logs/observer.log
        fi
+
+       cd - > /dev/null
    fi
 
    # 设置全局环境变量（供后续流程使用）
