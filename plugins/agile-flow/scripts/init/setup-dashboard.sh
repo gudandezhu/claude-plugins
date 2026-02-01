@@ -293,9 +293,18 @@ start_web_server() {
 }
 
 setup_web_dashboard() {
-    if ! check_web_server_running; then
-        start_web_server
+    # 快速检查：如果服务已运行且文件完整，跳过所有操作
+    if [[ -f "$WEB_PID_FILE" ]]; then
+        local existing_pid
+        existing_pid=$(cat "$WEB_PID_FILE")
+        if is_process_running "$existing_pid"; then
+            log_info "Web Dashboard 已在运行 (PID: $existing_pid)"
+            return 0
+        fi
     fi
+
+    # 服务未运行，执行启动流程
+    start_web_server
 }
 
 # ============================================
