@@ -11,7 +11,54 @@ allowed-tools: [Bash]
 
 ## 执行步骤
 
-### 第一步：停止 Web Dashboard
+### 第一步：停止产品观察者
+
+```bash
+OBSERVER_PID_FILE="${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid"
+
+# 检查 PID 文件是否存在
+if [[ -f "$OBSERVER_PID_FILE" ]]; then
+    # 读取 PID
+    OBSERVER_PID=$(cat "$OBSERVER_PID_FILE")
+
+    # 检查进程是否运行
+    if kill -0 $OBSERVER_PID 2>/dev/null; then
+        echo "🛑 停止产品观察者 (PID: $OBSERVER_PID)"
+        kill $OBSERVER_PID
+
+        # 等待进程结束
+        for i in {1..3}; do
+            if ! kill -0 $OBSERVER_PID 2>/dev/null; then
+                echo "✅ 产品观察者已停止"
+                break
+            fi
+            sleep 1
+        done
+
+        # 如果仍未停止，强制终止
+        if kill -0 $OBSERVER_PID 2>/dev/null; then
+            echo "⚠️  强制终止产品观察者"
+            kill -9 $OBSERVER_PID
+        fi
+    else
+        echo "⚠️  产品观察者进程不存在 (PID: $OBSERVER_PID)"
+    fi
+
+    # 清理 PID 文件
+    rm -f "$OBSERVER_PID_FILE"
+else
+    # 如果没有 PID 文件，尝试查找并终止进程
+    echo "ℹ️  未找到产品观察者 PID 文件"
+
+    # 查找并终止 product-observer.js 进程
+    if pgrep -f "product-observer.js" > /dev/null; then
+        pkill -f "product-observer.js"
+        echo "✅ 已终止产品观察者进程"
+    fi
+fi
+```
+
+### 第二步：停止 Web Dashboard
 
 使用 PID 文件优雅停止服务器：
 
@@ -62,9 +109,7 @@ else
 fi
 ```
 
-### 第二步：清理端口（如果需要）
-
-```bash
+### 第三步：清理端口（如果需要）
 # 检查端口是否仍被占用
 if lsof -i:3737 > /dev/null 2>&1; then
     echo "⚠️  端口 3737 仍被占用，强制清理..."
@@ -88,9 +133,9 @@ fi
 
 ```bash
 # 验证没有相关进程运行
-if pgrep -f "node.*server.js" > /dev/null; then
-    echo "⚠️  警告: 仍有 server.js 进程运行"
-    pgrep -f "node.*server.js" | head -5
+if pgrep -f "node.*server.js" > /dev/null || pgrep -f "product-observer.js" > /dev/null; then
+    echo "⚠️  警告: 仍有进程运行"
+    pgrep -f "node.*server.js\|product-observer.js" | head -5
 else
     echo "✅ 所有进程已停止"
 fi
@@ -105,6 +150,8 @@ fi
 
 ### 正常停止
 ```
+🛑 停止产品观察者 (PID: 54321)
+✅ 产品观察者已停止
 🛑 停止 Web Dashboard (PID: 12345)
 ✅ Web Dashboard 已停止
 ✅ 端口 3737 已释放
@@ -117,9 +164,10 @@ fi
 
 ### 进程不存在
 ```
+ℹ️  未找到产品观察者 PID 文件
 ⚠️  Web Dashboard 进程不存在 (PID: 12345)
 ✅ PID 文件已清理
-ℹ️  没有运行中的 server.js 进程
+ℹ️  没有运行中的进程
 
 ⏹️  Agile Flow 已停止
 
@@ -143,20 +191,22 @@ fi
 2. **状态保留**：所有任务状态保留在 `ai-docs/PLAN.md` 中
 3. **可恢复**：使用 `/agile-start` 可以随时恢复流程
 4. **日志保留**：服务器日志保留在 `web/.logs/server.log`
-5. **清理 PID**：停止后自动清理 PID 文件
+5. **日志保留**：产品观察者日志保留在 `web/.logs/observer.log`
+6. **清理 PID**：停止后自动清理 PID 文件
 
 ## 故障排除
 
 ### 无法停止进程
 ```bash
 # 查看所有相关进程
-ps aux | grep "node.*server.js"
+ps aux | grep -E "node.*server.js|product-observer.js"
 
 # 手动终止
 kill -9 <PID>
 
 # 或使用 pkill
 pkill -9 -f "node.*server.js"
+pkill -9 -f "product-observer.js"
 ```
 
 ### 端口无法释放
@@ -175,9 +225,11 @@ sudo ufw status
 ```bash
 # 删除 PID 文件
 rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid
+rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid
 
 # 手动查找并终止进程
 pkill -f "node.*server.js"
+pkill -f "product-observer.js"
 ```
 
 ## 清理选项
@@ -187,11 +239,14 @@ pkill -f "node.*server.js"
 ```bash
 # 停止所有相关进程
 pkill -f "node.*server.js"
+pkill -f "product-observer.js"
 
 # 清理所有文件
 rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid
 rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.log
+rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid
+rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.log
 
 # 确认清理完成
-! pgrep -f "node.*server.js"
+! pgrep -f "node.*server.js\|product-observer.js"
 ```

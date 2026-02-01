@@ -81,6 +81,27 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
        fi
    fi
 
+   # 启动产品观察者
+   if [ ! -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid ] || ! kill -0 $(cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/observer.pid) 2>/dev/null; then
+       echo "👁️  正在启动产品观察者..."
+
+       # 启动产品观察者（后台运行，记录 PID）
+       nohup node ${CLAUDE_PLUGIN_ROOT}/web/product-observer.js > .logs/observer.log 2>&1 &
+       OBSERVER_PID=$!
+       echo $OBSERVER_PID > .logs/observer.pid
+
+       # 等待启动
+       sleep 1
+
+       # 验证运行
+       if kill -0 $OBSERVER_PID 2>/dev/null; then
+           echo "✅ 产品观察者已启动 (PID: $OBSERVER_PID)"
+       else
+           echo "⚠️ 产品观察者启动失败，查看日志："
+           cat .logs/observer.log
+       fi
+   fi
+
    # 设置全局环境变量（供后续流程使用）
    echo "export AI_DOCS_PATH=$AI_DOCS_PATH" >> ~/.bashrc
    ```
