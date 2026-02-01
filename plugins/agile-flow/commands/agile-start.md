@@ -33,9 +33,9 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
 
 1. 检查并启动 Dashboard：
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh "$(pwd)"
 ```
-2. Dashboard 将运行在：http://localhost:3737
+2. Dashboard 将根据可用端口动态分配（默认 3737）
 3. 服务器将读取 `ai-docs/TASKS.json` 作为数据源
 
 **每次执行 /agile-start 时，必须确保完成此步骤才能继续！**

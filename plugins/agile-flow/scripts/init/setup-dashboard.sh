@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Script: setup-dashboard.sh
 # Description: Setup Web Dashboard and Product Observer Agent in user project
-# Usage: ./setup-dashboard.sh [options]
+# Usage: ./setup-dashboard.sh [project_directory]
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -12,8 +12,16 @@ IFS=$'\n\t'
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 
-# User project directory (current working directory)
-readonly PROJECT_ROOT="$(pwd)"
+# User project directory
+# 优先使用传入参数，其次使用 PWD 环境变量，最后使用当前目录
+if [[ -n "${1:-}" ]]; then
+    readonly PROJECT_ROOT="$1"
+elif [[ -n "${PWD:-}" ]]; then
+    readonly PROJECT_ROOT="$PWD"
+else
+    readonly PROJECT_ROOT="$(pwd)"
+fi
+
 readonly AI_DOCS_DIR="${PROJECT_ROOT}/ai-docs"
 
 # Plugin directory (where this script is installed)
@@ -162,6 +170,30 @@ ensure_directory() {
 # ============================================
 setup_web_server_files() {
     ensure_directory "$AI_DOCS_DIR"
+
+    # 检查并安装 npm 依赖
+    if [[ ! -f "${AI_DOCS_DIR}/package.json" ]]; then
+        log_info "创建 package.json..."
+        cat > "${AI_DOCS_DIR}/package.json" << 'EOF'
+{
+  "name": "agile-flow-dashboard",
+  "version": "1.0.0",
+  "description": "Agile Flow Web Dashboard",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+EOF
+    fi
+
+    if [[ ! -d "${AI_DOCS_DIR}/node_modules" ]]; then
+        log_info "安装 npm 依赖..."
+        cd "$AI_DOCS_DIR"
+        npm install --silent >/dev/null 2>&1 || {
+            log_error "npm install 失败"
+            return 1
+        }
+    fi
 
     # 复制 server.js 和 dashboard.html 到用户项目
     if [[ ! -f "${AI_DOCS_DIR}/server.js" ]]; then
