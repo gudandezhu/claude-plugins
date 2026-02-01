@@ -24,23 +24,37 @@ fi
 
 readonly AI_DOCS_DIR="${PROJECT_ROOT}/ai-docs"
 
-# Plugin directory (where this script is installed)
-# 优先使用环境变量，如果未设置则尝试从脚本位置计算
+# Plugin directory detection (handles both cache and source directory structures)
+# 缓存目录: /cache/.../agile-flow/4.0.0/scripts/init/setup-dashboard.sh
+# 源码目录: /source/plugins/agile-flow/scripts/init/setup-dashboard.sh
+
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+    # 优先使用环境变量（由 Claude Code 设置）
     readonly PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"
     readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/web"
     readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
     readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+    readonly PRODUCT_OBSERVER_DIR="${PLUGIN_ROOT}/agents/product-observer"
 else
-    # 从脚本位置向上查找（支持缓存目录和源码目录）
-    readonly PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
-    readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/plugins/agile-flow/web"
-    readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
-    readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+    # 根据脚本位置自动检测
+    # 检测是否在版本化缓存目录中（如 4.0.0）
+    if [[ "$SCRIPT_DIR" =~ /cache/ ]] || [[ "$(basename "$(cd "${SCRIPT_DIR}/../.." && pwd)")" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        # 缓存目录结构: version_dir/scripts/init → version_dir
+        readonly VERSION_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+        readonly PLUGIN_WEB_DIR="${VERSION_ROOT}/web"
+        readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
+        readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+        readonly PRODUCT_OBSERVER_DIR="${VERSION_ROOT}/agents/product-observer"
+        readonly PLUGIN_ROOT="$VERSION_ROOT"  # 保持变量名一致性
+    else
+        # 源码目录结构: plugins/agile-flow/scripts/init → plugins/agile-flow
+        readonly PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+        readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/web"
+        readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
+        readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+        readonly PRODUCT_OBSERVER_DIR="${PLUGIN_ROOT}/agents/product-observer"
+    fi
 fi
-
-# Product Observer directory
-readonly PRODUCT_OBSERVER_DIR="${PLUGIN_ROOT}/agents/product-observer"
 
 # Server configuration
 readonly WEB_SERVER_DEFAULT_PORT=3737
