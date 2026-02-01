@@ -51,21 +51,33 @@ echo "🌐 Dashboard: http://localhost:3737"
 echo "📊 健康检查: http://localhost:3737/health"
 ```
 
-### 第四步：启动自动化流程引擎
+### 第四步：启动自动化流程引擎（核心步骤）
 
-使用 Skill 工具调用 `agile-flow-engine` skill：
+**必须执行！使用 Skill 工具启动自动化流程：**
+
+立即调用 `agile-flow:agile-flow-engine` skill：
 
 ```
-调用 /agile-flow:agile-flow-engine skill 开始自动化流程
+使用 Skill 工具调用 agile-flow:agile-flow-engine
 ```
 
-Skill 将：
+**执行方式**：在工具调用中使用 `Skill` 工具，参数为：
+- `skill`: `agile-flow:agile-flow-engine`
+
+Skill 将自动执行：
 - 读取需求池（PRD.md）
 - 自动评估优先级
-- 转换为任务
-- 持续执行任务流转
+- 转换为任务到 TASKS.json
+- 持续执行任务流转（开发→测试→验收）
 - 自动测试验收
 - 循环处理下一个任务
+- **完全自动化，无需人工干预**
+
+**重要**：
+- ✅ 必须使用 Skill 工具调用
+- ✅ 不要跳过此步骤
+- ✅ Skill 会持续运行直到所有任务完成
+- ✅ 使用 `/agile-stop` 停止流程
 
 ## 输出结果
 
