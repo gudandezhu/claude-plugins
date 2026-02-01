@@ -102,19 +102,100 @@ echo "📊 健康检查: http://localhost:3737/health"
 
 ### 第四步：启动自动化流程引擎
 
-使用 Skill 工具调用 `agile-flow-engine` skill：
+**从现在开始，你将直接执行以下自动化流程（不要使用 Skill 工具或 Task 工具）：**
+
+#### 自动化循环
 
 ```
-调用 /agile-flow:agile-flow-engine skill 开始自动化流程
+需求池 → 任务选择 → 开发 → 测试 → 验收 → 下一个任务
+   ↑                                      ↓
+   └────────────── 自动循环 ←──────────────┘
 ```
 
-Skill 将：
-- 读取需求池（PRD.md）
-- 自动评估优先级
-- 转换为任务
-- 持续执行任务流转
-- 自动测试验收
-- 循环处理下一个任务
+#### 执行步骤
+
+**步骤 1：检查需求池**
+
+从 `ai-docs/PRD.md` 读取新需求：
+```bash
+# 评估优先级
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/utils/priority-evaluator.sh
+
+# 添加任务（示例）
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add P0 "实现用户登录功能"
+```
+
+**步骤 2：选择下一个任务**
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-next
+```
+
+优先级：BUG > 进行中 > 待测试 > 已测试 > 待办（P0→P3）
+
+如果没有待处理任务，等待 5 秒后返回步骤 1。
+
+**步骤 3：执行任务**
+
+```bash
+# 更新状态为进行中
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <TASK-ID> inProgress
+
+# 根据任务类型选择执行方式：
+# - TypeScript: 在回复中直接实现代码
+# - Python: 在回复中直接实现代码
+# - Shell: 在回复中直接实现脚本
+
+# 提交代码
+git add .
+git commit -m "feat: 实现任务描述"
+
+# 更新状态为待测试
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <TASK-ID> testing
+```
+
+**步骤 4：自动测试**
+
+```bash
+# 1. 生成并运行单元测试
+# TypeScript: npm run test:unit -- --coverage
+# Python: pytest --cov
+
+# 2. 启动项目验证
+# 检查日志是否有 error
+
+# 3. 处理结果
+# - 有 Bug: 记录到 BUGS.md，状态改为 bug
+# - 通过: 状态改为 tested
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <TASK-ID> tested
+```
+
+**步骤 5：验收**
+
+```bash
+# 1. 总结到 ai-docs/ACCEPTANCE.md（200字）
+# 2. 更新 ai-docs/CONTEXT.md（50字）
+# 3. API 变更记录到 ai-docs/API.md
+# 4. 标记完成
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <TASK-ID> completed
+```
+
+**步骤 6：继续循环**
+
+返回步骤 1，处理下一个任务。
+
+#### 停止条件
+
+- 用户执行 `/agile-stop`
+- 所有任务完成且无新需求
+- 遇到无法自动解决的阻塞（记录到 BUGS.md）
+
+#### 关键规则
+
+- **完全自动化**：不需要暂停，持续循环
+- **不使用 AskUserQuestion**：自动处理所有情况
+- **直接执行**：不使用 Skill 工具启动子流程
+- **输出进度**：清晰显示当前任务和状态
 
 ## 输出结果
 
