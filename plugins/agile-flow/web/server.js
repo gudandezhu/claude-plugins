@@ -160,6 +160,81 @@ app.get('/api/dashboard', async (req, res) => {
 });
 
 /**
+ * GET /api/prd - 获取需求池列表（只返回未转换的需求）
+ */
+app.get('/api/prd', async (req, res) => {
+    try {
+        const content = await fs.readFile(PRD_FILE, 'utf-8');
+        const lines = content.split('\n');
+
+        const requirements = [];
+        let currentReq = null;
+
+        for (const line of lines) {
+            // 匹配 ## 需求 时间戳
+            if (line.match(/^##\s+需求/)) {
+                if (currentReq) {
+                    // 只添加未标记为已转换的需求
+                    if (!currentReq.title.includes('[已转换]')) {
+                        requirements.push(currentReq);
+                    }
+                }
+                currentReq = { title: line, content: '' };
+            } else if (currentReq) {
+                if (line.match(/^---/)) {
+                    // 只添加未标记为已转换的需求
+                    if (!currentReq.title.includes('[已转换]')) {
+                        requirements.push(currentReq);
+                    }
+                    currentReq = null;
+                } else if (line.trim()) {
+                    currentReq.content += line + '\n';
+                }
+            }
+        }
+
+        if (currentReq && !currentReq.title.includes('[已转换]')) {
+            requirements.push(currentReq);
+        }
+
+        res.json({ requirements });
+    } catch (error) {
+        // PRD.md 不存在时返回空列表
+        res.json({ requirements: [] });
+    }
+});
+
+/**
+ * POST /api/prd/convert - 标记需求已转换为任务
+ */
+app.post('/api/prd/convert', async (req, res) => {
+    const { timestamp } = req.body;
+
+    if (!timestamp) {
+        return res.status(400).json({ error: '缺少需求时间戳' });
+    }
+
+    try {
+        const content = await fs.readFile(PRD_FILE, 'utf-8');
+        const lines = content.split('\n');
+
+        // 查找并标记该需求为已转换
+        const modified = lines.map(line => {
+            if (line.includes(`## 需求 ${timestamp}`) && !line.includes('[已转换]')) {
+                return `${line} [已转换]`;
+            }
+            return line;
+        });
+
+        await fs.writeFile(PRD_FILE, modified.join('\n'), 'utf-8');
+        res.json({ success: true, message: '需求已标记为已转换' });
+    } catch (error) {
+        console.error('Error converting requirement:', error);
+        res.status(500).json({ error: '标记失败' });
+    }
+});
+
+/**
  * POST /api/requirement - 提交需求到需求池
  */
 app.post('/api/requirement', async (req, res) => {
