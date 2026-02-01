@@ -35,14 +35,15 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
    ```bash
    # 设置 AI_DOCS_PATH 环境变量
    export AI_DOCS_PATH=$(pwd)/ai-docs
-
+   export CLAUDE_PROJECT_DIR=$(pwd)
+   
    # 进入 Web 目录
    cd ${CLAUDE_PLUGIN_ROOT}/web
    mkdir -p .logs
 
    # 检查是否已有运行中的服务
-   if [ -f .logs/server.pid ]; then
-       EXISTING_PID=$(cat .logs/server.pid)
+   if [ -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid ]; then
+       EXISTING_PID=$(cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid)
        if kill -0 $EXISTING_PID 2>/dev/null; then
            echo "ℹ️ Web Dashboard 已在运行 (PID: $EXISTING_PID)"
        else
@@ -52,7 +53,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
    fi
 
    # 如果没有运行中的服务，则启动
-   if [ ! -f .logs/server.pid ] || ! kill -0 $(cat .logs/server.pid) 2>/dev/null; then
+   if [ ! -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid ] || ! kill -0 $(cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid) 2>/dev/null; then
        echo "🚀 正在启动 Web Dashboard..."
 
        # 检查端口是否被占用
