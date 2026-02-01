@@ -83,7 +83,7 @@ Skill 将：
   - 在 Dashboard 提交需求
   - 流程自动运行，无需暂停
   - 使用 /agile-stop 停止流程
-  - 日志文件: ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.log
+  - 日志文件: ${AI_DOCS_PATH}/.logs/server.log
 ```
 
 ### 已有项目
@@ -105,13 +105,13 @@ Skill 将：
 ❌ 启动失败
 
 📋 诊断步骤：
-1. 检查端口: lsof -i:3737
-2. 查看日志: cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.log
+1. 检查端口: cat ${AI_DOCS_PATH}/.logs/server.port | xargs -I {} lsof -i:{}
+2. 查看日志: cat ${AI_DOCS_PATH}/.logs/server.log
 3. 检查进程: ps aux | grep "node.*server.js"
 
 💡 如需清理：
    pkill -f "node.*server.js"
-   rm -f ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid
+   rm -f ${AI_DOCS_PATH}/.logs/server.pid
 ```
 
 ## 注意事项
@@ -120,7 +120,7 @@ Skill 将：
 2. **Web Dashboard**：用户通过 Web 界面提交需求和查看进度
 3. **Skill 驱动**：流程由 agile-flow-engine skill 管理
 4. **PID 管理**：使用 PID 文件管理服务器进程
-5. **日志记录**：服务器日志保存在 `web/.logs/server.log`
+5. **日志记录**：服务器日志保存在 `ai-docs/.logs/server.log`
 6. **使用 /agile-stop**：停止整个流程（Dashboard + 自动化流程）
 
 ## 故障排除
@@ -139,9 +139,12 @@ kill -9 <PID>
 ### 服务器未响应
 ```bash
 # 检查服务器状态
-cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.log
+cat ${AI_DOCS_PATH}/.logs/server.log
+
+# 读取动态端口
+PORT=$(cat ${AI_DOCS_PATH}/.logs/server.port)
 
 # 重启服务器
-kill $(cat ${CLAUDE_PLUGIN_ROOT}/web/.logs/server.pid)
-cd ${CLAUDE_PLUGIN_ROOT}/web && node server.js &
+kill $(cat ${AI_DOCS_PATH}/.logs/server.pid)
+cd ${AI_DOCS_PATH} && PORT=$PORT node server.js &
 ```
