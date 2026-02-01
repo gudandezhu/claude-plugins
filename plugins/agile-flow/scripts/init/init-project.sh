@@ -12,10 +12,6 @@ NC='\033[0m'
 
 echo "=== 初始化 Agile Flow 项目 ==="
 
-#添加stop hook脚本到项目目录
-mkdir -p .hooks
-cp ${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh .hooks/
-
 # 确保 ai-docs 目录存在
 mkdir -p ai-docs
 
@@ -30,11 +26,6 @@ if ! grep -q "^ai-docs/" .gitignore; then
     echo "" >> .gitignore
     echo "# Agile Flow - AI 生成的文档" >> .gitignore
     echo "ai-docs/" >> .gitignore
-fi
-
-if ! grep -q "^.hooks/" .gitignore; then
-    echo "" >> .gitignore
-    echo ".hooks/" >> .gitignore
 fi
 
 # 忽略其他插件的 projects 目录，统一使用 ai-docs
@@ -397,7 +388,6 @@ echo -e "${GREEN}✅ 项目初始化完成${NC}"
 echo ""
 echo "💡 提示："
 echo "  - 所有文档位于 ai-docs/ 目录"
-echo "  - hook脚本在.hooks目录"
 echo "  - 任务数据: ai-docs/TASKS.json (不要手动编辑，使用工具脚本)"
 echo "  - 添加任务: node \${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add <P0|P1|P2|P3> \"描述\""
 echo "  - 查看进度: /agile-dashboard 或访问 http://localhost:3737"

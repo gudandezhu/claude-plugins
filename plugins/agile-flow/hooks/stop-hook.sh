@@ -8,4 +8,5 @@ if [ -d "ai-docs" ]; then
   exit 2
 fi
 
+# 没有未完成任务，正常退出
 exit 0

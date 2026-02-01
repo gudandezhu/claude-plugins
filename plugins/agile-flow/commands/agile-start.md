@@ -11,47 +11,83 @@ allowed-tools: [Bash, Skill]
 
 ## 执行步骤
 
-### 第一步：初始化项目（首次）
+### 第一步：初始化项目（仅首次）
 
-如果 `ai-docs/` 目录不存在：
+**如果 `ai-docs/` 目录不存在**，运行初始化脚本：
 
-1. 运行初始化脚本：
-   ```bash
-   bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
-   ```
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
+```
 
-2. 这将创建：
-   - `ai-docs/` 目录
-   - 文档模板（PLAN.md, ACCEPTANCE.md, BUGS.md, PRD.md 等）
+这将创建：
+- `ai-docs/` 目录
+- 文档模板（PLAN.md, ACCEPTANCE.md, BUGS.md, PRD.md 等）
 
-### 第二步：启动 Web Dashboard
+**如果目录已存在，跳过此步骤。**
 
-1. 设置并启动 Dashboard：
+---
+
+### 第二步：启动 Web Dashboard（每次必执行）
+
+**重要：无论 session 是否恢复，每次执行 /agile-start 都必须执行此步骤！**
+
+1. 检查并启动 Dashboard：
    ```bash
    # 设置 AI_DOCS_PATH 环境变量
    export AI_DOCS_PATH=$(pwd)/ai-docs
 
-   # 启动服务器（后台运行，记录 PID）
+   # 进入 Web 目录
    cd ${CLAUDE_PLUGIN_ROOT}/web
    mkdir -p .logs
-   nohup node server.js > .logs/server.log 2>&1 &
-   SERVER_PID=$!
-   echo $SERVER_PID > .logs/server.pid
 
-   # 等待服务器启动
-   sleep 2
-
-   # 验证服务器运行
-   if kill -0 $SERVER_PID 2>/dev/null; then
-       echo "✅ Web Dashboard 已启动 (PID: $SERVER_PID)"
-   else
-       echo "❌ Web Dashboard 启动失败"
-       exit 1
+   # 检查是否已有运行中的服务
+   if [ -f .logs/server.pid ]; then
+       EXISTING_PID=$(cat .logs/server.pid)
+       if kill -0 $EXISTING_PID 2>/dev/null; then
+           echo "ℹ️ Web Dashboard 已在运行 (PID: $EXISTING_PID)"
+       else
+           echo "⚠️ 旧的 PID 文件存在，但进程已停止，清理中..."
+           rm -f .logs/server.pid
+       fi
    fi
+
+   # 如果没有运行中的服务，则启动
+   if [ ! -f .logs/server.pid ] || ! kill -0 $(cat .logs/server.pid) 2>/dev/null; then
+       echo "🚀 正在启动 Web Dashboard..."
+
+       # 检查端口是否被占用
+       if lsof -i:3737 >/dev/null 2>&1; then
+           echo "⚠️ 端口 3737 已被占用，尝试终止旧进程..."
+           pkill -f "node.*server.js" || true
+           sleep 1
+       fi
+
+       # 启动服务器（后台运行，记录 PID）
+       nohup node server.js > .logs/server.log 2>&1 &
+       SERVER_PID=$!
+       echo $SERVER_PID > .logs/server.pid
+
+       # 等待服务器启动
+       sleep 2
+
+       # 验证服务器运行
+       if kill -0 $SERVER_PID 2>/dev/null; then
+           echo "✅ Web Dashboard 已启动 (PID: $SERVER_PID)"
+       else
+           echo "❌ Web Dashboard 启动失败，查看日志："
+           cat .logs/server.log
+           exit 1
+       fi
+   fi
+
+   # 设置全局环境变量（供后续 agent 使用）
+   echo "export AI_DOCS_PATH=$AI_DOCS_PATH" >> ~/.bashrc
    ```
 
-3. Dashboard 将运行在：http://localhost:3737
-4. 服务器将读取 `ai-docs/TASKS.json` 作为数据源
+2. Dashboard 将运行在：http://localhost:3737
+3. 服务器将读取 `ai-docs/TASKS.json` 作为数据源
+
+**每次执行 /agile-start 时，必须确保完成此步骤才能继续！**
 
 ### 第三步：验证服务状态
 
