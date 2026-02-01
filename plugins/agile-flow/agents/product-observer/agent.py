@@ -12,18 +12,32 @@ from datetime import datetime
 
 # Agent SDK 导入
 from claude_agent_sdk import query, ClaudeAgentOptions
-from anthropic import Anthropic
 
 # 配置
 CHECK_INTERVAL = 60  # 检查间隔（秒）
 AI_DOCS_PATH = os.environ.get('AI_DOCS_PATH', '')
 PROJECT_PATH = str(Path(AI_DOCS_PATH).parent) if AI_DOCS_PATH else ''
-DASHBOARD_API = 'http://127.0.0.1:3737'
-WEBAPP_URL = 'http://localhost:5173'
 
 # 已提交的问题（去重）
 submitted_issues = set()
 MAX_ISSUE_MEMORY = 100
+
+
+def get_dashboard_port() -> int:
+    """获取 Dashboard 端口"""
+    port_file = Path(AI_DOCS_PATH) / '.logs' / 'server.port'
+    if port_file.exists():
+        try:
+            return int(port_file.read_text().strip())
+        except (ValueError, IOError):
+            pass
+    return 3737  # 默认端口
+
+
+def get_dashboard_api() -> str:
+    """获取 Dashboard API 地址"""
+    port = get_dashboard_port()
+    return f'http://127.0.0.1:{port}'
 
 
 class ProductObserverAgent:
@@ -35,6 +49,7 @@ class ProductObserverAgent:
             raise ValueError("AI_DOCS_PATH 环境变量未设置")
 
         self.http_client = httpx.AsyncClient(timeout=30.0)
+        self.dashboard_api = get_dashboard_api()
 
     async def analyze_with_claude(self, prompt: str) -> str:
         """使用 Claude Agent SDK 分析"""
@@ -64,7 +79,7 @@ class ProductObserverAgent:
         try:
             # 使用 AI 分析 Dashboard 状态
             analysis = await self.analyze_with_claude(
-                f"请检查 {DASHBOARD_API.replace('127.0.0.1', 'localhost')} 的状态。"
+                f"请检查 {self.dashboard_api} 的状态。"
                 f"这是一个敏捷开发 Dashboard，显示任务进度和需求池。"
                 f"请识别："
                 f"1. 是否有界面布局问题"
@@ -85,34 +100,6 @@ class ProductObserverAgent:
 
         except Exception as e:
             print(f"❌ Dashboard 检查失败: {e}")
-
-        return issues
-
-    async def check_webapp(self) -> list:
-        """检查前端应用"""
-        issues = []
-
-        try:
-            # 检查应用是否运行
-            response = await self.http_client.get(WEBAPP_URL, timeout=5.0)
-            response_time = response.elapsed.total_seconds() * 1000
-
-            if response_time > 2000:
-                issues.append({
-                    'type': 'performance',
-                    'priority': 'P1',
-                    'title': 'Web 应用响应慢',
-                    'description': f'首页加载 {response_time:.0f}ms'
-                })
-
-        except Exception as e:
-            if 'timeout' in str(e).lower() or 'connect' in str(e).lower():
-                issues.append({
-                    'type': 'availability',
-                    'priority': 'P1',
-                    'title': 'Web 应用未运行',
-                    'description': f'无法访问 {WEBAPP_URL}'
-                })
 
         return issues
 
@@ -159,8 +146,8 @@ class ProductObserverAgent:
         issues = []
 
         try:
-            # 检查 Web Server 日志
-            log_dir = Path(__file__).parent.parent.parent / 'web' / '.logs'
+            # 检查项目中的 Web Server 日志
+            log_dir = Path(AI_DOCS_PATH) / '.logs'
             server_log = log_dir / 'server.log'
 
             if server_log.exists():
@@ -194,7 +181,7 @@ class ProductObserverAgent:
 
         try:
             response = await self.http_client.post(
-                f'{DASHBOARD_API}/api/requirement',
+                f'{self.dashboard_api}/api/requirement',
                 json={
                     'requirement': f"[{issue['type'].upper()}] {issue['title']}\n\n"
                                   f"{issue['description']}\n\n"
@@ -222,7 +209,6 @@ class ProductObserverAgent:
         # 并发执行所有检查
         checks = [
             self.check_dashboard(),
-            self.check_webapp(),
             self.check_code_quality(),
             self.check_logs()
         ]
@@ -262,15 +248,13 @@ class ProductObserverAgent:
 ╚══════════════════════════════════════════════╝
 
 项目: {PROJECT_PATH}
-Web: {WEBAPP_URL}
-API: {DASHBOARD_API}
+API: {dashboard_api}
 间隔: {CHECK_INTERVAL}s
 
-观察: Dashboard、Web 应用、代码质量、日志
+观察: Dashboard、代码质量、日志
         """.format(
             PROJECT_PATH=PROJECT_PATH,
-            WEBAPP_URL=WEBAPP_URL,
-            DASHBOARD_API=DASHBOARD_API,
+            dashboard_api=self.dashboard_api,
             CHECK_INTERVAL=CHECK_INTERVAL
         ))
 

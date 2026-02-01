@@ -9,7 +9,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = 3737;
+const PORT = process.env.PORT || 3737;  // 支持环境变量 PORT
 const HOST = '127.0.0.1'; // 只监听本地，提高安全性
 
 // ai-docs 路径（由启动脚本设置 AI_DOCS_PATH 环境变量）
@@ -23,9 +23,10 @@ app.use(express.json({ limit: '1mb' }));
 // 设置 CSP header，允许 DevTools 连接
 app.use((req, res, next) => {
     // 设置宽松的 CSP 策略，允许同源连接和 DevTools
+    const port = PORT;  // 使用动态端口
     res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; connect-src 'self' http://localhost:3737 http://127.0.0.1:3737; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+        `default-src 'self'; connect-src 'self' http://localhost:${port} http://127.0.0.1:${port}; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';`
     );
     next();
 });
