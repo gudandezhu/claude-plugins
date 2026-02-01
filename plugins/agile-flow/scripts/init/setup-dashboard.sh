@@ -29,11 +29,11 @@ readonly PRODUCT_OBSERVER_DIR="${CLAUDE_PLUGIN_ROOT:-${PLUGIN_AGGRESSIVE_FLOW_RO
 
 # Server configuration
 readonly WEB_SERVER_DEFAULT_PORT=3737
-readonly WEB_PORT_FILE="${LOGS_DIR}/server.port"
-readonly OBSERVER_PORT_FILE="${LOGS_DIR}/observer.port"  # 预留，未来可能需要
 
 # File paths in user project
 readonly LOGS_DIR="${AI_DOCS_DIR}/.logs"
+readonly WEB_PORT_FILE="${LOGS_DIR}/server.port"
+readonly OBSERVER_PORT_FILE="${LOGS_DIR}/observer.port"  # 预留，未来可能需要
 readonly WEB_PID_FILE="${LOGS_DIR}/server.pid"
 readonly WEB_LOG_FILE="${LOGS_DIR}/server.log"
 readonly OBSERVER_PID_FILE="${LOGS_DIR}/observer.pid"
