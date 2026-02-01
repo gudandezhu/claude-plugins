@@ -25,15 +25,22 @@ fi
 readonly AI_DOCS_DIR="${PROJECT_ROOT}/ai-docs"
 
 # Plugin directory (where this script is installed)
-readonly PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
-readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/plugins/agile-flow/web"
-readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
-readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+# 优先使用环境变量，如果未设置则尝试从脚本位置计算
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+    readonly PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"
+    readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/web"
+    readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
+    readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+else
+    # 从脚本位置向上查找（支持缓存目录和源码目录）
+    readonly PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+    readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/plugins/agile-flow/web"
+    readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
+    readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
+fi
 
 # Product Observer directory
-# 使用默认值，如果 CLAUDE_PLUGIN_ROOT 未设置则使用计算的路径
-readonly PLUGIN_AGGRESSIVE_FLOW_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-readonly PRODUCT_OBSERVER_DIR="${CLAUDE_PLUGIN_ROOT:-${PLUGIN_AGGRESSIVE_FLOW_ROOT}}/agents/product-observer"
+readonly PRODUCT_OBSERVER_DIR="${PLUGIN_ROOT}/agents/product-observer"
 
 # Server configuration
 readonly WEB_SERVER_DEFAULT_PORT=3737
