@@ -12,9 +12,8 @@ const app = express();
 const PORT = 3737;
 const HOST = '127.0.0.1'; // 只监听本地，提高安全性
 
-// 获取项目根目录（支持环境变量和命令行参数）
-const PROJECT_ROOT = process.env.CLAUDE_PROJECT_ROOT || process.cwd();
-const AI_DOCS_PATH = path.join(PROJECT_ROOT, 'ai-docs');
+// ai-docs 路径（由启动脚本设置 AI_DOCS_PATH 环境变量）
+const AI_DOCS_PATH = process.env.AI_DOCS_PATH;
 const PLAN_FILE = path.join(AI_DOCS_PATH, 'PLAN.md');
 const PRD_FILE = path.join(AI_DOCS_PATH, 'PRD.md');
 
@@ -225,7 +224,7 @@ const server = app.listen(PORT, HOST, () => {
 ║                                              ║
 ║     Dashboard: http://${HOST}:${PORT}          ║
 ║     API: http://${HOST}:${PORT}/api/*            ║
-║     项目目录: ${PROJECT_ROOT}     ║
+║     ai-docs: ${AI_DOCS_PATH}     ║
 ╚══════════════════════════════════════════════╝
     `);
 });

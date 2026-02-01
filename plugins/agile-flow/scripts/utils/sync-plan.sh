@@ -9,13 +9,13 @@ set -e
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# 检查 ai-docs 目录
-if [ ! -d "ai-docs" ]; then
-    echo "❌ 项目未初始化"
+# 必须设置 AI_DOCS_PATH 环境变量
+if [ -z "$AI_DOCS_PATH" ]; then
+    echo "❌ 错误: AI_DOCS_PATH 环境变量未设置" >&2
     exit 1
 fi
 
-plan_file="ai-docs/PLAN.md"
+plan_file="$AI_DOCS_PATH/PLAN.md"
 
 # 检查 PLAN.md 是否存在
 if [ ! -f "$plan_file" ]; then

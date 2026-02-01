@@ -6,8 +6,14 @@
 
 set -e
 
-PRD_FILE="ai-docs/PRD.md"
-PLAN_FILE="ai-docs/PLAN.md"
+# 必须设置 AI_DOCS_PATH 环境变量
+if [ -z "$AI_DOCS_PATH" ]; then
+    echo "❌ 错误: AI_DOCS_PATH 环境变量未设置" >&2
+    exit 1
+fi
+
+PRD_FILE="$AI_DOCS_PATH/PRD.md"
+PLAN_FILE="$AI_DOCS_PATH/PLAN.md"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -58,10 +64,7 @@ process_requirements() {
 
 # 主函数
 main() {
-    if [ ! -d "ai-docs" ]; then
-        echo "⚠️  项目未初始化"
-        exit 1
-    fi
+    # AI_DOCS_PATH 检查已在文件开头完成
 
     process_requirements
 }

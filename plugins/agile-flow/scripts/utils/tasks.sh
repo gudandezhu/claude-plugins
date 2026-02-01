@@ -11,7 +11,13 @@
 
 set -e
 
-TASKS_FILE="${AI_DOCS_PATH:-./ai-docs}/TASKS.json"
+# 必须设置 AI_DOCS_PATH 环境变量
+if [ -z "$AI_DOCS_PATH" ]; then
+    echo "❌ 错误: AI_DOCS_PATH 环境变量未设置" >&2
+    exit 1
+fi
+
+TASKS_FILE="$AI_DOCS_PATH/TASKS.json"
 
 # 确保 TASKS.json 存在
 init_tasks() {
