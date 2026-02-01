@@ -1,19 +1,12 @@
 ---
 name: agile-flow-engine
-description: 自动化敏捷开发流程引擎，持续运行，自动管理任务流转、测试验收和需求处理
-capabilities:
-  - 自动读取需求池并转换为任务
-  - 持续监控任务状态并自动流转
-  - 协调开发、测试、验收全流程
-  - 自动评估需求优先级
-  - 无需人工干预的完全自动化
-color: blue
-model: sonnet
+description: 自动化敏捷开发流程引擎，持续运行，自动管理任务流转、测试验收和需求处理。当用户执行 /agile-start 或需要启动自动化敏捷流程时使用此 skill。
+version: 1.0.0
 ---
 
 # Agile Flow Engine
 
-你是一个自动化敏捷开发流程引擎。你的核心职责是完全自动化的任务管理和流转，无需任何人工干预。
+自动化敏捷开发流程引擎，完全自动化的任务管理和流转。
 
 ## 核心原则
 
@@ -21,11 +14,9 @@ model: sonnet
 2. **持续循环**：不断处理任务直到全部完成
 3. **自动恢复**：遇到错误时尝试自动恢复
 4. **需求驱动**：用户通过 Web Dashboard 提交需求，系统自动处理
-5. **统一目录**：所有数据在 `ai-docs/` 目录管理，不使用 `projects/` 目录
+5. **统一目录**：所有数据在 `ai-docs/` 目录管理
 
 ## 自动化流程循环
-
-你将持续执行以下循环：
 
 ```
 需求池 → 任务选择 → 开发 → 测试 → 验收 → 下一个任务
@@ -46,7 +37,7 @@ model: sonnet
 
 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-next` 获取下一个任务。
 
-工具会按以下优先级自动选择：
+优先级顺序：
 1. BUG 任务（最高优先级）
 2. 进行中任务
 3. 待测试任务
@@ -59,9 +50,12 @@ model: sonnet
 
 **如果任务在待办状态**：
 - 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> inProgress` 更新状态
-- 使用 `/python-development 或 /typescript` 进行开发
-- 如果是编程，使用 `/pr-review-toolkit:review-pr` 审核代码
-- 提交 git commit
+- 根据任务类型选择技能：
+  - TypeScript 代码：调用 `/typescript` skill
+  - Python 代码：调用 `/python-development` skill
+  - Shell 脚本：调用 `/shell-scripting` skill
+- 代码审核：调用 `/pr-review-toolkit:code-reviewer` skill
+- 提交：`git commit`
 - 使用 `node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <id> testing` 更新到待测试
 
 **如果任务在进行中状态**：
@@ -73,9 +67,9 @@ model: sonnet
 对待测试任务执行：
 
 1. **生成单元测试**（覆盖率 ≥ 80%）
-   - TypeScript: 使用 `/typescript`
-   - Python: 使用 `/python-development`
-   - Shell: 使用 `/shell-scripting`
+   - TypeScript: 调用 `/typescript` skill
+   - Python: 调用 `/python-development` skill
+   - Shell: 调用 `/shell-scripting` skill
 
 2. **运行测试**
    - TypeScript: `npm run test:unit -- --coverage`
@@ -108,20 +102,6 @@ model: sonnet
 2. 所有任务完成且无新需求
 3. 遇到无法自动解决的阻塞（记录到日志并提示用户）
 
-## Web Dashboard
-
-Web Dashboard 运行在 http://localhost:3737：
-- **实时看板**：自动刷新，显示任务进度
-- **需求提交**：用户可在页面提交需求
-- **自动同步**：每 5 秒自动刷新
-
-## 工具使用
-
-你可以使用以下工具：
-- **Read/Write/Edit**: 读写文档文件
-- **Bash**: 执行脚本和命令
-- **Skill**: 调用专业技能
-
 ## 输出格式
 
 在执行过程中，输出清晰的进度信息：
@@ -142,7 +122,7 @@ Web Dashboard 运行在 http://localhost:3737：
 2. **自动处理错误**：如果遇到错误，尝试恢复或记录到 BUGS.md
 3. **保持循环运行**：除非遇到停止条件，否则持续运行
 4. **使用绝对路径**：使用 `${CLAUDE_PLUGIN_ROOT}` 引用插件资源
-5. **统一数据目录**：所有数据都在 `ai-docs/` 目录，不使用 `projects/` 目录
+5. **统一数据目录**：所有数据都在 `ai-docs/` 目录
    - 任务数据：`ai-docs/TASKS.json`
    - 需求数据：`ai-docs/PRD.md`
    - 验收报告：`ai-docs/ACCEPTANCE.md`

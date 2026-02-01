@@ -80,7 +80,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
        fi
    fi
 
-   # 设置全局环境变量（供后续 agent 使用）
+   # 设置全局环境变量（供后续流程使用）
    echo "export AI_DOCS_PATH=$AI_DOCS_PATH" >> ~/.bashrc
    ```
 
@@ -100,15 +100,15 @@ echo "🌐 Dashboard: http://localhost:3737"
 echo "📊 健康检查: http://localhost:3737/health"
 ```
 
-### 第四步：启动自动流程引擎
+### 第四步：启动自动化流程引擎
 
-使用 Skill 工具调用 `agile-flow-engine` agent：
+使用 Skill 工具调用 `agile-flow-engine` skill：
 
 ```
-启动 agile-flow-engine agent 开始自动化流程
+调用 /agile-flow:agile-flow-engine skill 开始自动化流程
 ```
 
-Agent 将：
+Skill 将：
 - 读取需求池（PRD.md）
 - 自动评估优先级
 - 转换为任务
@@ -146,7 +146,7 @@ Agent 将：
   - 进行中: 1 个
   - 已完成: 5 个
 
-🔄 Agent 正在自动处理任务...
+🔄 自动化流程正在运行...
 ```
 
 ### 启动失败
@@ -165,12 +165,12 @@ Agent 将：
 
 ## 注意事项
 
-1. **完全自动化**：启动后 Agent 将持续运行，无需人工干预
+1. **完全自动化**：启动后 skill 将持续运行，无需人工干预
 2. **Web Dashboard**：用户通过 Web 界面提交需求和查看进度
-3. **Agent 持续运行**：Agent 会自动循环处理所有任务
+3. **Skill 驱动**：流程由 agile-flow-engine skill 管理
 4. **PID 管理**：使用 PID 文件管理服务器进程
 5. **日志记录**：服务器日志保存在 `web/.logs/server.log`
-6. **使用 /agile-stop**：停止整个流程（Dashboard + Agent）
+6. **使用 /agile-stop**：停止整个流程（Dashboard + 自动化流程）
 
 ## 故障排除
 

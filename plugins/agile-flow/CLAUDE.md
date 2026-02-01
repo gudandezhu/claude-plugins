@@ -6,9 +6,11 @@
 
 ### 插件协同
 ```
-用户需求 → PRD.md → agile-flow-engine → /python-development 或 /typescript → agile-flow-engine → pr-review-toolkit
-  (Web)     需求池      自动流程引擎       功能开发        测试验收         代码审核
+用户需求 → PRD.md → agile-flow-engine skill → /python-development 或 /typescript → agile-flow-engine skill → pr-review-toolkit
+  (Web)     需求池        自动流程引擎                功能开发                   测试验收                      代码审核
 ```
+
+**说明**：agile-flow-engine skill 管理自动化流程
 
 | 插件 | 职责 |
 |------|------|
