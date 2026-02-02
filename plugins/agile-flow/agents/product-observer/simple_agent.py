@@ -70,7 +70,7 @@ class SimpleProductObserver:
                     })
 
         except Exception as e:
-            print(f"❌ 日志检查失败: {e}")
+            print(f"❌ 日志检查失败: {e}", flush=True)
 
         return issues
 
@@ -110,7 +110,7 @@ class SimpleProductObserver:
                     pass
 
         except Exception as e:
-            print(f"❌ 任务文件检查失败: {e}")
+            print(f"❌ 任务文件检查失败: {e}", flush=True)
 
         return issues
 
@@ -137,19 +137,19 @@ class SimpleProductObserver:
             )
 
             if response.status_code == 200:
-                print(f"✅ {issue['title']}")
+                print(f"✅ {issue['title']}", flush=True)
                 return True
             else:
-                print(f"❌ 提交失败: {issue['title']}")
+                print(f"❌ 提交失败: {issue['title']}", flush=True)
                 return False
 
         except Exception as e:
-            print(f"❌ 提交异常: {e}")
+            print(f"❌ 提交异常: {e}", flush=True)
             return False
 
     async def observe_once(self):
         """执行一次观察"""
-        print(f"\n🔍 {datetime.now().strftime('%H:%M:%S')} 开始观察...\n")
+        print(f"\n🔍 {datetime.now().strftime('%H:%M:%S')} 开始观察...\n", flush=True)
 
         all_issues = []
 
@@ -158,13 +158,13 @@ class SimpleProductObserver:
             result = await self.check_logs()
             all_issues.extend(result)
         except Exception as e:
-            print(f"❌ 日志检查异常: {e}")
+            print(f"❌ 日志检查异常: {e}", flush=True)
 
         try:
             result = await self.check_task_file()
             all_issues.extend(result)
         except Exception as e:
-            print(f"❌ 任务文件检查异常: {e}")
+            print(f"❌ 任务文件检查异常: {e}", flush=True)
 
         # 按优先级排序
         priority_order = {'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3}
@@ -172,16 +172,16 @@ class SimpleProductObserver:
 
         # 提交问题
         if all_issues:
-            print(f"\n发现 {len(all_issues)} 个问题:\n")
+            print(f"\n发现 {len(all_issues)} 个问题:\n", flush=True)
             submitted = 0
             for issue in all_issues:
                 if await self.submit_issue(issue):
                     submitted += 1
-            print(f"\n✓ 已提交 {submitted} 个新问题")
+            print(f"\n✓ 已提交 {submitted} 个新问题", flush=True)
         else:
-            print("✓ 未发现问题")
+            print("✓ 未发现问题", flush=True)
 
-        print(f"\n⏰ 下次检查: {(datetime.now().timestamp() + CHECK_INTERVAL):.0f}\n")
+        print(f"\n⏰ 下次检查: {(datetime.now().timestamp() + CHECK_INTERVAL):.0f}\n", flush=True)
 
     async def run(self):
         """持续运行"""
@@ -201,7 +201,7 @@ API: {dashboard_api}
             PROJECT_PATH=PROJECT_PATH,
             dashboard_api=self.dashboard_api,
             CHECK_INTERVAL=CHECK_INTERVAL
-        ))
+        ), flush=True)
 
         # 立即执行一次
         await self.observe_once()
@@ -219,7 +219,7 @@ async def main():
     try:
         await agent.run()
     except KeyboardInterrupt:
-        print("\n🛑 Product Observer Agent 停止\n")
+        print("\n🛑 Product Observer Agent 停止\n", flush=True)
     except Exception as e:
         print(f"❌ Agent 异常: {e}")
         raise

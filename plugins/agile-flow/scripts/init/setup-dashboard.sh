@@ -349,9 +349,11 @@ start_product_observer() {
     log_action "正在启动产品观察者 Agent..."
     # 设置环境变量：AI_DOCS_PATH 和 API 密钥
     # 使用简化版观察器，避免 SDK 调用问题
+    # PYTHONUNBUFFERED=1 强制不缓冲输出
     AI_DOCS_PATH="$AI_DOCS_DIR" \
     ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
-    nohup python3 simple_agent.py > "$OBSERVER_LOG_FILE" 2>&1 &
+    PYTHONUNBUFFERED=1 \
+    nohup python3 -u simple_agent.py > "$OBSERVER_LOG_FILE" 2>&1 &
     local observer_pid=$!
     echo "$observer_pid" > "$OBSERVER_PID_FILE"
 
