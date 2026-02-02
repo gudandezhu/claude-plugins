@@ -274,8 +274,8 @@ start_web_server() {
     fi
 
     log_action "正在启动 Web Dashboard (端口: $server_port)..."
-    # 使用 PORT 环境变量传递端口
-    PORT="$server_port" nohup node server.js > "$WEB_LOG_FILE" 2>&1 &
+    # 使用 PORT 环境变量传递端口，AI_DOCS_PATH 传递文档路径
+    PORT="$server_port" AI_DOCS_PATH="$AI_DOCS_DIR" nohup node server.js > "$WEB_LOG_FILE" 2>&1 &
     local server_pid=$!
     echo "$server_pid" > "$WEB_PID_FILE"
 
