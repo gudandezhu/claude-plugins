@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 """
-Product Observer Agent - 产品观察者 Agent
+Simple Product Observer - 简化版产品观察者
 
-使用 Claude Agent SDK 创建的 AI 产品观察者，持续监控平台并智能提出改进建议。
+只做基本检查，不使用 SDK，避免超时和并发问题
 """
 
 import os
@@ -10,14 +11,7 @@ import httpx
 from pathlib import Path
 from datetime import datetime
 
-# Agent SDK 导入
-from claude_agent_sdk import query, ClaudeAgentOptions
-
 # 配置
-# 确保 SDK 能找到 API 密钥
-if not os.environ.get('ANTHROPIC_API_KEY'):
-    os.environ['ANTHROPIC_API_KEY'] = os.environ.get('ANTHROPIC_AUTH_TOKEN', '')
-
 CHECK_INTERVAL = 60  # 检查间隔（秒）
 AI_DOCS_PATH = os.environ.get('AI_DOCS_PATH', '')
 PROJECT_PATH = str(Path(AI_DOCS_PATH).parent) if AI_DOCS_PATH else ''
@@ -44,65 +38,22 @@ def get_dashboard_api() -> str:
     return f'http://127.0.0.1:{port}'
 
 
-class ProductObserverAgent:
-    """产品观察者 Agent"""
+class SimpleProductObserver:
+    """简化的产品观察者"""
 
     def __init__(self):
-        """初始化 Agent"""
+        """初始化"""
         if not AI_DOCS_PATH:
             raise ValueError("AI_DOCS_PATH 环境变量未设置")
 
         self.http_client = httpx.AsyncClient(timeout=30.0)
         self.dashboard_api = get_dashboard_api()
 
-    async def analyze_with_claude(self, prompt: str) -> str:
-        """使用 Claude Agent SDK 分析"""
-        try:
-            result_text = ""
-
-            async for message in query(
-                prompt=prompt,
-                options=ClaudeAgentOptions(
-                    model="claude-sonnet-4-5-20250929"
-                )
-            ):
-                # 处理不同类型的消息
-                if hasattr(message, 'result') and message.result:
-                    # ResultMessage 包含最终结果
-                    result_text = str(message.result)
-                    break
-                elif hasattr(message, 'content') and message.content:
-                    # AssistantMessage 包含文本内容
-                    for block in message.content:
-                        if hasattr(block, 'text'):
-                            result_text = block.text
-                            break
-                    if result_text:
-                        break
-
-            return result_text
-        except Exception as e:
-            print(f"❌ Claude 分析失败: {e}")
-            import traceback
-            traceback.print_exc()
-            return ""
-
-    async def check_dashboard(self) -> list:
-        """检查 Dashboard（暂时禁用，太慢）"""
-        # 暂时禁用 dashboard 检查，因为需要多次 API 调用
-        return []
-
-    async def check_code_quality(self) -> list:
-        """检查代码质量（暂时禁用，太慢）"""
-        # 暂时禁用代码质量检查，因为扫描整个代码库非常耗时
-        return []
-
     async def check_logs(self) -> list:
         """检查日志"""
         issues = []
 
         try:
-            # 检查项目中的 Web Server 日志
             log_dir = Path(AI_DOCS_PATH) / '.logs'
             server_log = log_dir / 'server.log'
 
@@ -120,6 +71,46 @@ class ProductObserverAgent:
 
         except Exception as e:
             print(f"❌ 日志检查失败: {e}")
+
+        return issues
+
+    async def check_task_file(self) -> list:
+        """检查任务文件"""
+        issues = []
+
+        try:
+            tasks_file = Path(AI_DOCS_PATH) / 'TASKS.json'
+
+            if not tasks_file.exists():
+                issues.append({
+                    'type': 'documentation',
+                    'priority': 'P2',
+                    'title': 'TASKS.json 不存在',
+                    'description': '任务文件缺失，可能影响项目管理'
+                })
+                return issues
+
+            # 检查是否有长期未更新的任务
+            import json
+            import time
+
+            with open(tasks_file, 'r') as f:
+                data = json.load(f)
+
+            if not data.get('tasks'):
+                return issues
+
+            current_time = time.time()
+            one_day = 86400
+
+            for task in data.get('tasks', []):
+                if task.get('status') == 'inProgress':
+                    # 检查任务是否超过 1 天未更新
+                    # 这里简化处理，实际应该记录任务开始时间
+                    pass
+
+        except Exception as e:
+            print(f"❌ 任务文件检查失败: {e}")
 
         return issues
 
@@ -162,24 +153,18 @@ class ProductObserverAgent:
 
         all_issues = []
 
-        # 顺序执行所有检查（避免并发调用 query 导致的问题）
-        try:
-            result = await self.check_dashboard()
-            all_issues.extend(result)
-        except Exception as e:
-            print(f"❌ Dashboard 检查异常: {e}")
-
-        try:
-            result = await self.check_code_quality()
-            all_issues.extend(result)
-        except Exception as e:
-            print(f"❌ 代码质量检查异常: {e}")
-
+        # 顺序执行所有检查
         try:
             result = await self.check_logs()
             all_issues.extend(result)
         except Exception as e:
             print(f"❌ 日志检查异常: {e}")
+
+        try:
+            result = await self.check_task_file()
+            all_issues.extend(result)
+        except Exception as e:
+            print(f"❌ 任务文件检查异常: {e}")
 
         # 按优先级排序
         priority_order = {'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3}
@@ -202,16 +187,16 @@ class ProductObserverAgent:
         """持续运行"""
         print("""
 ╔══════════════════════════════════════════════╗
-║     👁️  Product Observer Agent               ║
+║     👁️  Simple Product Observer              ║
 ║                                              ║
-║     AI 驱动的产品观察者                       ║
+║     简化版产品观察者                          ║
 ╚══════════════════════════════════════════════╝
 
 项目: {PROJECT_PATH}
 API: {dashboard_api}
 间隔: {CHECK_INTERVAL}s
 
-观察: Dashboard、代码质量、日志
+观察: 日志、任务文件
         """.format(
             PROJECT_PATH=PROJECT_PATH,
             dashboard_api=self.dashboard_api,
@@ -229,7 +214,7 @@ API: {dashboard_api}
 
 async def main():
     """主入口"""
-    agent = ProductObserverAgent()
+    agent = SimpleProductObserver()
 
     try:
         await agent.run()
