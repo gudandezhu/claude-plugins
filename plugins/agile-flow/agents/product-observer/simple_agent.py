@@ -237,8 +237,7 @@ class ProductObserverAgent:
             async for message in query(
                 prompt=prompt,
                 options=ClaudeAgentOptions(
-                    model="claude-sonnet-4-5-20250929",
-                    max_tokens=2000
+                    model="claude-sonnet-4-5-20250929"
                 )
             ):
                 if hasattr(message, 'result') and message.result:
