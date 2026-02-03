@@ -16,6 +16,12 @@ CHECK_INTERVAL = 60  # 检查间隔（秒）
 AI_DOCS_PATH = os.environ.get('AI_DOCS_PATH', '')
 PROJECT_PATH = str(Path(AI_DOCS_PATH).parent) if AI_DOCS_PATH else ''
 
+# 启动时输出环境变量（用于调试）
+print(f"[DEBUG] AI_DOCS_PATH = {AI_DOCS_PATH}", flush=True)
+print(f"[DEBUG] PROJECT_PATH = {PROJECT_PATH}", flush=True)
+print(f"[DEBUG] 当前工作目录 = {os.getcwd()}", flush=True)
+print(f"[DEBUG] 脚本路径 = {__file__}", flush=True)
+
 # 已提交的问题（去重）
 submitted_issues = set()
 MAX_ISSUE_MEMORY = 100

@@ -355,10 +355,11 @@ start_product_observer() {
     # 设置环境变量：AI_DOCS_PATH 和 API 密钥
     # PYTHONUNBUFFERED=1 强制不缓冲输出
     # 工作目录设置为项目根目录，脚本在项目本地
-    AI_DOCS_PATH="$AI_DOCS_DIR" \
-    ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
-    PYTHONUNBUFFERED=1 \
-    nohup python3 -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
+    # 使用 env 命令确保环境变量正确传递到 nohup 子进程
+    env AI_DOCS_PATH="$AI_DOCS_DIR" \
+        ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
+        PYTHONUNBUFFERED=1 \
+        nohup python3 -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
     local observer_pid=$!
     echo "$observer_pid" > "$OBSERVER_PID_FILE"
 
