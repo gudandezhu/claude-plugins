@@ -325,9 +325,24 @@ check_observer_running() {
 install_observer_dependencies() {
     cd "$PRODUCT_OBSERVER_DIR"
 
-    if ! python3 -c "import claude_agent_sdk" 2>/dev/null; then
-        log_info "📦 安装 Agent SDK 依赖..."
-        if ! pip3 install -q -r requirements.txt; then
+    # 检查依赖是否已安装
+    if python3 -c "import claude_agent_sdk" 2>/dev/null; then
+        return 0
+    fi
+
+    log_info "📦 安装 Agent SDK 依赖..."
+
+    # 优先使用项目虚拟环境
+    local venv_pip="${PROJECT_ROOT}/.venv/bin/pip"
+    if [[ -f "$venv_pip" ]]; then
+        log_info "使用项目虚拟环境安装依赖..."
+        if ! "$venv_pip" install -q -r requirements.txt; then
+            log_error "虚拟环境依赖安装失败"
+            return 1
+        fi
+    else
+        # 使用用户级 pip 安装
+        if ! pip3 install -q --user -r requirements.txt; then
             log_error "依赖安装失败"
             return 1
         fi
@@ -355,11 +370,21 @@ start_product_observer() {
     # 设置环境变量：AI_DOCS_PATH 和 API 密钥
     # PYTHONUNBUFFERED=1 强制不缓冲输出
     # 工作目录设置为项目根目录，脚本在项目本地
+    # 优先使用项目虚拟环境的 Python
+
+    # 确定使用哪个 Python
+    local venv_python="${PROJECT_ROOT}/.venv/bin/python"
+    local python_cmd="python3"
+    if [[ -f "$venv_python" ]]; then
+        python_cmd="$venv_python"
+        log_info "使用项目虚拟环境 Python"
+    fi
+
     # 使用 env 命令确保环境变量正确传递到 nohup 子进程
     env AI_DOCS_PATH="$AI_DOCS_DIR" \
         ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
         PYTHONUNBUFFERED=1 \
-        nohup python3 -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
+        nohup "$python_cmd" -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
     local observer_pid=$!
     echo "$observer_pid" > "$OBSERVER_PID_FILE"
 
