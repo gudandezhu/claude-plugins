@@ -341,19 +341,24 @@ start_product_observer() {
     check_command python3
     check_python_version
 
-    # 安装依赖
+    # 安装依赖到项目环境
     install_observer_dependencies || return 1
 
-    cd "$PRODUCT_OBSERVER_DIR"
+    # 复制观察者脚本到项目目录（ai-docs/）
+    local observer_script="${AI_DOCS_DIR}/.observer.py"
+    cp "${PRODUCT_OBSERVER_DIR}/simple_agent.py" "$observer_script"
+
+    # 从项目目录启动观察者（工作目录 = 项目根目录）
+    cd "$PROJECT_ROOT"
 
     log_action "正在启动产品观察者 Agent..."
     # 设置环境变量：AI_DOCS_PATH 和 API 密钥
-    # 使用简化版观察器，避免 SDK 调用问题
     # PYTHONUNBUFFERED=1 强制不缓冲输出
+    # 工作目录设置为项目根目录，脚本在项目本地
     AI_DOCS_PATH="$AI_DOCS_DIR" \
     ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
     PYTHONUNBUFFERED=1 \
-    nohup python3 -u simple_agent.py > "$OBSERVER_LOG_FILE" 2>&1 &
+    nohup python3 -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
     local observer_pid=$!
     echo "$observer_pid" > "$OBSERVER_PID_FILE"
 
@@ -361,6 +366,8 @@ start_product_observer() {
 
     if is_process_running "$observer_pid"; then
         log_success "产品观察者 Agent 已启动 (PID: $observer_pid)"
+        log_info "工作目录: $PROJECT_ROOT"
+        log_info "日志文件: $OBSERVER_LOG_FILE"
     else
         log_warning "产品观察者 Agent 启动失败，查看日志："
         cat "$OBSERVER_LOG_FILE"
