@@ -199,9 +199,8 @@ class ProductObserverAgent:
 
         issues = []
 
-        try:
-            # 简化提示，减少 token 使用
-            prompt = f"""分析项目并找出问题。项目路径: {PROJECT_PATH}
+        # 简化提示，减少 token 使用
+        prompt = f"""分析项目并找出问题。项目路径: {PROJECT_PATH}
 
 任务状态: {context.count('任务')} 个任务
 测试结果: 通过 {test_results['unit_tests'].get('passed', 0) if test_results['unit_tests'] else 0} 个测试
@@ -215,30 +214,47 @@ class ProductObserverAgent:
 
 没有问题则返回 []。"""
 
-            # 调用 Claude SDK（添加超时控制）
+        # 调用 Claude SDK（添加超时控制）
+        try:
             result_text = ""
-            try:
-                async for message in query(
-                    prompt=prompt,
-                    options=ClaudeAgentOptions(
-                        model="claude-sonnet-4-5-20250929"
-                    )
-                ):
-                    if hasattr(message, 'result') and message.result:
-                        result_text = str(message.result)
-                        break
-                    elif hasattr(message, 'content') and message.content:
-                        for block in message.content:
-                            if hasattr(block, 'text'):
-                                result_text = block.text
-                                break
-                        if result_text:
+            query_task = None
+
+            # 创建异步任务并设置超时
+            async def run_query():
+                nonlocal result_text
+                try:
+                    async for message in query(
+                        prompt=prompt,
+                        options=ClaudeAgentOptions(
+                            model="claude-sonnet-4-5-20250929"
+                        )
+                    ):
+                        if hasattr(message, 'result') and message.result:
+                            result_text = str(message.result)
                             break
+                        elif hasattr(message, 'content') and message.content:
+                            for block in message.content:
+                                if hasattr(block, 'text'):
+                                    result_text = block.text
+                                    break
+                            if result_text:
+                                break
+                except Exception as e:
+                    print(f"    ⚠️  SDK 内部错误: {e}", flush=True)
+                    raise
+
+            # 使用 wait_for 添加超时
+            query_task = asyncio.create_task(run_query())
+            try:
+                await asyncio.wait_for(query_task, timeout=60.0)  # 60秒超时
             except asyncio.TimeoutError:
-                print("    ⚠️  AI 分析超时，使用基础分析", flush=True)
-                return []
-            except Exception as e:
-                print(f"    ⚠️  AI SDK 调用失败: {e}，使用基础分析", flush=True)
+                print("    ⚠️  AI 分析超时（60秒），使用基础分析", flush=True)
+                if query_task and not query_task.done():
+                    query_task.cancel()
+                    try:
+                        await query_task
+                    except:
+                        pass
                 return []
 
             # 解析结果
@@ -254,8 +270,12 @@ class ProductObserverAgent:
                 except json.JSONDecodeError as e:
                     print(f"    ⚠️  AI 返回格式错误: {e}", flush=True)
 
+        except asyncio.CancelledError:
+            print("    ⚠️  AI 分析被取消，使用基础分析", flush=True)
+            return []
         except Exception as e:
-            print(f"    ❌ AI 分析异常: {e}", flush=True)
+            print(f"    ⚠️  AI SDK 调用失败: {e}，使用基础分析", flush=True)
+            return []
 
         return issues
 
@@ -416,7 +436,6 @@ AI 分析: {SDK_AVAILABLE}
 
 async def main():
     """主入口"""
-    agent = None
     try:
         agent = ProductObserverAgent()
         await agent.run()
@@ -429,14 +448,7 @@ async def main():
         print(f"❌ Agent 异常: {e}", flush=True)
         import traceback
         traceback.print_exc()
-        # 即使出错也尝试继续运行
-        if agent:
-            print("\n⚠️  Agent 将在 30 秒后重启...", flush=True)
-            await asyncio.sleep(30)
-            # 重新启动
-            await main()
-        else:
-            sys.exit(1)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
