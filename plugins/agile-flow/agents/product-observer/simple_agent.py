@@ -65,7 +65,11 @@ class ProductObserverAgent:
         if not PROJECT_PATH or not Path(PROJECT_PATH).exists():
             raise ValueError(f"项目路径不存在: {PROJECT_PATH}")
 
-        self.http_client = httpx.AsyncClient(timeout=120.0)
+        # 增加超时时间，避免网络问题
+        self.http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(30.0, connect=10.0),
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+        )
         self.dashboard_api = get_dashboard_api()
         self.project_context = ""
         self.last_analysis_time = None
@@ -196,73 +200,62 @@ class ProductObserverAgent:
         issues = []
 
         try:
-            # 构建分析提示
-            prompt = f"""你是一个产品分析专家。请分析以下项目信息，找出问题、风险和改进机会。
+            # 简化提示，减少 token 使用
+            prompt = f"""分析项目并找出问题。项目路径: {PROJECT_PATH}
 
-{context}
+任务状态: {context.count('任务')} 个任务
+测试结果: 通过 {test_results['unit_tests'].get('passed', 0) if test_results['unit_tests'] else 0} 个测试
+覆盖率: {test_results.get('coverage', 'N/A')}%
 
-## 测试结果
-"""
-
-            if test_results['unit_tests']:
-                prompt += f"\n单元测试: 通过 {test_results['unit_tests'].get('passed', 0)}"
-                if 'failed' in test_results['unit_tests']:
-                    prompt += f", 失败 {test_results['unit_tests']['failed']}"
-
-            if test_results['coverage']:
-                prompt += f"\n覆盖率: {test_results['coverage']}%"
-
-            if test_results['errors']:
-                prompt += f"\n错误: {', '.join(test_results['errors'])}"
-
-            prompt += f"""
-
-## 输出要求
-请以 JSON 格式输出发现的问题，每个问题包含：
-- type: 问题类型 (bug/performance/security/ux/feature/documentation/quality)
-- priority: 优先级 (P0/P1/P2/P3)
-- title: 问题标题（简短）
-- description: 详细描述（包括原因、影响、建议）
-
-只输出 JSON 数组，不要其他内容。格式：
+输出 JSON 格式的问题列表:
 [
-  {{"type": "bug", "priority": "P0", "title": "...", "description": "..."}},
+  {{"type": "bug|performance|security|ux|feature|documentation|quality", "priority": "P0|P1|P2|P3", "title": "简短标题", "description": "详细描述"}},
   ...
 ]
 
-如果没有发现重要问题，返回空数组 []。"""
+没有问题则返回 []。"""
 
-            # 调用 Claude SDK
+            # 调用 Claude SDK（添加超时控制）
             result_text = ""
-            async for message in query(
-                prompt=prompt,
-                options=ClaudeAgentOptions(
-                    model="claude-sonnet-4-5-20250929"
-                )
-            ):
-                if hasattr(message, 'result') and message.result:
-                    result_text = str(message.result)
-                    break
-                elif hasattr(message, 'content') and message.content:
-                    for block in message.content:
-                        if hasattr(block, 'text'):
-                            result_text = block.text
-                            break
-                    if result_text:
+            try:
+                async for message in query(
+                    prompt=prompt,
+                    options=ClaudeAgentOptions(
+                        model="claude-sonnet-4-5-20250929"
+                    )
+                ):
+                    if hasattr(message, 'result') and message.result:
+                        result_text = str(message.result)
                         break
+                    elif hasattr(message, 'content') and message.content:
+                        for block in message.content:
+                            if hasattr(block, 'text'):
+                                result_text = block.text
+                                break
+                        if result_text:
+                            break
+            except asyncio.TimeoutError:
+                print("    ⚠️  AI 分析超时，使用基础分析", flush=True)
+                return []
+            except Exception as e:
+                print(f"    ⚠️  AI SDK 调用失败: {e}，使用基础分析", flush=True)
+                return []
 
             # 解析结果
             if result_text:
-                # 提取 JSON（可能包含在其他文本中）
-                import re
-                json_match = re.search(r'\[.*\]', result_text, re.DOTALL)
-                if json_match:
-                    issues_json = json_match.group(0)
-                    issues = json.loads(issues_json)
-                    print(f"    ✓ AI 发现 {len(issues)} 个问题", flush=True)
+                try:
+                    # 提取 JSON
+                    import re
+                    json_match = re.search(r'\[.*\]', result_text, re.DOTALL)
+                    if json_match:
+                        issues_json = json_match.group(0)
+                        issues = json.loads(issues_json)
+                        print(f"    ✓ AI 发现 {len(issues)} 个问题", flush=True)
+                except json.JSONDecodeError as e:
+                    print(f"    ⚠️  AI 返回格式错误: {e}", flush=True)
 
         except Exception as e:
-            print(f"    ❌ AI 分析失败: {e}", flush=True)
+            print(f"    ❌ AI 分析异常: {e}", flush=True)
 
         return issues
 
@@ -423,6 +416,7 @@ AI 分析: {SDK_AVAILABLE}
 
 async def main():
     """主入口"""
+    agent = None
     try:
         agent = ProductObserverAgent()
         await agent.run()
@@ -435,7 +429,14 @@ async def main():
         print(f"❌ Agent 异常: {e}", flush=True)
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        # 即使出错也尝试继续运行
+        if agent:
+            print("\n⚠️  Agent 将在 30 秒后重启...", flush=True)
+            await asyncio.sleep(30)
+            # 重新启动
+            await main()
+        else:
+            sys.exit(1)
 
 
 if __name__ == '__main__':
