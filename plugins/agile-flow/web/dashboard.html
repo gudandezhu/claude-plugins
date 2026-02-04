@@ -367,18 +367,19 @@
                     return;
                 }
 
-                container.innerHTML = data.requirements.map(req => {
+                container.innerHTML = data.requirements.map((req, index) => {
                     // 提取时间戳（## 需求 时间戳）
                     const timestampMatch = req.title.match(/##\s+需求\s+(.+)/);
                     const timestamp = timestampMatch ? timestampMatch[1] : '';
+                    const content = req.content.trim();
 
                     return `
                     <div class="prd-item">
                         <div class="prd-text">
                             <div class="prd-time">${req.title.replace(/^##\s*/, '')}</div>
-                            <div class="prd-content">${req.content.trim()}</div>
+                            <div class="prd-content">${content}</div>
                         </div>
-                        <button class="delete-btn" onclick="deleteRequirement('${encodeURIComponent(timestamp)}')">删除</button>
+                        <button class="delete-btn" onclick="deleteRequirement(${index}, '${encodeURIComponent(content)}')">删除</button>
                     </div>
                 `}).join('');
             } catch (error) {
@@ -440,15 +441,15 @@
             }
         }
 
-        async function deleteRequirement(timestamp) {
-            const decodedTimestamp = decodeURIComponent(timestamp);
+        async function deleteRequirement(index, content) {
+            const decodedContent = decodeURIComponent(content);
 
-            if (!confirm(`确定要删除这个需求吗？\n\n${decodedTimestamp}`)) {
+            if (!confirm(`确定要删除这个需求吗？\n\n${decodedContent}`)) {
                 return;
             }
 
             try {
-                const response = await fetch(`/api/requirement?timestamp=${encodeURIComponent(timestamp)}`, {
+                const response = await fetch(`/api/requirement?index=${index}&content=${encodeURIComponent(content)}`, {
                     method: 'DELETE'
                 });
 

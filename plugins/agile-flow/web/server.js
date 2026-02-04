@@ -239,48 +239,64 @@ app.post('/api/prd/convert', async (req, res) => {
  * DELETE /api/requirement - 删除需求
  */
 app.delete('/api/requirement', async (req, res) => {
-    const { timestamp } = req.query;
+    const { index, content } = req.query;
 
-    if (!timestamp) {
-        return res.status(400).json({ error: '缺少需求时间戳' });
+    if (index === undefined || !content) {
+        return res.status(400).json({ error: '缺少需求索引或内容' });
     }
 
     try {
-        const content = await fs.readFile(PRD_FILE, 'utf-8');
-        const lines = content.split('\n');
+        const fileContent = await fs.readFile(PRD_FILE, 'utf-8');
+        const targetIndex = parseInt(index);
+        const targetContent = content.trim();
 
-        // 查找并删除该需求
-        const result = [];
-        let skipMode = false;
-        let deleted = false;
+        // 解析需求块
+        const blocks = [];
+        const lines = fileContent.split('\n');
 
-        for (let i = 0; i < lines.length; i++) {
+        let i = 0;
+        while (i < lines.length) {
             const line = lines[i];
-
-            // 匹配 ## 需求 时间戳
-            if (line.match(/^##\s+需求/) && line.includes(timestamp)) {
-                skipMode = true;
-                deleted = true;
-                continue;
-            }
-
-            // 遇到分隔符，停止跳过
-            if (skipMode && line.match(/^---/)) {
-                skipMode = false;
-                continue;
-            }
-
-            // 如果不在跳过模式，保留该行
-            if (!skipMode) {
-                result.push(line);
+            if (line.match(/^##\s+需求/)) {
+                const blockLines = [line];
+                i++;
+                while (i < lines.length && !lines[i].match(/^---/)) {
+                    blockLines.push(lines[i]);
+                    i++;
+                }
+                if (i < lines.length) {
+                    blockLines.push(lines[i]); // 添加 --- 分隔符
+                    i++;
+                }
+                blocks.push(blockLines.join('\n'));
+            } else {
+                blocks.push(line);
+                i++;
             }
         }
 
-        if (!deleted) {
+        // 只保留未标记为已转换的需求
+        const requirements = blocks.filter(block => {
+            return block.match(/^##\s+需求/) && !block.includes('[已转换]');
+        });
+
+        if (targetIndex < 0 || targetIndex >= requirements.length) {
             return res.status(404).json({ error: '需求不存在' });
         }
 
-        await fs.writeFile(PRD_FILE, result.join('\n'), 'utf-8');
+        // 验证内容是否匹配
+        const targetBlock = requirements[targetIndex];
+        const blockContent = targetBlock.split('\n').slice(1, -1).join('\n').trim();
+        if (blockContent !== targetContent) {
+            return res.status(400).json({ error: '需求内容不匹配' });
+        }
+
+        // 从原文件中找到并删除该块
+        let result = fileContent;
+        const escapedBlock = targetBlock.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        result = result.replace(escapedBlock, '');
+
+        await fs.writeFile(PRD_FILE, result, 'utf-8');
         res.json({ success: true, message: '需求已删除' });
     } catch (error) {
         if (error.code === 'ENOENT') {
