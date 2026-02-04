@@ -28,34 +28,6 @@ if ! grep -q "^ai-docs/" .gitignore; then
     echo "ai-docs/" >> .gitignore
 fi
 
-# 忽略其他插件的 projects 目录，统一使用 ai-docs
-if ! grep -q "^projects/" .gitignore; then
-    echo "" >> .gitignore
-    echo "# 其他插件的项目目录（统一使用 ai-docs 管理）" >> .gitignore
-    echo "projects/" >> .gitignore
-fi
-
-# 迁移 projects/active 内容到 ai-docs
-if [ -d "projects/active" ]; then
-    echo ""
-    echo -e "${YELLOW}发现 projects/active 目录，正在迁移到 ai-docs...${NC}"
-
-    # 迁移 PLAN.md
-    if [ -f "projects/active/PLAN.md" ] && [ ! -f "ai-docs/PLAN.md" ]; then
-        cp "projects/active/PLAN.md" "ai-docs/PLAN.md"
-        echo "  + 已迁移 PLAN.md"
-    fi
-
-    # 迁移任务文档
-    if [ -d "projects/active/tasks" ]; then
-        mkdir -p "ai-docs/tasks-detail"
-        cp -r projects/active/tasks/* ai-docs/tasks-detail/ 2>/dev/null || true
-        echo "  + 已迁移任务详情文档"
-    fi
-
-    echo -e "${GREEN}✅ 迁移完成，可以删除 projects/active 目录${NC}"
-    echo "   建议: rm -rf projects/active"
-fi
 
 # 文档模板创建函数
 create_doc_template() {

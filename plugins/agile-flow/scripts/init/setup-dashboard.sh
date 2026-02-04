@@ -216,16 +216,12 @@ EOF
         }
     fi
 
-    # 复制 server.js 和 dashboard.html 到用户项目
-    if [[ ! -f "${AI_DOCS_DIR}/server.js" ]]; then
-        cp "$PLUGIN_SERVER_JS" "${AI_DOCS_DIR}/server.js"
-        log_info "已复制 server.js 到 ${AI_DOCS_DIR}"
-    fi
+    # 复制 server.js 和 dashboard.html 到用户项目（每次覆盖，确保使用最新版本）
+    cp "$PLUGIN_SERVER_JS" "${AI_DOCS_DIR}/server.js"
+    log_info "已更新 server.js"
 
-    if [[ ! -f "${AI_DOCS_DIR}/dashboard.html" ]]; then
-        cp "$PLUGIN_DASHBOARD_HTML" "${AI_DOCS_DIR}/dashboard.html"
-        log_info "已复制 dashboard.html 到 ${AI_DOCS_DIR}"
-    fi
+    cp "$PLUGIN_DASHBOARD_HTML" "${AI_DOCS_DIR}/dashboard.html"
+    log_info "已更新 dashboard.html"
 }
 
 check_web_server_running() {
@@ -361,7 +357,7 @@ start_product_observer() {
 
     # 复制观察者脚本到项目目录（ai-docs/）
     local observer_script="${AI_DOCS_DIR}/.observer.py"
-    cp "${PRODUCT_OBSERVER_DIR}/simple_agent.py" "$observer_script"
+    cp "${PRODUCT_OBSERVER_DIR}/agent.py" "$observer_script"
 
     # 从项目目录启动观察者（工作目录 = 项目根目录）
     cd "$PROJECT_ROOT"
