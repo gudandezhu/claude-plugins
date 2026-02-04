@@ -4,7 +4,8 @@
  * 用法: node tasks.js <command> [args]
  */
 
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 const { execSync } = require('child_process');
 
@@ -70,10 +71,10 @@ const TASKS_FILE = path.join(AI_DOCS_PATH, 'TASKS.json');
  */
 async function initTasks() {
     try {
-        await fs.access(TASKS_FILE);
+        await fsPromises.access(TASKS_FILE);
     } catch {
-        await fs.mkdir(path.dirname(TASKS_FILE), { recursive: true });
-        await fs.writeFile(TASKS_FILE, JSON.stringify({
+        await fsPromises.mkdir(path.dirname(TASKS_FILE), { recursive: true });
+        await fsPromises.writeFile(TASKS_FILE, JSON.stringify({
             iteration: 1,
             tasks: []
         }, null, 2));
@@ -85,7 +86,7 @@ async function initTasks() {
  */
 async function readTasks() {
     await initTasks();
-    const content = await fs.readFile(TASKS_FILE, 'utf-8');
+    const content = await fsPromises.readFile(TASKS_FILE, 'utf-8');
     return JSON.parse(content);
 }
 
@@ -93,7 +94,7 @@ async function readTasks() {
  * 写入 TASKS.json
  */
 async function writeTasks(data) {
-    await fs.writeFile(TASKS_FILE, JSON.stringify(data, null, 2));
+    await fsPromises.writeFile(TASKS_FILE, JSON.stringify(data, null, 2));
 }
 
 /**

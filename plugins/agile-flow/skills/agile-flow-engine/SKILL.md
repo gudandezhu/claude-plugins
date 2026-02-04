@@ -1,281 +1,114 @@
 ---
 name: agile-flow-engine
-description: 自动化敏捷开发流程引擎（总并发=3，开发固定1个+测试1个+需求2个），持续运行模式
+description: 自动化敏捷开发流程引擎（固定3个slot：开发1+测试1+需求1）
 version: 4.0.0
 ---
 
-# Agile Flow Engine - 持续并发模式
+# Agile Flow Engine
 
-自动化敏捷开发流程引擎，**总并发限制=3**，持续运行，动态分配资源。
+自动化敏捷开发流程引擎，固定保持 3 个 slot，每个 subagent 完成后立即启动新的。
 
 ## 核心原理
 
-**关键**：使用 `Task` tool 的 `run_in_background=true` 参数来实现真正的并行 subagent 执行。
+**为什么需要引擎循环**？
+- 每个 subagent 只处理一个任务就结束（清理上下文，避免 token 浪费）
+- 引擎检测到完成后，立即启动新的同类型 subagent
+- 这样始终有 3 个 subagent 在工作，但上下文不会堆积
 
-```python
-# 串行执行（旧版）
-Task(subagent_type="general-purpose", prompt="任务A")  # 等待完成
-Task(subagent_type="general-purpose", prompt="任务B")  # 等待完成
+## 并发策略
 
-# 并行执行（新版，默认）
-Task(subagent_type="general-purpose", prompt="任务A", run_in_background=True)  # 立即返回
-Task(subagent_type="general-purpose", prompt="任务B", run_in_background=True)  # 立即返回
-# 两个任务同时运行
+**固定 3 个 slot**：
+- 开发 slot：1 个（持续处理 pending 任务）
+- 测试 slot：1 个（持续处理 testing 任务）
+- 需求 slot：1 个（持续处理 PRD.md 需求）
+
+## 你需要做的
+
+**重要**：直接执行，不要创建任何脚本文件。
+
+### 主循环（简化版）
+
+**执行以下循环，直到 3 个 slot 都没有任务**：
+
+#### 步骤 1：检查是否有任务
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list
 ```
 
-## 并行策略
+#### 步骤 2：清理已完成的 subagent
 
-### 严格并发限制（API 限制 = 3）
+对每个运行中的 subagent，使用 `TaskOutput(task_id, block=False, timeout=1000)` 检查：
+- 如果已完成，从运行列表移除，记录该类型 slot 变为空闲
 
-**重要**：由于 API 并发限制为 3，必须严格控制总并发数为 3。
+#### 步骤 3：为空闲的 slot 启动新的 subagent
 
-**持续运行模式**（不是批次模式）：
-- 开发固定 1 个（必须一直保持）
-- 测试最多 1 个
-- 需求分析占用剩余配额（最多 2 个）
-- 技术设计跳过（优先开发和测试）
+**开发 slot（如果空闲且有待开发任务）**：
+- 使用 `Task` 工具，subagent_type="general-purpose", run_in_background=true
+- prompt: "使用 /agile-flow:agile-develop-task 技能，从 TASKS.json 中获取一个 status='pending' 的任务并执行 TDD 开发。处理完这个任务后就结束"
+- 记录到运行列表：running["dev"] = task_id
+
+**测试 slot（如果空闲且有测试任务）**：
+- 使用 `Task` 工具，subagent_type="general-purpose", run_in_background=true
+- prompt: "使用 /agile-flow:agile-e2e-test 技能，从 TASKS.json 中获取一个 status='testing' 的任务并执行 E2E 测试。处理完这个任务后就结束"
+- 记录到运行列表：running["test"] = task_id
+
+**需求 slot（如果空闲且 PRD.md 有未处理需求）**：
+- 使用 `Task` 工具，subagent_type="general-purpose", run_in_background=true
+- prompt: "使用 /agile-flow:agile-product-analyze 技能，从 PRD.md 中读取一个未处理的需求，评估并创建任务到 TASKS.json。处理完这个需求后就结束"
+- 记录到运行列表：running["requirement"] = task_id
+
+#### 步骤 4：检查是否全部完成
+
+如果：
+- 3 个 slot 都空闲
+- 且没有 pending 任务
+- 且没有 testing 任务
+- 且 PRD.md 没有未处理需求
+
+则显示 "✅ 所有任务已完成" 并结束。
+
+#### 步骤 5：等待 5 秒
+
+使用 Bash 工具：`sleep 5`
+
+然后回到步骤 1，继续下一轮循环。
+
+## 工作流程
 
 ```
-总并发 = 3
-├── 开发: 1 (固定)
-├── 测试: 0-1 (动态)
-└── 需求: 0-2 (动态填充剩余配额)
+主循环：
+├── 检查任务状态
+├── 清理已完成的 SA
+├── 为空闲 slot 启动新 SA
+│   ├── 开发 slot 空闲? → 启动开发 SA
+│   ├── 测试 slot 空闲? → 启动测试 SA
+│   └── 需求 slot 空闲? → 启动需求 SA
+├── 全部完成? → 结束
+└── 等待 5 秒 → 回到开始
 ```
 
-### 动态资源分配
+## 上下文清理示例
 
 ```
-有测试任务时: [开发1] + [测试1] + [需求1] = 3
-无测试任务时: [开发1] + [需求2] = 3
-只有开发时: [开发1] = 1
+时间线：
+T0: 启动开发SA-1 (处理任务1)
+T1: SA-1 完成，结束 (上下文清理)
+T2: 引擎检测到开发 slot 空闲，启动开发SA-2 (处理任务2)
+T3: SA-2 完成，结束 (上下文清理)
+T4: 引擎检测到开发 slot 空闲，启动开发SA-3 (处理任务3)
+...
 ```
-
-**关键规则**：
-1. 开发必须保持 1 个（如果有待开发任务）
-2. 测试优先级高于需求
-3. 需求分析填充剩余配额
-4. 某个阶段任务完成后，立即启动该阶段的下一个任务
 
 ## 环境变量
 
 ```bash
 export AI_DOCS_PATH="$(pwd)/ai-docs"
-export MAX_CONCURRENT=3  # 总并发限制（开发1 + 测试1 + 需求2）
 ```
 
-## 执行流程
+## 关键说明
 
-### 主循环（核心 - 持续运行模式）
-
-```python
-MAX_CONCURRENT = 3  # 总并发限制
-
-def main_loop():
-    """主循环：持续运行，动态分配资源"""
-    running = {}  # {task_id: (task_type, original_task_id)}
-
-    while True:
-        # 1. 清理已完成的任务
-        running = cleanup_finished(running)
-
-        # 2. 统计各阶段运行中的任务数
-        dev_count = count_by_type(running, "dev")
-        test_count = count_by_type(running, "test")
-        req_count = count_by_type(running, "requirement")
-
-        # 3. 计算剩余配额
-        slots_available = MAX_CONCURRENT - len(running)
-
-        # 4. 如果没有任务且没有运行中的进程，退出
-        if not has_any_pending_tasks() and not running:
-            print("✅ 所有任务已完成")
-            break
-
-        # 5. 动态分配资源
-
-        # 5.1 开发：固定保持 1 个
-        if dev_count < 1:
-            dev_tasks = get_tasks_by_status("pending")
-            if dev_tasks and slots_available > 0:
-                task = dev_tasks[0]
-                task_id = launch_developer(task, run_in_background=True)
-                running[task_id] = ("dev", task.id)
-                slots_available -= 1
-                print(f"  💻 启动开发: {task.id}")
-
-        # 5.2 测试：最多 1 个
-        if test_count < 1 and slots_available > 0:
-            test_tasks = get_tasks_by_status("testing")
-            if test_tasks:
-                task = test_tasks[0]
-                task_id = launch_tester(task, run_in_background=True)
-                running[task_id] = ("test", task.id)
-                slots_available -= 1
-                print(f"  🧪 启动测试: {task.id}")
-
-        # 5.3 需求分析：填充剩余配额
-        while slots_available > 0:
-            req_tasks = get_tasks_by_status("requirements")
-            if not req_tasks:
-                break
-            task = req_tasks[0]
-            task_id = launch_requirement_analyzer(task, run_in_background=True)
-            running[task_id] = ("requirement", task.id)
-            slots_available -= 1
-            print(f"  📋 启动需求: {task.id}")
-
-        # 6. 显示当前状态（重新统计）
-        dev_count = count_by_type(running, "dev")
-        test_count = count_by_type(running, "test")
-        req_count = count_by_type(running, "requirement")
-        print(f"\n🔄 运行中: {len(running)}/{MAX_CONCURRENT}")
-        print(f"   开发: {dev_count}, 测试: {test_count}, 需求: {req_count}")
-
-        # 7. 等待一段时间再检查
-        time.sleep(5)
-```
-
-### 资源分配优先级
-
-```
-1. 开发：必须有 1 个（如果有待开发任务）
-2. 测试：最多 1 个（优先于需求）
-3. 需求：填充剩余配额（0-2 个）
-```
-
-### 步骤 1：获取待处理任务
-
-```bash
-# 获取所有待处理任务（按状态分组）
-requirements_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list requirements)
-pending_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list pending)
-testing_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list testing)
-# 注意：跳过 design 状态，需求分析完成后直接进入开发
-```
-
-### 步骤 2：Subagent Prompt 模板
-
-**重要**：使用 `run_in_background=True` 实现真正的并行
-
-**关键**：Subagent 自己通过 Bash 工具更新任务状态，Engine 只负责调度。
-
-#### 需求分析（填充剩余配额，最多 2 个）
-
-```python
-while slots_available > 0:
-    req_tasks = get_tasks_by_status("requirements")
-    if not req_tasks: break
-    task = req_tasks[0]
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"需求分析：{task.description}",
-        prompt=f"""
-任务 ID: {task.id}，需求内容: {task.description}
-环境变量：export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-步骤：
-1. 读取 CONTEXT.md、TECH.md、PRD.md
-2. 评估优先级（P0紧急/P1重要/P2默认/P3可选）
-3. 使用 tasks.js add 创建任务
-4. 更新 CONTEXT.md
-5. **必须更新任务状态**：tasks.js update {task.id} pending
-""",
-        run_in_background=True
-    )
-    running[task_id] = ("requirement", task.id)
-    slots_available -= 1
-```
-
-#### TDD 开发（固定 1 个）
-
-```python
-if dev_count < 1 and (pending_tasks := get_tasks_by_status("pending")):
-    task = pending_tasks[0]
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"TDD 开发：{task.description}",
-        prompt=f"""
-任务 ID: {task.id}，优先级: {task.priority}
-环境变量：export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-TDD 流程：
-1. TODO 规划（>20行时）
-2. 检查测试 → 运行测试（红）→ 编写代码（绿）→ 重构
-3. 覆盖率 ≥ 80% → 代码审核（/pr-review-toolkit:code-reviewer）
-4. **必须更新任务状态**：tasks.js update {task.id} testing
-""",
-        run_in_background=True
-    )
-    running[task_id] = ("dev", task.id)
-    slots_available -= 1
-```
-
-#### E2E 测试（最多 1 个）
-
-```python
-if test_count < 1 and slots_available > 0 and (testing_tasks := get_tasks_by_status("testing")):
-    task = testing_tasks[0]
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"E2E 测试：{task.description}",
-        prompt=f"""
-任务 ID: {task.id}
-环境变量：export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-步骤：
-1. 启动项目 → Playwright MCP 测试 → 检查控制台错误
-2. BUG 记录到 BUGS.md
-3. **必须更新任务状态**：tasks.js update {task.id} tested
-""",
-        run_in_background=True
-    )
-    running[task_id] = ("test", task.id)
-    slots_available -= 1
-```
-
-### 步骤 3：清理已完成的任务
-
-```python
-def cleanup_finished(running):
-    """清理已完成的任务"""
-    finished = []
-    for task_id, (task_type, original_id) in running.items():
-        try:
-            result = TaskOutput(task_id=task_id, block=False, timeout=1000)
-            if result is not None:
-                # Subagent 已经自己通过 Bash 工具更新了状态
-                finished.append(task_id)
-                emoji = {"requirement": "📋", "dev": "💻", "test": "🧪"}
-                print(f"  {emoji.get(task_type, '✅')} 完成: {original_id}")
-        except:
-            pass
-
-    for task_id in finished:
-        del running[task_id]
-    return running
-```
-```
-
-## 输出示例
-
-```
-🔄 运行中: 3/3 (开发:1, 测试:1, 需求:1)
-💻 启动开发: TASK-001
-🧪 启动测试: TEST-005
-📋 启动需求: REQ-003
-
-[5秒后]
-💻 完成: TASK-001
-🔄 运行中: 2/3
-💻 启动开发: TASK-002
-```
-
-## 注意事项
-
-1. **总并发=3**：不是每个阶段3个
-2. **开发固定1个**：避免代码冲突
-3. **Subagent 自己更新状态**：通过 Bash 工具调用 `tasks.js update`
-4. **Engine 只负责调度**：监听 subagent 完成事件，不处理状态更新
-5. **使用 `run_in_background=True`**
-6. **使用 `TaskOutput(block=False)`**
-7. **每5秒检查一次状态**
+1. **每个 subagent 只处理一个任务** - 避免上下文堆积
+2. **引擎主循环** - 检测完成并启动新的 subagent
+3. **固定 3 个 slot** - 开发、测试、需求各一个
+4. **使用 run_in_background=true** - 并行执行
