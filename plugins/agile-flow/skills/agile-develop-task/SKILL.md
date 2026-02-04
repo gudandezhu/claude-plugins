@@ -117,7 +117,9 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update TASK-001 bug
 
 ---
 
-## 输出结果
+## 输出结果（供人类查看）
+
+**注意**：输出是给人类查看日志用的，Engine 不会解析。唯一的要求是必须通过 Bash 工具更新任务状态。
 
 ```
 ✅ 步骤 0 通过：TODO 规划完成（5 个实现点）
