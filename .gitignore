@@ -8,3 +8,4 @@ package-lock.json
 
 # 其他插件的项目目录（统一使用 ai-docs 管理）
 projects/
+plugins/agile-flow/utils/__pycache__/
