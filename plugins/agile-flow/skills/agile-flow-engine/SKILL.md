@@ -157,6 +157,8 @@ testing_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list testing)
 
 **重要**：使用 `run_in_background=True` 实现真正的并行
 
+**关键**：Subagent 自己通过 Bash 工具更新任务状态，Engine 只负责调度。
+
 #### 需求分析（填充剩余配额，最多 2 个）
 
 ```python
@@ -176,8 +178,7 @@ while slots_available > 0:
 2. 评估优先级（P0紧急/P1重要/P2默认/P3可选）
 3. 使用 tasks.js add 创建任务
 4. 更新 CONTEXT.md
-
-返回 JSON：{{"task_id": "{task.id}", "tasks_created": 数量, "summary": "总结"}}
+5. **必须更新任务状态**：tasks.js update {task.id} pending
 """,
         run_in_background=True
     )
@@ -201,9 +202,7 @@ TDD 流程：
 1. TODO 规划（>20行时）
 2. 检查测试 → 运行测试（红）→ 编写代码（绿）→ 重构
 3. 覆盖率 ≥ 80% → 代码审核（/pr-review-toolkit:code-reviewer）
-4. 更新状态：tasks.js update {task.id} testing
-
-返回 JSON：{{"task_id": "{task.id}", "status": "testing|bug", "summary": "总结"}}
+4. **必须更新任务状态**：tasks.js update {task.id} testing
 """,
         run_in_background=True
     )
@@ -226,9 +225,7 @@ if test_count < 1 and slots_available > 0 and (testing_tasks := get_tasks_by_sta
 步骤：
 1. 启动项目 → Playwright MCP 测试 → 检查控制台错误
 2. BUG 记录到 BUGS.md
-3. 更新状态：tasks.js update {task.id} tested
-
-返回 JSON：{{"task_id": "{task.id}", "status": "tested|bug", "bugs": []}}
+3. **必须更新任务状态**：tasks.js update {task.id} tested
 """,
         run_in_background=True
     )
@@ -246,23 +243,17 @@ def cleanup_finished(running):
         try:
             result = TaskOutput(task_id=task_id, block=False, timeout=1000)
             if result is not None:
-                process_result(task_type, result, original_id)
+                # Subagent 已经自己通过 Bash 工具更新了状态
                 finished.append(task_id)
-                print(f"  {['📋','💻','🧪'][['requirement','dev','test'].index(task_type)]} 完成: {original_id}")
-        except: pass
+                emoji = {"requirement": "📋", "dev": "💻", "test": "🧪"}
+                print(f"  {emoji.get(task_type, '✅')} 完成: {original_id}")
+        except:
+            pass
 
-    for task_id in finished: del running[task_id]
+    for task_id in finished:
+        del running[task_id]
     return running
-
-def process_result(task_type, result, original_id):
-    """处理任务结果"""
-    task_id = result.get("task_id", original_id)
-    if task_type == "requirement":
-        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} pending")
-    elif task_type == "dev":
-        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {result.get('status','testing')}")
-    elif task_type == "test":
-        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {result.get('status','tested')}")
+```
 ```
 
 ## 输出示例
@@ -283,6 +274,8 @@ def process_result(task_type, result, original_id):
 
 1. **总并发=3**：不是每个阶段3个
 2. **开发固定1个**：避免代码冲突
-3. **使用 `run_in_background=True`**
-4. **使用 `TaskOutput(block=False)`**
-5. **每5秒检查一次状态**
+3. **Subagent 自己更新状态**：通过 Bash 工具调用 `tasks.js update`
+4. **Engine 只负责调度**：监听 subagent 完成事件，不处理状态更新
+5. **使用 `run_in_background=True`**
+6. **使用 `TaskOutput(block=False)`**
+7. **每5秒检查一次状态**
