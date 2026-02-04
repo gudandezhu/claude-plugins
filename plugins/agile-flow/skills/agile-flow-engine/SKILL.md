@@ -1,12 +1,12 @@
 ---
 name: agile-flow-engine
-description: 自动化敏捷开发流程引擎（默认并行），同时运行需求分析、技术设计、开发、测试多个 subagent
-version: 3.0.0
+description: 自动化敏捷开发流程引擎（总并发=3，开发固定1个+测试1个+需求2个），持续运行模式
+version: 4.0.0
 ---
 
-# Agile Flow Engine - 并行版本
+# Agile Flow Engine - 持续并发模式
 
-自动化敏捷开发流程引擎，**默认支持并行执行**，多个阶段的任务可以同时进行。
+自动化敏捷开发流程引擎，**总并发限制=3**，持续运行，动态分配资源。
 
 ## 核心原理
 
@@ -25,96 +25,119 @@ Task(subagent_type="general-purpose", prompt="任务B", run_in_background=True) 
 
 ## 并行策略
 
-### 流水线并行（推荐）
+### 严格并发限制（API 限制 = 3）
+
+**重要**：由于 API 并发限制为 3，必须严格控制总并发数为 3。
+
+**持续运行模式**（不是批次模式）：
+- 开发固定 1 个（必须一直保持）
+- 测试最多 1 个
+- 需求分析占用剩余配额（最多 2 个）
+- 技术设计跳过（优先开发和测试）
 
 ```
-需求池 → [需求A, 需求B, 需求C] → 需求分析（并行3个）
-       ↓
-       [设计A, 设计B, 设计C] → 技术设计（并行3个）
-       ↓
-       [开发A, 开发B, 开发C] → TDD开发（并行3个）
-       ↓
-       [测试A, 测试B, 测试C] → E2E测试（并行3个）
+总并发 = 3
+├── 开发: 1 (固定)
+├── 测试: 0-1 (动态)
+└── 需求: 0-2 (动态填充剩余配额)
 ```
 
-**关键**：不同阶段的任务可以并行执行！
-- 需求分析可以并行处理多个需求
-- 技术设计可以并行处理多个设计
-- TDD 开发可以并行处理多个开发任务
-- E2E 测试可以并行处理多个测试
-
-### 阶段并行
+### 动态资源分配
 
 ```
-[需求分析 subagent] ──┐
-[技术设计 subagent] ──┼──→ 同时运行
-[TDD 开发 subagent]  ──┤
-[E2E 测试 subagent]  ──┘
+有测试任务时: [开发1] + [测试1] + [需求1] = 3
+无测试任务时: [开发1] + [需求2] = 3
+只有开发时: [开发1] = 1
 ```
 
-**每个阶段同时运行最多 3 个 subagent**（MAX_PARALLEL=3）
+**关键规则**：
+1. 开发必须保持 1 个（如果有待开发任务）
+2. 测试优先级高于需求
+3. 需求分析填充剩余配额
+4. 某个阶段任务完成后，立即启动该阶段的下一个任务
 
 ## 环境变量
 
 ```bash
 export AI_DOCS_PATH="$(pwd)/ai-docs"
-export MAX_PARALLEL=3  # 每个阶段最多并行数
+export MAX_CONCURRENT=3  # 总并发限制（开发1 + 测试1 + 需求2）
 ```
 
 ## 执行流程
 
-### 主循环（核心）
+### 主循环（核心 - 持续运行模式）
 
 ```python
+MAX_CONCURRENT = 3  # 总并发限制
+
 def main_loop():
-    """主循环：持续并行处理任务"""
+    """主循环：持续运行，动态分配资源"""
+    running = {}  # {task_id: (task_type, original_task_id)}
+
     while True:
-        # 检查是否还有任务
-        pending_tasks = get_pending_tasks()
-        if not pending_tasks:
+        # 1. 清理已完成的任务
+        running = cleanup_finished(running)
+
+        # 2. 统计各阶段运行中的任务数
+        dev_count = count_by_type(running, "dev")
+        test_count = count_by_type(running, "test")
+        req_count = count_by_type(running, "requirement")
+
+        # 3. 计算剩余配额
+        slots_available = MAX_CONCURRENT - len(running)
+
+        # 4. 如果没有任务且没有运行中的进程，退出
+        if not has_any_pending_tasks() and not running:
             print("✅ 所有任务已完成")
             break
 
-        # 并行启动多个阶段的 subagent
-        background_tasks = []
+        # 5. 动态分配资源
 
-        # 1. 需求分析（最多 MAX_PARALLEL 个）
-        req_tasks = get_tasks_by_status("requirements")
-        for task in req_tasks[:MAX_PARALLEL]:
+        # 5.1 开发：固定保持 1 个
+        if dev_count < 1:
+            dev_tasks = get_tasks_by_status("pending")
+            if dev_tasks and slots_available > 0:
+                task = dev_tasks[0]
+                task_id = launch_developer(task, run_in_background=True)
+                running[task_id] = ("dev", task.id)
+                slots_available -= 1
+                print(f"  💻 启动开发: {task.id}")
+
+        # 5.2 测试：最多 1 个
+        if test_count < 1 and slots_available > 0:
+            test_tasks = get_tasks_by_status("testing")
+            if test_tasks:
+                task = test_tasks[0]
+                task_id = launch_tester(task, run_in_background=True)
+                running[task_id] = ("test", task.id)
+                slots_available -= 1
+                print(f"  🧪 启动测试: {task.id}")
+
+        # 5.3 需求分析：填充剩余配额
+        while slots_available > 0:
+            req_tasks = get_tasks_by_status("requirements")
+            if not req_tasks:
+                break
+            task = req_tasks[0]
             task_id = launch_requirement_analyzer(task, run_in_background=True)
-            background_tasks.append(("requirement", task_id, task.id))
+            running[task_id] = ("requirement", task.id)
+            slots_available -= 1
+            print(f"  📋 启动需求: {task.id}")
 
-        # 2. 技术设计（最多 MAX_PARALLEL 个）
-        design_tasks = get_tasks_by_status("design")
-        for task in design_tasks[:MAX_PARALLEL]:
-            task_id = launch_tech_designer(task, run_in_background=True)
-            background_tasks.append(("design", task_id, task.id))
+        # 6. 显示当前状态
+        print(f"\n🔄 运行中: {len(running)}/{MAX_CONCURRENT}")
+        print(f"   开发: {dev_count}, 测试: {test_count}, 需求: {req_count}")
 
-        # 3. TDD 开发（最多 MAX_PARALLEL 个）
-        dev_tasks = get_tasks_by_status("pending")
-        for task in dev_tasks[:MAX_PARALLEL]:
-            task_id = launch_developer(task, run_in_background=True)
-            background_tasks.append(("dev", task_id, task.id))
+        # 7. 等待一段时间再检查
+        time.sleep(5)
+```
 
-        # 4. E2E 测试（最多 MAX_PARALLEL 个）
-        test_tasks = get_tasks_by_status("testing")
-        for task in test_tasks[:MAX_PARALLEL]:
-            task_id = launch_tester(task, run_in_background=True)
-            background_tasks.append(("test", task_id, task.id))
+### 资源分配优先级
 
-        # 如果没有启动任何任务，退出
-        if not background_tasks:
-            print("✅ 没有可执行的任务")
-            break
-
-        # 等待所有后台任务完成
-        print(f"\n🚀 并行执行中 ({len(background_tasks)} 个 subagent)")
-        results = wait_for_completion(background_tasks)
-
-        # 处理结果
-        process_results(results)
-
-        print("\n📊 批次完成，继续下一批...")
+```
+1. 开发：必须有 1 个（如果有待开发任务）
+2. 测试：最多 1 个（优先于需求）
+3. 需求：填充剩余配额（0-2 个）
 ```
 
 ### 步骤 1：获取待处理任务
@@ -122,9 +145,9 @@ def main_loop():
 ```bash
 # 获取所有待处理任务（按状态分组）
 requirements_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list requirements)
-design_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list design)
 pending_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list pending)
 testing_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list testing)
+# 注意：跳过 design 状态，需求分析完成后直接进入开发
 ```
 
 ### 步骤 2：并行启动多个 subagent（核心）
@@ -177,61 +200,13 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
     print(f"  🚀 启动需求分析: {task.id}")
 ```
 
-#### 技术设计 subagent
+#### TDD 开发 subagent（固定 1 个）
 
 ```python
-for task in design_tasks[:MAX_PARALLEL]:
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"技术设计：{task.description}",
-        prompt=f"""
-将用户故事拆分为技术任务并维护技术上下文
-
-任务 ID: {task.id}
-需求: {task.description}
-
-环境变量：
-export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-**优先读取项目上下文**：
-1. 读取 ai-docs/CONTEXT.md - 了解项目业务上下文
-2. 读取 ai-docs/TECH.md - 了解项目技术上下文
-
-步骤：
-1. 从 CONTEXT.md 读取业务上下文
-2. 从 TECH.md 读取技术上下文
-3. 从 PRD.md 读取用户需求
-4. 分析技术需求：API 端点、数据模型、前端组件、测试需求
-5. 拆分为技术任务（每个任务 1-4 小时）
-6. 使用 tasks.js add 创建任务
-7. 更新 TECH.md
-
-TECH.md 应该包含：
-- 技术栈
-- 目录结构
-- 代码约定
-- 重要文件位置
-- API 设计原则
-- 数据模型概述
-
-完成后返回 JSON：
-{{
-  "task_id": "{task.id}",
-  "tasks_created": 数量,
-  "tech_context_updated": true,
-  "summary": "简要总结"
-}}
-""",
-        run_in_background=True
-    )
-    background_tasks.append(("design", task_id, task.id))
-    print(f"  🎨 启动技术设计: {task.id}")
-```
-
-#### TDD 开发 subagent
-
-```python
-for task in pending_tasks[:MAX_PARALLEL]:
+# 开发：固定保持 1 个
+pending_tasks = get_tasks_by_status("pending")
+if pending_tasks and dev_count < 1:
+    task = pending_tasks[0]
     task_id = Task(
         subagent_type="general-purpose",
         description=f"TDD 开发：{task.description}",
@@ -272,10 +247,13 @@ TDD 流程：
     print(f"  💻 启动TDD开发: {task.id}")
 ```
 
-#### E2E 测试 subagent
+#### E2E 测试 subagent（最多 1 个）
 
 ```python
-for task in testing_tasks[:MAX_PARALLEL]:
+# 测试：最多 1 个
+testing_tasks = get_tasks_by_status("testing")
+if testing_tasks and test_count < 1 and slots_available > 0:
+    task = testing_tasks[0]
     task_id = Task(
         subagent_type="general-purpose",
         description=f"E2E 测试：{task.description}",
@@ -309,62 +287,105 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 """,
         run_in_background=True
     )
-    background_tasks.append(("test", task_id, task.id))
-    print(f"  🧪 启动E2E测试: {task.id}")
+    running[task_id] = ("test", task.id)
+    slots_available -= 1
+    print(f"  🧪 启动测试: {task.id}")
 ```
 
-### 步骤 3：等待并收集结果
+#### 需求分析 subagent（填充剩余配额）
+
+```python
+# 需求：填充剩余配额（最多 2 个）
+while slots_available > 0:
+    req_tasks = get_tasks_by_status("requirements")
+    if not req_tasks:
+        break
+    task = req_tasks[0]
+    task_id = Task(
+        subagent_type="general-purpose",
+        description=f"需求分析：{task.description}",
+        prompt=f"""
+分析项目需求并创建任务到 TASKS.json
+
+任务 ID: {task.id}
+需求内容: {task.description}
+
+环境变量：
+export AI_DOCS_PATH="$(pwd)/ai-docs"
+
+**优先读取项目上下文**（第一步）：
+1. 读取 ai-docs/CONTEXT.md - 了解项目业务上下文
+2. 读取 ai-docs/TECH.md - 了解项目技术上下文
+
+步骤：
+1. 读取 CONTEXT.md 和 TECH.md，了解项目当前状态
+2. 读取 PRD.md
+3. 识别功能需求
+4. 评估优先级：
+   - P0: 紧急、关键、核心、阻塞、崩溃、安全、漏洞
+   - P1: 重要、优化、性能、体验、提升、改进
+   - P2: 默认优先级
+   - P3: 可选、建议、美化、调整、微调
+5. 使用 tasks.js add 创建任务
+6. 更新 CONTEXT.md
+
+完成后返回 JSON：
+{{
+  "task_id": "{task.id}",
+  "tasks_created": 数量,
+  "context_updated": true,
+  "summary": "简要总结"
+}}
+""",
+        run_in_background=True
+    )
+    running[task_id] = ("requirement", task.id)
+    slots_available -= 1
+    print(f"  📋 启动需求: {task.id}")
+```
+
+### 步骤 3：清理已完成的任务并处理结果
 
 ```python
 import time
 
-# 等待所有后台任务完成
-results = []
-while background_tasks:
-    # 检查每个任务状态
-    for task_type, task_id, original_id in background_tasks[:]:
-        try:
-            # 使用 TaskOutput 获取结果（非阻塞）
-            result = TaskOutput(task_id=task_id, block=False, timeout=1000)
+def cleanup_finished(running):
+    """清理已完成的任务，返回新的 running 字典"""
+    finished = []
 
+    for task_id, (task_type, original_id) in running.items():
+        try:
+            result = TaskOutput(task_id=task_id, block=False, timeout=1000)
             if result is not None:
-                # 任务完成
+                # 任务完成，处理结果
+                process_result(task_type, result, original_id)
+                finished.append(task_id)
                 type_emoji = {
                     "requirement": "📋",
-                    "design": "🎨",
                     "dev": "💻",
                     "test": "🧪"
                 }
                 print(f"  {type_emoji.get(task_type, '✅')} 完成: {original_id}")
-                results.append((task_type, result))
-                background_tasks.remove((task_type, task_id, original_id))
         except:
             # 任务仍在运行
             pass
 
-    time.sleep(5)  # 每 5 秒检查一次
-```
+    # 移除已完成的任务
+    for task_id in finished:
+        del running[task_id]
 
-### 步骤 4：处理结果
+    return running
 
-```python
-# 处理每个任务的结果
-for task_type, result in results:
-    task_id = result.get("task_id")
+def process_result(task_type, result, original_id):
+    """处理任务完成后的结果"""
+    task_id = result.get("task_id", original_id)
 
     if task_type == "requirement":
         # 需求分析完成
         if result.get("context_update"):
             with open("ai-docs/CONTEXT.md", "a") as f:
                 f.write(f"\n{result['context_update']}\n")
-        # 更新任务状态
-        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} design")
-
-    elif task_type == "design":
-        # 技术设计完成
-        if result.get("tech_context_updated"):
-            print(f"  📝 技术上下文已更新")
-        # 更新任务状态
+        # 更新任务状态 → pending（跳过 design，直接进入开发）
         Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} pending")
 
     elif task_type == "dev":
@@ -377,7 +398,7 @@ for task_type, result in results:
             with open("ai-docs/BUGS.md", "a") as f:
                 for bug in result["bugs"]:
                     f.write(f"- {bug}\n")
-        # 更新任务状态（根据返回的状态）
+        # 更新任务状态
         new_status = result.get("status", "testing")
         Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {new_status}")
 
@@ -394,84 +415,71 @@ for task_type, result in results:
 
 ## 性能对比
 
-### 场景：12个任务（3需求 + 3设计 + 3开发 + 3测试）
+### 场景：12个任务（3需求 + 3开发 + 3测试）
 
 | 模式 | 总耗时 | 说明 |
 |------|--------|------|
-| 串行 | 120分钟 | 需求→设计→开发→测试，每个10分钟 |
-| 并行(3) | 40分钟 | 4个阶段各并行3个，同时执行 |
+| 串行 | 90分钟 | 需求→开发→测试，每个10分钟 |
+| 持续并发(3) | 40分钟 | 开发固定1个，测试和需求动态填充 |
 
-**加速比：约 3 倍**
+**加速比：约 2.25 倍**
 
 ## 输出格式
 
 ```
-🚀 并行敏捷开发流程 (MAX_PARALLEL=3)
+🚀 敏捷开发流程 (总并发=3)
 
-📋 待处理任务: 12 个
-  - 需求分析: 3 个
-  - 技术设计: 3 个
-  - TDD 开发: 3 个
-  - E2E 测试: 3 个
+🔄 运行中: 3/3
+   开发: 1, 测试: 1, 需求: 1
 
-🚀 启动并行 subagent (12 个)
-  📋 启动需求分析: REQ-001
-  📋 启动需求分析: REQ-002
-  📋 启动需求分析: REQ-003
-  🎨 启动技术设计: DES-001
-  🎨 启动技术设计: DES-002
-  🎨 启动技术设计: DES-003
-  💻 启动TDD开发: TASK-001
-  💻 启动TDD开发: TASK-002
-  💻 启动TDD开发: TASK-003
-  🧪 启动E2E测试: TEST-001
-  🧪 启动E2E测试: TEST-002
-  🧪 启动E2E测试: TEST-003
+💻 启动开发: TASK-001
+🧪 启动测试: TEST-005
+📋 启动需求: REQ-003
 
-⏳ 等待任务完成...
-  📋 完成: REQ-001
-  💻 完成: TASK-002
-  🎨 完成: DES-001
-  🧪 完成: TEST-001
-  ...
+[5秒后]
+💻 完成: TASK-001
+🔄 运行中: 2/3
+   开发: 0, 测试: 1, 需求: 1
 
-📝 更新 CONTEXT.md
-📊 批次完成，继续下一批...
+💻 启动开发: TASK-002
+🔄 运行中: 3/3
+   开发: 1, 测试: 1, 需求: 1
+...
 ```
 
 ## 核心原则
 
-1. **Subagent 隔离**：每个任务在独立的 subagent 中执行，上下文自动隔离
-2. **自动清理**：subagent 完成后，其上下文自动从主会话移除
-3. **只保留摘要**：主会话只保留任务状态和关键摘要（200字）
-4. **完全自动化**：持续运行，不需要人工干预
-5. **默认并行**：多个阶段的任务默认并行执行，无需额外配置
+1. **总并发限制 = 3**：严格遵守 API 并发限制
+2. **开发固定 1 个**：避免代码仓库混乱
+3. **动态资源分配**：任务完成后立即启动同类型的下一个
+4. **Subagent 隔离**：每个任务在独立的 subagent 中执行
+5. **完全自动化**：持续运行，不需要人工干预
 
 ## 注意事项
 
-1. **使用 run_in_background=True**：所有 Task 调用必须设置此参数
-2. **使用 TaskOutput(block=False)**：非阻塞获取结果
-3. **限制并行度**：每个阶段最多 MAX_PARALLEL 个 subagent
-4. **文件冲突**：任务拆分时避免文件重叠
-5. **端口冲突**：动态端口分配（3000-3010）
+1. **总并发数 = 3**：不是每个阶段 3 个
+2. **开发必须 1 个**：避免多开发导致代码冲突
+3. **使用 run_in_background=True**：所有 Task 调用必须设置此参数
+4. **使用 TaskOutput(block=False)**：非阻塞获取结果
+5. **持续监控**：每 5 秒检查一次任务状态
 6. **优先读取上下文**：每个 subagent 启动时，优先读取 CONTEXT.md 和 TECH.md
 
 ## 最佳实践
 
-### 1. 并行度选择
+### 1. 并发度选择
 
 ```
-小型项目: MAX_PARALLEL = 2
-中型项目: MAX_PARALLEL = 3
-大型项目: MAX_PARALLEL = 5
+API 限制 = 3: MAX_CONCURRENT = 3
+API 限制 = 5: MAX_CONCURRENT = 5
 ```
 
-### 2. 任务拆分原则
+### 2. 资源分配策略
 
-- ✅ 独立模块（auth, users, stocks）
-- ✅ 清晰边界（前端 vs 后端）
-- ❌ 避免文件重叠
-- ❌ 避免循环依赖
+```
+开发: 固定 1 个（必须）
+测试: 最多 1 个（优先）
+需求: 填充剩余（0-2 个）
+```
 
 ### 3. 错误处理
 
@@ -489,38 +497,35 @@ except Exception as e:
 ### 实时状态
 
 ```python
-def show_status(background_tasks):
-    """显示并行执行状态"""
-    print(f"\n🚀 并行执行中 ({len(background_tasks)} 个 subagent)")
+def show_status(running):
+    """显示当前运行状态"""
+    dev_count = count_by_type(running, "dev")
+    test_count = count_by_type(running, "test")
+    req_count = count_by_type(running, "requirement")
 
-    for task_type, task_id, original_id in background_tasks:
+    print(f"\n🔄 运行中: {len(running)}/{MAX_CONCURRENT}")
+    print(f"   开发: {dev_count}, 测试: {test_count}, 需求: {req_count}")
+
+    # 显示各任务详情
+    for task_id, (task_type, original_id) in running.items():
         type_emoji = {
             "requirement": "📋",
-            "design": "🎨",
             "dev": "💻",
             "test": "🧪"
         }
-        # 检查任务状态
-        try:
-            result = TaskOutput(task_id=task_id, block=False, timeout=100)
-            if result:
-                print(f"  {type_emoji.get(task_type, '✅')} {original_id}: 已完成")
-            else:
-                print(f"  {type_emoji.get(task_type, '🔄')} {original_id}: 运行中")
-        except:
-            print(f"  ⚠️  {original_id}: 状态未知")
+        print(f"  {type_emoji.get(task_type, '🔄')} {original_id}: 运行中")
 ```
 
 ## 总结
 
 **核心改进**：
-1. **默认并行**：无需参数，自动并行执行
-2. **多阶段并行**：需求、设计、开发、测试同时进行
-3. **使用 run_in_background=True**：实现真正的并行
-4. **使用 TaskOutput(block=False)**：非阻塞获取结果
-5. **批次处理**：限制并行度，避免资源耗尽
+1. **总并发限制 = 3**：严格遵守 API 并发限制
+2. **开发固定 1 个**：避免代码仓库冲突
+3. **动态资源分配**：任务完成后立即启动下一个
+4. **持续运行模式**：不是批次模式，而是持续监控
+5. **使用 run_in_background=True**：实现真正的并行
 
 **性能提升**：
-- 串行：4 个阶段 × N 个任务 × 每个任务时间
-- 并行：⌈N / MAX_PARALLEL⌉ × 每个任务时间
-- 加速比：约 MAX_PARALLEL 倍
+- 串行：需求 → 开发 → 测试，依次执行
+- 持续并发：开发固定 + 测试需求动态填充
+- 加速比：约 2-3 倍（取决于任务分布）
