@@ -349,18 +349,6 @@ setup_product_observer() {
     install_observer_dependencies
     log_info "Observer Agent 依赖已就绪，将由 Task 工具启动"
 }
-# Cleanup on Signal (仅捕获脚本执行期间的信号)
-# ============================================
-cleanup_on_signal() {
-    log_warning "接收到退出信号，停止服务..."
-    stop_web_server
-    stop_product_observer
-    log_success "服务已清理"
-    exit 0
-}
-
-# 注册信号处理（仅在脚本执行期间有效）
-trap cleanup_on_signal EXIT INT TERM
 
 # ============================================
 # Main Function
@@ -383,7 +371,7 @@ main() {
     log_success "✅ Web Dashboard 已启动"
     log_info ""
     log_info "📌 服务说明："
-    log_info "   • Web Dashboard：独立运行（端口: $server_port）"
+    log_info "   • Web Dashboard：独立运行"
     log_info "   • Observer Agent：请使用 Task 工具作为后台 subagent 启动"
     log_info "   • 如需停止，请执行: /agile-stop"
 }
