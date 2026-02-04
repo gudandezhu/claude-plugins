@@ -7,6 +7,33 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ============================================
+# Usage
+# ============================================
+usage() {
+    cat <<EOF
+Usage: $SCRIPT_NAME [project_directory]
+
+Stop Agile Flow automation services (Web Dashboard + Observer).
+
+Arguments:
+    project_directory    Path to project directory (default: current directory)
+
+Environment:
+    AI_DOCS_PATH         Path to ai-docs directory (default: <project>/ai-docs)
+
+Examples:
+    $SCRIPT_NAME                          # Stop in current directory
+    $SCRIPT_NAME /path/to/project         # Stop in specific directory
+    AI_DOCS_PATH=/custom/docs $SCRIPT_NAME # Use custom docs path
+
+EOF
+}
+
+# ============================================
+# Constants
+# ============================================
+
+# ============================================
 # Constants
 # ============================================
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -133,19 +160,47 @@ cleanup_port() {
 
 verify_stop() {
     local remaining=0
+    local project_dir="$1"
 
-    # 检查 Web Dashboard
+    # 检查 Web Dashboard（限制在项目目录内）
     if pgrep -f "node.*server.js" >/dev/null 2>&1; then
-        echo "⚠️  警告: 仍有 Web Dashboard 进程运行"
-        pgrep -f "node.*server.js" | head -3
-        ((remaining++))
+        # 只显示项目相关的进程
+        local pids
+        pids=$(pgrep -f "node.*server.js" 2>/dev/null | while read -r pid; do
+            if [[ -d "/proc/$pid" ]]; then
+                local cmdline
+                cmdline=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ')
+                if [[ "$cmdline" == *"$project_dir"* ]]; then
+                    echo "$pid"
+                fi
+            fi
+        done)
+
+        if [[ -n "$pids" ]]; then
+            echo "⚠️  警告: 仍有 Web Dashboard 进程运行"
+            echo "$pids" | head -3
+            ((remaining++))
+        fi
     fi
 
-    # 检查 Observer
-    if [[ -f "$OBSERVER_PID_FILE" ]] || pgrep -f "observer.*agent.py" >/dev/null 2>&1; then
-        echo "⚠️  警告: 仍有 Observer 进程运行"
-        pgrep -f "observer.*agent.py" | head -3
-        ((remaining++))
+    # 检查 Observer（限制在项目目录内）
+    if pgrep -f "observer.*agent.py" >/dev/null 2>&1; then
+        local pids
+        pids=$(pgrep -f "observer.*agent.py" 2>/dev/null | while read -r pid; do
+            if [[ -d "/proc/$pid" ]]; then
+                local cmdline
+                cmdline=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ')
+                if [[ "$cmdline" == *"$project_dir"* ]]; then
+                    echo "$pid"
+                fi
+            fi
+        done)
+
+        if [[ -n "$pids" ]]; then
+            echo "⚠️  警告: 仍有 Observer 进程运行"
+            echo "$pids" | head -3
+            ((remaining++))
+        fi
     fi
 
     if (( remaining == 0 )); then
@@ -161,9 +216,41 @@ verify_stop() {
 # Main Function
 # ============================================
 main() {
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -v|--verbose)
+                set -x
+                shift
+                ;;
+            *)
+                PROJECT_ROOT="$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Validate project directory
+    if [[ ! -d "$PROJECT_ROOT" ]]; then
+        log_error "项目目录不存在: $PROJECT_ROOT"
+        exit 1
+    fi
+
+    # Validate ai-docs directory
+    if [[ ! -d "$AI_DOCS_DIR" ]]; then
+        log_error "ai-docs 目录不存在: $AI_DOCS_DIR"
+        log_error "请确认项目路径正确，或使用: AI_DOCS_PATH=/custom/path $SCRIPT_NAME"
+        exit 1
+    fi
+
     echo ""
     echo "⏹️  停止 Agile Flow 自动化流程"
     echo "======================================"
+    echo "项目: $PROJECT_ROOT"
     echo ""
 
     # 停止服务
@@ -177,7 +264,7 @@ main() {
     echo ""
 
     # 验证
-    if verify_stop; then
+    if verify_stop "$PROJECT_ROOT"; then
         echo ""
         echo "⏹️  Agile Flow 已停止"
         echo ""
@@ -186,6 +273,10 @@ main() {
     else
         echo ""
         echo "❌ 停止失败，请手动检查"
+        echo ""
+        echo "提示："
+        echo "  查看进程: ps aux | grep -E 'node.*server.js|observer.*agent.py'"
+        echo "  强制停止: pkill -9 -f 'node.*server.js|observer.*agent.py'"
         exit 1
     fi
 }
