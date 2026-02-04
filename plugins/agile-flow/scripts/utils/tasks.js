@@ -6,9 +6,63 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const { execSync } = require('child_process');
 
-// 支持 AI_DOCS_PATH 环境变量，或使用默认值
-const AI_DOCS_PATH = process.env.AI_DOCS_PATH || path.join(process.cwd(), 'ai-docs');
+/**
+ * 智能检测 ai-docs 目录
+ */
+function findAiDocsPath() {
+    // 1. 优先使用环境变量
+    if (process.env.AI_DOCS_PATH) {
+        return process.env.AI_DOCS_PATH;
+    }
+
+    // 2. 尝试从 git 根目录查找
+    try {
+        const gitRoot = execSync('git rev-parse --show-toplevel', {
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'ignore']
+        }).trim();
+
+        if (gitRoot) {
+            const gitRootAiDocs = path.join(gitRoot, 'ai-docs');
+            if (fs.existsSync(gitRootAiDocs)) {
+                return gitRootAiDocs;
+            }
+        }
+    } catch (e) {
+        // 不是 git 仓库或 git 命令失败
+    }
+
+    // 3. 向上查找 ai-docs 目录
+    let currentDir = process.cwd();
+    while (currentDir !== path.parse(currentDir).root) {
+        const aiDocsPath = path.join(currentDir, 'ai-docs');
+        if (fs.existsSync(aiDocsPath)) {
+            return aiDocsPath;
+        }
+        currentDir = path.dirname(currentDir);
+    }
+
+    // 4. 再次尝试使用 git 根目录（即使 ai-docs 不存在）
+    try {
+        const gitRoot = execSync('git rev-parse --show-toplevel', {
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'ignore']
+        }).trim();
+
+        if (gitRoot) {
+            return path.join(gitRoot, 'ai-docs');
+        }
+    } catch (e) {
+        // 不是 git 仓库或 git 命令失败
+    }
+
+    // 5. 最后使用当前目录
+    return path.join(process.cwd(), 'ai-docs');
+}
+
+const AI_DOCS_PATH = findAiDocsPath();
 const TASKS_FILE = path.join(AI_DOCS_PATH, 'TASKS.json');
 
 /**

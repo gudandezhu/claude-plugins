@@ -9,8 +9,47 @@ set -e
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# 支持 AI_DOCS_PATH 环境变量，或使用默认值
-AI_DOCS_PATH="${AI_DOCS_PATH:-$(pwd)/ai-docs}"
+# 智能检测 ai-docs 目录
+find_ai_docs_path() {
+    # 1. 优先使用环境变量
+    if [ -n "$AI_DOCS_PATH" ]; then
+        echo "$AI_DOCS_PATH"
+        return
+    fi
+
+    # 2. 尝试从 git 根目录查找
+    if git rev-parse --show-toplevel >/dev/null 2>&1; then
+        local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+        if [ -n "$git_root" ] && [ -d "$git_root/ai-docs" ]; then
+            echo "$git_root/ai-docs"
+            return
+        fi
+    fi
+
+    # 3. 向上查找 ai-docs 目录
+    local current_dir=$(pwd)
+    while [ "$current_dir" != "/" ]; do
+        if [ -d "$current_dir/ai-docs" ]; then
+            echo "$current_dir/ai-docs"
+            return
+        fi
+        current_dir=$(dirname "$current_dir")
+    done
+
+    # 4. 使用 git 根目录（即使 ai-docs 不存在）
+    if git rev-parse --show-toplevel >/dev/null 2>&1; then
+        local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+        if [ -n "$git_root" ]; then
+            echo "$git_root/ai-docs"
+            return
+        fi
+    fi
+
+    # 5. 最后使用当前目录
+    echo "$(pwd)/ai-docs"
+}
+
+AI_DOCS_PATH=$(find_ai_docs_path)
 plan_file="$AI_DOCS_PATH/PLAN.md"
 
 # 检查 PLAN.md 是否存在
