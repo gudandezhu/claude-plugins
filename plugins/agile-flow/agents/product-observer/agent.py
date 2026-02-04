@@ -499,6 +499,27 @@ class ProductObserverAgent:
         print(f"⏰ 下次分析: {datetime.fromtimestamp(datetime.now().timestamp() + CHECK_INTERVAL).strftime('%H:%M:%S')}", flush=True)
         print(f"{'='*70}\n", flush=True)
 
+    async def _monitor_claude_process(self):
+        """监控 Claude Code 主进程，退出时自动停止 Observer"""
+        if not CLAUDE_PID or not CLAUDE_PID.isdigit():
+            print("  ⚠️  未设置 CLAUDE_PID，无法监控 Claude Code 进程", flush=True)
+            return
+
+        claude_pid = int(CLAUDE_PID)
+        print(f"  👁️  监控 Claude Code 主进程 (PID: {claude_pid})", flush=True)
+
+        while True:
+            await asyncio.sleep(10)  # 每 10 秒检查一次
+
+            # 检查 Claude Code 进程是否还在运行
+            try:
+                os.kill(claude_pid, 0)  # 发送信号 0 检查进程是否存在
+            except ProcessLookupError:
+                # Claude Code 已退出
+                print(f"\n🛑 Claude Code (PID: {claude_pid}) 已退出，Observer 自动停止", flush=True)
+                print(f"   {datetime.now().strftime('%H:%M:%S')} - Observer 监控结束\n", flush=True)
+                os._exit(0)  # 立即退出，不执行清理
+
     async def run(self):
         """持续运行"""
         print("""
