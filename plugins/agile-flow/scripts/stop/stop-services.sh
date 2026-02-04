@@ -3,6 +3,7 @@
 # Description: 停止 Agile Flow 自动化流程（Web Dashboard + Observer）
 # Usage: ./stop-services.sh [project_directory]
 
+# shellcheck disable=SC2317
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -36,15 +37,17 @@ EOF
 # ============================================
 # Constants
 # ============================================
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+declare -g SCRIPT_NAME
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 
 # User project directory
+declare PROJECT_ROOT
 if [[ -n "${1:-}" ]]; then
-    readonly PROJECT_ROOT="$1"
+    PROJECT_ROOT="$(cd "$1" && pwd)" || exit 1
 else
-    readonly PROJECT_ROOT="$(pwd)"
+    PROJECT_ROOT="$(pwd)"
 fi
+declare -gr PROJECT_ROOT="$PROJECT_ROOT"
 
 readonly AI_DOCS_DIR="${PROJECT_ROOT}/ai-docs"
 readonly LOGS_DIR="${AI_DOCS_DIR}/.logs"
@@ -74,6 +77,8 @@ log_error() {
 log_action() {
     echo "🚀 $*"
 }
+
+# shellcheck source=/dev/null disable=SC2317
 
 # ============================================
 # Utility Functions
@@ -169,7 +174,7 @@ verify_stop() {
         pids=$(pgrep -f "node.*server.js" 2>/dev/null | while read -r pid; do
             if [[ -d "/proc/$pid" ]]; then
                 local cmdline
-                cmdline=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ')
+                cmdline=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null)
                 if [[ "$cmdline" == *"$project_dir"* ]]; then
                     echo "$pid"
                 fi
@@ -189,7 +194,7 @@ verify_stop() {
         pids=$(pgrep -f "observer.*agent.py" 2>/dev/null | while read -r pid; do
             if [[ -d "/proc/$pid" ]]; then
                 local cmdline
-                cmdline=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ')
+                cmdline=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null)
                 if [[ "$cmdline" == *"$project_dir"* ]]; then
                     echo "$pid"
                 fi
@@ -216,7 +221,7 @@ verify_stop() {
 # Main Function
 # ============================================
 main() {
-    # Parse arguments
+    # Parse arguments (必须在 PROJECT_ROOT 设置前)
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -h|--help)
@@ -228,11 +233,17 @@ main() {
                 shift
                 ;;
             *)
+                # 保存项目路径供后续使用
                 PROJECT_ROOT="$1"
                 shift
                 ;;
         esac
     done
+
+    # 如果没有通过参数指定，使用当前目录
+    if [[ -z "$PROJECT_ROOT" ]]; then
+        PROJECT_ROOT="$(pwd)"
+    fi
 
     # Validate project directory
     if [[ ! -d "$PROJECT_ROOT" ]]; then
