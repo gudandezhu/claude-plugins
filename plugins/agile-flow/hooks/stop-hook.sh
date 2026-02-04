@@ -1,7 +1,7 @@
 #!/bin/bash
-# Stop Hook - 清理 Web Dashboard 和 Observer Agent
+# Stop Hook - 正常退出时的清理（仅在 /exit 等正常退出时触发）
 
-echo "执行 stop hook：清理自动化流程..."
+echo "执行 stop hook..."
 
 # 项目目录
 cd "${CLAUDE_PROJECT_DIR:-}" || exit 0
@@ -20,7 +20,6 @@ if [[ -f "$WEB_PID_FILE" ]]; then
         echo "  🛑 停止 Web Dashboard (PID: $web_pid)..."
         kill "$web_pid" 2>/dev/null || true
         sleep 1
-        # 如果还在运行，强制杀死
         if kill -0 "$web_pid" 2>/dev/null; then
             kill -9 "$web_pid" 2>/dev/null || true
         fi
@@ -36,7 +35,6 @@ if [[ -f "$OBSERVER_PID_FILE" ]]; then
         echo "  👁️  停止 Observer Agent (PID: $observer_pid)..."
         kill "$observer_pid" 2>/dev/null || true
         sleep 1
-        # 如果还在运行，强制杀死
         if kill -0 "$observer_pid" 2>/dev/null; then
             kill -9 "$observer_pid" 2>/dev/null || true
         fi
@@ -48,13 +46,10 @@ echo "✅ 自动化流程已清理"
 
 # 如果有未完成的敏捷任务，提醒用户
 if [ -d "ai-docs" ]; then
-    # 检查是否有未完成的任务
     if [ -f "ai-docs/TASKS.json" ]; then
-        # 统计未完成任务数量
         local pending_tasks
         pending_tasks=$(python3 -c "
 import json
-import sys
 try:
     with open('ai-docs/TASKS.json', 'r') as f:
         tasks = json.load(f).get('tasks', [])

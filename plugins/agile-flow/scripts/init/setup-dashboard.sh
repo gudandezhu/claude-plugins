@@ -435,6 +435,20 @@ setup_product_observer() {
 }
 
 # ============================================
+# Cleanup on Signal (仅捕获脚本执行期间的信号)
+# ============================================
+cleanup_on_signal() {
+    log_warning "接收到退出信号，停止服务..."
+    stop_web_server
+    stop_product_observer
+    log_success "服务已清理"
+    exit 0
+}
+
+# 注册信号处理（仅在脚本执行期间有效）
+trap cleanup_on_signal EXIT INT TERM
+
+# ============================================
 # Main Function
 # ============================================
 main() {
@@ -452,7 +466,10 @@ main() {
     # 设置产品观察者 Agent
     setup_product_observer
 
-    log_success "Dashboard 设置完成"
+    log_success "✅ Dashboard 和 Observer 已启动"
+    log_info ""
+    log_info "📌 注意：服务将独立运行，不随 Claude Code 退出而停止"
+    log_info "   如需停止服务，请执行: /agile-stop"
 }
 
 main "$@"

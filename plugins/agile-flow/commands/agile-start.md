@@ -35,6 +35,13 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"  # 必需
 export MAX_CONCURRENT=3               # 可选，默认3
 ```
 
+## 服务说明
+
+**重要**：Web Dashboard 和 Observer Agent 作为**独立服务**运行：
+- ✅ 不会随 Claude Code 退出而停止
+- ✅ 可以持续监控和分析项目
+- ⚠️  需要手动停止：`/agile-stop`
+
 ## 故障排除
 
 ```bash
@@ -46,4 +53,7 @@ cat ${AI_DOCS_PATH}/.logs/server.log
 PORT=$(cat ${AI_DOCS_PATH}/.logs/server.port)
 kill $(cat ${AI_DOCS_PATH}/.logs/server.pid)
 cd ${AI_DOCS_PATH} && PORT=$PORT node server.js &
+
+# 停止所有服务
+/agile-stop
 ```
