@@ -15,8 +15,6 @@ readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 # User project directory
 if [[ -n "${1:-}" ]]; then
     readonly PROJECT_ROOT="$1"
-elif [[ -n "${PWD:-}" ]]; then
-    readonly PROJECT_ROOT="$PWD"
 else
     readonly PROJECT_ROOT="$(pwd)"
 fi
