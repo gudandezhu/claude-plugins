@@ -213,6 +213,29 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        .prd-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .prd-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8em;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .delete-btn:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -344,12 +367,20 @@
                     return;
                 }
 
-                container.innerHTML = data.requirements.map(req => `
+                container.innerHTML = data.requirements.map(req => {
+                    // 提取时间戳（## 需求 时间戳）
+                    const timestampMatch = req.title.match(/##\s+需求\s+(.+)/);
+                    const timestamp = timestampMatch ? timestampMatch[1] : '';
+
+                    return `
                     <div class="prd-item">
-                        <div class="prd-time">${req.title.replace(/^##\s*/, '')}</div>
-                        <div class="prd-content">${req.content.trim()}</div>
+                        <div class="prd-text">
+                            <div class="prd-time">${req.title.replace(/^##\s*/, '')}</div>
+                            <div class="prd-content">${req.content.trim()}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteRequirement('${encodeURIComponent(timestamp)}')">删除</button>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (error) {
                 console.error('Failed to fetch PRD:', error);
             }
@@ -406,6 +437,30 @@
             } catch (error) {
                 console.error('Failed to submit requirement:', error);
                 alert('提交失败，请重试');
+            }
+        }
+
+        async function deleteRequirement(timestamp) {
+            const decodedTimestamp = decodeURIComponent(timestamp);
+
+            if (!confirm(`确定要删除这个需求吗？\n\n${decodedTimestamp}`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/requirement?timestamp=${encodeURIComponent(timestamp)}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    fetchPRD();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || '删除失败，请重试');
+                }
+            } catch (error) {
+                console.error('Failed to delete requirement:', error);
+                alert('删除失败，请重试');
             }
         }
 

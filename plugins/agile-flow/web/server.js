@@ -236,6 +236,62 @@ app.post('/api/prd/convert', async (req, res) => {
 });
 
 /**
+ * DELETE /api/requirement - 删除需求
+ */
+app.delete('/api/requirement', async (req, res) => {
+    const { timestamp } = req.query;
+
+    if (!timestamp) {
+        return res.status(400).json({ error: '缺少需求时间戳' });
+    }
+
+    try {
+        const content = await fs.readFile(PRD_FILE, 'utf-8');
+        const lines = content.split('\n');
+
+        // 查找并删除该需求
+        const result = [];
+        let skipMode = false;
+        let deleted = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // 匹配 ## 需求 时间戳
+            if (line.match(/^##\s+需求/) && line.includes(timestamp)) {
+                skipMode = true;
+                deleted = true;
+                continue;
+            }
+
+            // 遇到分隔符，停止跳过
+            if (skipMode && line.match(/^---/)) {
+                skipMode = false;
+                continue;
+            }
+
+            // 如果不在跳过模式，保留该行
+            if (!skipMode) {
+                result.push(line);
+            }
+        }
+
+        if (!deleted) {
+            return res.status(404).json({ error: '需求不存在' });
+        }
+
+        await fs.writeFile(PRD_FILE, result.join('\n'), 'utf-8');
+        res.json({ success: true, message: '需求已删除' });
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return res.status(404).json({ error: '需求文件不存在' });
+        }
+        console.error('Error deleting requirement:', error);
+        res.status(500).json({ error: '删除需求失败' });
+    }
+});
+
+/**
  * POST /api/requirement - 提交需求到需求池
  */
 app.post('/api/requirement', async (req, res) => {
