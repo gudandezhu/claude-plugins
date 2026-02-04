@@ -6,12 +6,8 @@
 
 set -e
 
-# 必须设置 AI_DOCS_PATH 环境变量
-if [ -z "$AI_DOCS_PATH" ]; then
-    echo "❌ 错误: AI_DOCS_PATH 环境变量未设置" >&2
-    exit 1
-fi
-
+# 支持 AI_DOCS_PATH 环境变量，或使用默认值
+AI_DOCS_PATH="${AI_DOCS_PATH:-$(pwd)/ai-docs}"
 PRD_FILE="$AI_DOCS_PATH/PRD.md"
 PLAN_FILE="$AI_DOCS_PATH/PLAN.md"
 
