@@ -135,44 +135,6 @@ EOF
 }
 EOF
             ;;
-        "ACCEPTANCE.md")
-            cat > "$doc_file" << 'EOF'
-# 任务验收报告 (ACCEPTANCE)
-
-## 验收标准
-
-### 功能验收
-- [ ] 功能符合需求描述
-- [ ] 所有用户场景通过
-- [ ] 边界情况处理正确
-
-### 质量验收
-- [ ] 单元测试覆盖率 ≥ 80%
-- [ ] 所有测试通过
-- [ ] 代码通过 Linting
-- [ ] 代码通过类型检查
-
-## 已完成任务
-
-暂无
-
-## 待验收任务
-
-- 无
-
-## 验收流程
-
-1. 开发人员完成任务开发
-2. 自动运行测试（覆盖率 ≥ 80%）
-3. AI 检查验收标准
-4. 记录验收结果到此文档
-
-## 质量指标
-
-- 测试覆盖率目标: ≥ 80%
-- 代码通过率目标: 100%
-EOF
-            ;;
         "BUGS.md")
             cat > "$doc_file" << 'EOF'
 # Bug 列表 (BUGS)
@@ -371,7 +333,7 @@ echo ""
 echo "创建文档模板..."
 
 # 必需文档
-required_docs=("TASKS.json" "ACCEPTANCE.md" "BUGS.md")
+required_docs=("TASKS.json" "BUGS.md")
 # 可选文档
 optional_docs=("PRD.md" "OPS.md" "CONTEXT.md" "API.md" "PLAN.md")
 

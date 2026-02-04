@@ -21,7 +21,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
 
 这将创建：
 - `ai-docs/` 目录
-- 文档模板（PLAN.md, ACCEPTANCE.md, BUGS.md, PRD.md 等）
+- 文档模板（PLAN.md, BUGS.md, PRD.md 等）
 
 **如果目录已存在，跳过此步骤。**
 
@@ -31,12 +31,17 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/init-project.sh
 
 **重要：无论 session 是否恢复，每次执行 /agile-start 都必须执行此步骤！**
 
-1. 检查并启动 Dashboard：
+1. **设置环境变量**（必需）：
+```bash
+export AI_DOCS_PATH="$(pwd)/ai-docs"
+```
+
+2. 检查并启动 Dashboard：
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh "$(pwd)"
 ```
-2. Dashboard 将根据可用端口动态分配（默认 3737）
-3. 服务器将读取 `ai-docs/TASKS.json` 作为数据源
+3. Dashboard 将根据可用端口动态分配（默认 3737）
+4. 服务器将读取 `ai-docs/TASKS.json` 作为数据源
 
 **每次执行 /agile-start 时，必须确保完成此步骤才能继续！**
 
@@ -64,76 +69,11 @@ echo "📊 健康检查: http://localhost:3737/health"
 **执行方式**：在工具调用中使用 `Skill` 工具，参数为：
 - `skill`: `agile-flow:agile-flow-engine`
 
-Skill 将自动执行：
-- 读取需求池（PRD.md）
-- 自动评估优先级
-- 转换为任务到 TASKS.json
-- 持续执行任务流转（开发→测试→验收）
-- 自动测试验收
-- 循环处理下一个任务
-- **完全自动化，无需人工干预**
-
 **重要**：
 - ✅ 必须使用 Skill 工具调用
 - ✅ 不要跳过此步骤
 - ✅ Skill 会持续运行直到所有任务完成
 - ✅ 使用 `/agile-stop` 停止流程
-
-## 输出结果
-
-### 首次启动
-```
-✅ 项目结构已创建
-✅ 文档模板已创建
-✅ Web Dashboard 已启动 (PID: 12345)
-
-🌐 Dashboard: http://localhost:3737
-📊 健康检查: http://localhost:3737/health
-🚀 自动化流程已启动
-
-💡 提示：
-  - 在 Dashboard 提交需求
-  - 流程自动运行，无需暂停
-  - 使用 /agile-stop 停止流程
-  - 日志文件: ${AI_DOCS_PATH}/.logs/server.log
-```
-
-### 已有项目
-```
-🌐 Dashboard: http://localhost:3737
-🚀 自动化流程已恢复
-
-📊 当前进度:
-  - 迭代: 1
-  - 待办: 3 个
-  - 进行中: 1 个
-  - 已完成: 5 个
-
-🔄 自动化流程正在运行...
-```
-
-### 启动失败
-```
-❌ 启动失败
-
-📋 诊断步骤：
-1. 检查端口: cat ${AI_DOCS_PATH}/.logs/server.port | xargs -I {} lsof -i:{}
-2. 查看日志: cat ${AI_DOCS_PATH}/.logs/server.log
-3. 检查进程: ps aux | grep "node.*server.js"
-
-💡 如需清理：
-   pkill -f "node.*server.js"
-   rm -f ${AI_DOCS_PATH}/.logs/server.pid
-```
-
-## 注意事项
-
-1. **完全自动化**：启动后 skill 将持续运行，无需人工干预
-2. **Web Dashboard**：用户通过 Web 界面提交需求和查看进度
-3. **Skill 驱动**：流程由 agile-flow-engine skill 管理
-4. **PID 管理**：使用 PID 文件管理服务器进程
-5. **日志记录**：服务器日志保存在 `ai-docs/.logs/server.log`
-6. **使用 /agile-stop**：停止整个流程（Dashboard + 自动化流程）
 
 ## 故障排除
 

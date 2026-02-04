@@ -43,7 +43,6 @@ def get_dashboard_api() -> str:
     port = get_dashboard_port()
     return f'http://127.0.0.1:{port}'
 
-
 class ProductObserverAgent:
     """产品观察者 Agent"""
 
