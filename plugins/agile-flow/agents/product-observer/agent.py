@@ -552,23 +552,40 @@ AI 分析: 启用
         # 立即执行一次
         await self.observe_once()
 
-        # 定时执行
+        # 定时执行（带异常处理）
         while True:
-            await asyncio.sleep(CHECK_INTERVAL)
-            await self.observe_once()
+            try:
+                await asyncio.sleep(CHECK_INTERVAL)
+                await self.observe_once()
+            except Exception as e:
+                print(f"\n❌ 分析循环异常: {type(e).__name__}: {e}", flush=True)
+                print(f"   将在 {CHECK_INTERVAL} 秒后重试...\n", flush=True)
+                # 等待后继续
+                await asyncio.sleep(CHECK_INTERVAL)
 
 
 async def main():
     """主入口"""
     agent = ProductObserverAgent()
 
-    try:
-        await agent.run()
-    except KeyboardInterrupt:
-        print("\n🛑 Product Observer Agent 停止\n", flush=True)
-    except Exception as e:
-        print(f"❌ Agent 异常: {e}", flush=True)
-        raise
+    while True:
+        try:
+            await agent.run()
+        except KeyboardInterrupt:
+            print("\n🛑 Product Observer Agent 停止\n", flush=True)
+            break
+        except Exception as e:
+            print(f"\n❌ Agent 发生异常: {e}", flush=True)
+            print(f"   异常类型: {type(e).__name__}", flush=True)
+            print(f"   Agent 将在 {CHECK_INTERVAL} 秒后重试...\n", flush=True)
+
+            # 等待后继续运行
+            try:
+                await asyncio.sleep(CHECK_INTERVAL)
+            except KeyboardInterrupt:
+                print("\n🛑 Product Observer Agent 停止\n", flush=True)
+                break
+            continue
 
 
 if __name__ == '__main__':
