@@ -1,7 +1,7 @@
 ---
 name: agile-start
-description: 启动完全自动化的敏捷开发流程
-argument-hint: 无需参数
+description: 启动完全自动化的敏捷开发流程（支持串行和并行模式）
+argument-hint: [parallel] - 可选，添加 'parallel' 参数启动并行模式
 allowed-tools: [Bash, Skill]
 ---
 
@@ -60,20 +60,39 @@ echo "📊 健康检查: http://localhost:3737/health"
 
 **必须执行！使用 Skill 工具启动自动化流程：**
 
-立即调用 `agile-flow:agile-flow-engine` skill：
+#### 模式选择
 
+**默认模式（串行）**：
 ```
 使用 Skill 工具调用 agile-flow:agile-flow-engine
 ```
-
-**执行方式**：在工具调用中使用 `Skill` 工具，参数为：
 - `skill`: `agile-flow:agile-flow-engine`
+- 适合：小型项目、需要顺序执行的任务
+
+**并行模式**（高性能）：
+```
+使用 Skill 工具调用 agile-flow:agile-flow-engine-parallel
+```
+- `skill`: `agile-flow:agile-flow-engine-parallel`
+- 适合：中型/大型项目、任务可并行执行
+- 性能提升：约 2-3 倍（MAX_PARALLEL=3）
+
+**如何选择**：
+- 如果命令参数包含 `parallel`，使用并行模式
+- 否则使用默认的串行模式
 
 **重要**：
 - ✅ 必须使用 Skill 工具调用
 - ✅ 不要跳过此步骤
 - ✅ Skill 会持续运行直到所有任务完成
 - ✅ 使用 `/agile-stop` 停止流程
+
+#### 性能对比
+
+| 模式 | 10个任务 (每个10分钟) | 适用场景 |
+|------|----------------------|----------|
+| 串行 | 100分钟 | 小型项目、顺序依赖 |
+| 并行(3) | ~35分钟 | 中型项目、独立任务 |
 
 ## 故障排除
 
