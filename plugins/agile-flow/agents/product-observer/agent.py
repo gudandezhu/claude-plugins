@@ -396,7 +396,8 @@ class ProductObserverAgent:
 
         submitted_issues.add(issue_key)
         if len(submitted_issues) > MAX_ISSUE_MEMORY:
-            submitted_issues.pop(next(iter(submitted_issues)))
+            # set.pop() 不接受参数，随机删除一个元素
+            submitted_issues.pop()
 
         try:
             response = await self.http_client.post(
