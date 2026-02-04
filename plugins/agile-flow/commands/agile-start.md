@@ -1,14 +1,12 @@
 ---
 name: agile-start
-description: 启动敏捷开发流程（总并发=3，开发固定1个+测试1个+需求2个）
+description: 启动敏捷开发流程
 allowed-tools: [Bash, Skill]
 ---
 
 # Agile Start
 
 启动自动化敏捷开发流程（Web Dashboard + 流程引擎）。
-
-**总并发=3**：开发固定1个，测试最多1个，需求分析填充剩余配额。
 
 ## 执行步骤
 
@@ -29,20 +27,6 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh "$(pwd)"
 ### 3. 启动流程引擎
 
 使用 `Skill` 工具调用 `agile-flow:agile-flow-engine`
-
-## 并发策略
-
-```
-总并发 = 3
-├── 开发: 1 (固定)
-├── 测试: 0-1 (动态)
-└── 需求: 0-2 (填充剩余)
-```
-
-**关键规则**：
-- 开发固定1个（避免代码冲突）
-- 测试优先于需求
-- 任务完成后立即启动同类型的下一个
 
 ## 环境变量
 
