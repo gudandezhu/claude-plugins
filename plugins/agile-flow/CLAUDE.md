@@ -51,7 +51,7 @@
 
 ## 版本号管理
 
-修改以下文件后必须更新 `plugin.json` 版本号：
+修改以下文件后必须更新[marketplace.json](../../.claude-plugin/marketplace.json) 和[plugin.json](.claude-plugin/plugin.json) 版本号：
 
 - `commands/` - 添加或修改命令
 - `skills/` - 添加或修改技能
