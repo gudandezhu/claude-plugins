@@ -288,18 +288,28 @@ start_web_server() {
     fi
 }
 
-setup_web_dashboard() {
-    # 快速检查：如果服务已运行且文件完整，跳过所有操作
+stop_web_server() {
     if [[ -f "$WEB_PID_FILE" ]]; then
         local existing_pid
         existing_pid=$(cat "$WEB_PID_FILE")
         if is_process_running "$existing_pid"; then
-            log_info "Web Dashboard 已在运行 (PID: $existing_pid)"
-            return 0
+            log_info "正在停止 Web Dashboard (PID: $existing_pid)..."
+            kill "$existing_pid" 2>/dev/null || true
+            sleep 1
+            # 如果进程还在，强制杀死
+            if is_process_running "$existing_pid"; then
+                kill -9 "$existing_pid" 2>/dev/null || true
+                sleep 1
+            fi
+            log_success "Web Dashboard 已停止"
         fi
+        rm -f "$WEB_PID_FILE"
     fi
+}
 
-    # 服务未运行，执行启动流程
+setup_web_dashboard() {
+    # 每次都重启：先停止旧进程，再启动新进程
+    stop_web_server
     start_web_server
 }
 
@@ -399,10 +409,29 @@ start_product_observer() {
     cd - >/dev/null
 }
 
-setup_product_observer() {
-    if ! check_observer_running; then
-        start_product_observer
+stop_product_observer() {
+    if [[ -f "$OBSERVER_PID_FILE" ]]; then
+        local existing_pid
+        existing_pid=$(cat "$OBSERVER_PID_FILE")
+        if is_process_running "$existing_pid"; then
+            log_info "正在停止产品观察者 Agent (PID: $existing_pid)..."
+            kill "$existing_pid" 2>/dev/null || true
+            sleep 1
+            # 如果进程还在，强制杀死
+            if is_process_running "$existing_pid"; then
+                kill -9 "$existing_pid" 2>/dev/null || true
+                sleep 1
+            fi
+            log_success "产品观察者 Agent 已停止"
+        fi
+        rm -f "$OBSERVER_PID_FILE"
     fi
+}
+
+setup_product_observer() {
+    # 每次都重启：先停止旧进程，再启动新进程
+    stop_product_observer
+    start_product_observer
 }
 
 # ============================================
