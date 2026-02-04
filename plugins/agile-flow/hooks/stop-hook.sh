@@ -1,7 +1,7 @@
 #!/bin/bash
-# Stop Hook - 正常退出时的清理（仅在 /exit 等正常退出时触发）
+# Stop Hook - 清理 Web Dashboard（Observer 作为 subagent 自动清理）
 
-echo "执行 stop hook..."
+echo "执行 stop hook：清理自动化流程..."
 
 # 项目目录
 cd "${CLAUDE_PROJECT_DIR:-}" || exit 0
@@ -10,7 +10,6 @@ cd "${CLAUDE_PROJECT_DIR:-}" || exit 0
 readonly AI_DOCS_DIR="ai-docs"
 readonly LOGS_DIR="${AI_DOCS_DIR}/.logs"
 readonly WEB_PID_FILE="${LOGS_DIR}/server.pid"
-readonly OBSERVER_PID_FILE="${LOGS_DIR}/observer.pid"
 
 # 停止 Web Dashboard
 if [[ -f "$WEB_PID_FILE" ]]; then
@@ -20,6 +19,7 @@ if [[ -f "$WEB_PID_FILE" ]]; then
         echo "  🛑 停止 Web Dashboard (PID: $web_pid)..."
         kill "$web_pid" 2>/dev/null || true
         sleep 1
+        # 如果还在运行，强制杀死
         if kill -0 "$web_pid" 2>/dev/null; then
             kill -9 "$web_pid" 2>/dev/null || true
         fi
@@ -27,22 +27,7 @@ if [[ -f "$WEB_PID_FILE" ]]; then
     rm -f "$WEB_PID_FILE"
 fi
 
-# 停止 Observer Agent
-if [[ -f "$OBSERVER_PID_FILE" ]]; then
-    local observer_pid
-    observer_pid=$(cat "$OBSERVER_PID_FILE")
-    if kill -0 "$observer_pid" 2>/dev/null; then
-        echo "  👁️  停止 Observer Agent (PID: $observer_pid)..."
-        kill "$observer_pid" 2>/dev/null || true
-        sleep 1
-        if kill -0 "$observer_pid" 2>/dev/null; then
-            kill -9 "$observer_pid" 2>/dev/null || true
-        fi
-    fi
-    rm -f "$OBSERVER_PID_FILE"
-fi
-
-echo "✅ 自动化流程已清理"
+echo "✅ Web Dashboard 已清理（Observer 作为 subagent 自动退出）"
 
 # 如果有未完成的敏捷任务，提醒用户
 if [ -d "ai-docs" ]; then

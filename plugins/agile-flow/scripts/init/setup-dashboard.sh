@@ -314,20 +314,9 @@ setup_web_dashboard() {
 }
 
 # ============================================
-# Product Observer Functions
 # ============================================
-check_observer_running() {
-    if [[ -f "$OBSERVER_PID_FILE" ]]; then
-        local existing_pid
-        existing_pid=$(cat "$OBSERVER_PID_FILE")
-        if is_process_running "$existing_pid"; then
-            log_info "产品观察者 Agent 已在运行 (PID: $existing_pid)"
-            return 0
-        fi
-    fi
-    return 1
-}
-
+# Product Observer Functions (仅安装依赖)
+# ============================================
 install_observer_dependencies() {
     cd "$PRODUCT_OBSERVER_DIR"
 
@@ -355,106 +344,11 @@ install_observer_dependencies() {
     fi
 }
 
-start_product_observer() {
-    ensure_directory "$(dirname "$OBSERVER_PID_FILE")"
-
-    # 检查 Python 环境
-    check_command python3
-    check_python_version
-
-    # 安装依赖到项目环境
-    install_observer_dependencies || return 1
-
-    # 复制观察者脚本到项目目录（ai-docs/）
-    local observer_script="${AI_DOCS_DIR}/.observer.py"
-    cp "${PRODUCT_OBSERVER_DIR}/agent.py" "$observer_script"
-
-    # 从项目目录启动观察者（工作目录 = 项目根目录）
-    cd "$PROJECT_ROOT"
-
-    log_action "正在启动产品观察者 Agent..."
-    # 设置环境变量：AI_DOCS_PATH 和 API 密钥
-    # PYTHONUNBUFFERED=1 强制不缓冲输出
-    # 工作目录设置为项目根目录，脚本在项目本地
-    # 优先使用项目虚拟环境的 Python
-
-    # 确定使用哪个 Python
-    local venv_python="${PROJECT_ROOT}/.venv/bin/python"
-    local python_cmd="python3"
-    if [[ -f "$venv_python" ]]; then
-        python_cmd="$venv_python"
-        log_info "使用项目虚拟环境 Python"
-    fi
-
-    # 获取 Claude Code 主进程 PID（用于监控生命周期）
-    local claude_pid=""
-    claude_pid=$(pgrep -f "claude$" | head -1)
-    if [[ -n "$claude_pid" ]]; then
-        log_info "检测到 Claude Code 主进程 (PID: $claude_pid)"
-    else
-        log_warning "未检测到 Claude Code 主进程，Observer 可能无法自动退出"
-    fi
-
-    # 使用 env 命令确保环境变量正确传递到 nohup 子进程
-    env AI_DOCS_PATH="$AI_DOCS_DIR" \
-        ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
-        CLAUDE_PID="${claude_pid}" \
-        PYTHONUNBUFFERED=1 \
-        nohup "$python_cmd" -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
-    local observer_pid=$!
-    echo "$observer_pid" > "$OBSERVER_PID_FILE"
-
-    sleep 2
-
-    if is_process_running "$observer_pid"; then
-        log_success "产品观察者 Agent 已启动 (PID: $observer_pid)"
-        log_info "工作目录: $PROJECT_ROOT"
-        log_info "日志文件: $OBSERVER_LOG_FILE"
-    else
-        log_warning "产品观察者 Agent 启动失败，查看日志："
-        cat "$OBSERVER_LOG_FILE"
-        return 1
-    fi
-
-    cd - >/dev/null
-}
-
-stop_product_observer() {
-    if [[ -f "$OBSERVER_PID_FILE" ]]; then
-        local existing_pid
-        existing_pid=$(cat "$OBSERVER_PID_FILE")
-        if is_process_running "$existing_pid"; then
-            log_info "正在停止产品观察者 Agent (PID: $existing_pid)..."
-            kill "$existing_pid" 2>/dev/null || true
-            sleep 1
-            # 如果进程还在，强制杀死
-            if is_process_running "$existing_pid"; then
-                kill -9 "$existing_pid" 2>/dev/null || true
-                sleep 1
-            fi
-            log_success "产品观察者 Agent 已停止"
-        fi
-        rm -f "$OBSERVER_PID_FILE"
-    fi
-}
-
 setup_product_observer() {
-    # 每次都重启：确保使用最新代码和最新的 CLAUDE_PID
-    # Observer 会监控 Claude Code 进程，自动跟随退出
-    if [[ -f "$OBSERVER_PID_FILE" ]]; then
-        local existing_pid
-        existing_pid=$(cat "$OBSERVER_PID_FILE")
-        if is_process_running "$existing_pid"; then
-            log_info "停止旧的 Observer (PID: $existing_pid)，重新启动..."
-            stop_product_observer
-        fi
-    fi
-
-    # 启动新进程
-    start_product_observer
+    # 仅安装依赖，Observer 由 Task 工具作为 subagent 启动
+    install_observer_dependencies
+    log_info "Observer Agent 依赖已就绪，将由 Task 工具启动"
 }
-
-# ============================================
 # Cleanup on Signal (仅捕获脚本执行期间的信号)
 # ============================================
 cleanup_on_signal() {
@@ -486,12 +380,12 @@ main() {
     # 设置产品观察者 Agent
     setup_product_observer
 
-    log_success "✅ Dashboard 和 Observer 已启动"
+    log_success "✅ Web Dashboard 已启动"
     log_info ""
     log_info "📌 服务说明："
-    log_info "   • Web Dashboard：独立运行，每次启动会更新代码"
-    log_info "   • Observer Agent：监控 Claude Code 生命周期，自动跟随退出"
-    log_info "   • 如需手动停止，请执行: /agile-stop"
+    log_info "   • Web Dashboard：独立运行（端口: $server_port）"
+    log_info "   • Observer Agent：请使用 Task 工具作为后台 subagent 启动"
+    log_info "   • 如需停止，请执行: /agile-stop"
 }
 
 main "$@"
