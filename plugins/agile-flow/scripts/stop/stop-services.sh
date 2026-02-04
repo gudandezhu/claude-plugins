@@ -8,6 +8,12 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ============================================
+# Constants
+# ============================================
+declare -g SCRIPT_NAME
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+
+# ============================================
 # Usage
 # ============================================
 usage() {
@@ -31,31 +37,6 @@ EOF
 }
 
 # ============================================
-# Constants
-# ============================================
-
-# ============================================
-# Constants
-# ============================================
-declare -g SCRIPT_NAME
-SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
-
-# User project directory
-declare PROJECT_ROOT
-if [[ -n "${1:-}" ]]; then
-    PROJECT_ROOT="$(cd "$1" && pwd)" || exit 1
-else
-    PROJECT_ROOT="$(pwd)"
-fi
-declare -gr PROJECT_ROOT="$PROJECT_ROOT"
-
-readonly AI_DOCS_DIR="${PROJECT_ROOT}/ai-docs"
-readonly LOGS_DIR="${AI_DOCS_DIR}/.logs"
-readonly WEB_PID_FILE="${LOGS_DIR}/server.pid"
-readonly WEB_PORT_FILE="${LOGS_DIR}/server.port"
-readonly OBSERVER_PID_FILE="${LOGS_DIR}/observer.pid"
-
-# ============================================
 # Logging Functions
 # ============================================
 log_info() {
@@ -77,8 +58,6 @@ log_error() {
 log_action() {
     echo "🚀 $*"
 }
-
-# shellcheck source=/dev/null disable=SC2317
 
 # ============================================
 # Utility Functions
@@ -120,31 +99,37 @@ kill_process() {
 # Stop Functions
 # ============================================
 stop_web_server() {
-    if [[ -f "$WEB_PID_FILE" ]]; then
+    local web_pid_file="$1"
+
+    if [[ -f "$web_pid_file" ]]; then
         local pid
-        pid=$(cat "$WEB_PID_FILE")
+        pid=$(cat "$web_pid_file")
         kill_process "$pid" "Web Dashboard"
-        rm -f "$WEB_PID_FILE"
+        rm -f "$web_pid_file"
     else
         echo "ℹ️  未找到 Web Dashboard PID 文件"
     fi
 }
 
 stop_observer() {
-    if [[ -f "$OBSERVER_PID_FILE" ]]; then
+    local observer_pid_file="$1"
+
+    if [[ -f "$observer_pid_file" ]]; then
         local pid
-        pid=$(cat "$OBSERVER_PID_FILE")
+        pid=$(cat "$observer_pid_file")
         kill_process "$pid" "Observer Agent"
-        rm -f "$OBSERVER_PID_FILE"
+        rm -f "$observer_pid_file"
     else
         echo "ℹ️  未找到 Observer Agent PID 文件"
     fi
 }
 
 cleanup_port() {
-    if [[ -f "$WEB_PORT_FILE" ]]; then
+    local web_port_file="$1"
+
+    if [[ -f "$web_port_file" ]]; then
         local port
-        port=$(cat "$WEB_PORT_FILE")
+        port=$(cat "$web_port_file")
 
         if lsof -i:"$port" >/dev/null 2>&1; then
             echo "⚠️  端口 ${port} 仍被占用，强制清理..."
@@ -159,17 +144,16 @@ cleanup_port() {
             fi
         fi
 
-        rm -f "$WEB_PORT_FILE"
+        rm -f "$web_port_file"
     fi
 }
 
 verify_stop() {
-    local remaining=0
     local project_dir="$1"
+    local remaining=0
 
     # 检查 Web Dashboard（限制在项目目录内）
     if pgrep -f "node.*server.js" >/dev/null 2>&1; then
-        # 只显示项目相关的进程
         local pids
         pids=$(pgrep -f "node.*server.js" 2>/dev/null | while read -r pid; do
             if [[ -d "/proc/$pid" ]]; then
@@ -221,7 +205,8 @@ verify_stop() {
 # Main Function
 # ============================================
 main() {
-    # Parse arguments (必须在 PROJECT_ROOT 设置前)
+    # Parse arguments
+    local project_dir=""
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -h|--help)
@@ -233,27 +218,33 @@ main() {
                 shift
                 ;;
             *)
-                # 保存项目路径供后续使用
-                PROJECT_ROOT="$1"
+                project_dir="$1"
                 shift
                 ;;
         esac
     done
 
     # 如果没有通过参数指定，使用当前目录
-    if [[ -z "$PROJECT_ROOT" ]]; then
-        PROJECT_ROOT="$(pwd)"
+    if [[ -z "$project_dir" ]]; then
+        project_dir="$(pwd)"
     fi
 
-    # Validate project directory
-    if [[ ! -d "$PROJECT_ROOT" ]]; then
-        log_error "项目目录不存在: $PROJECT_ROOT"
+    # 验证项目目录
+    if [[ ! -d "$project_dir" ]]; then
+        log_error "项目目录不存在: $project_dir"
         exit 1
     fi
 
-    # Validate ai-docs directory
-    if [[ ! -d "$AI_DOCS_DIR" ]]; then
-        log_error "ai-docs 目录不存在: $AI_DOCS_DIR"
+    # 设置路径
+    local ai_docs_dir="${project_dir}/ai-docs"
+    local logs_dir="${ai_docs_dir}/.logs"
+    local web_pid_file="${logs_dir}/server.pid"
+    local web_port_file="${logs_dir}/server.port"
+    local observer_pid_file="${logs_dir}/observer.pid"
+
+    # 验证 ai-docs 目录
+    if [[ ! -d "$ai_docs_dir" ]]; then
+        log_error "ai-docs 目录不存在: $ai_docs_dir"
         log_error "请确认项目路径正确，或使用: AI_DOCS_PATH=/custom/path $SCRIPT_NAME"
         exit 1
     fi
@@ -261,21 +252,21 @@ main() {
     echo ""
     echo "⏹️  停止 Agile Flow 自动化流程"
     echo "======================================"
-    echo "项目: $PROJECT_ROOT"
+    echo "项目: $project_dir"
     echo ""
 
     # 停止服务
-    stop_web_server
+    stop_web_server "$web_pid_file"
     echo ""
-    stop_observer
+    stop_observer "$observer_pid_file"
     echo ""
 
     # 清理端口
-    cleanup_port
+    cleanup_port "$web_port_file"
     echo ""
 
     # 验证
-    if verify_stop "$PROJECT_ROOT"; then
+    if verify_stop "$project_dir"; then
         echo ""
         echo "⏹️  Agile Flow 已停止"
         echo ""
