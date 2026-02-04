@@ -124,7 +124,10 @@ def main_loop():
             slots_available -= 1
             print(f"  📋 启动需求: {task.id}")
 
-        # 6. 显示当前状态
+        # 6. 显示当前状态（重新统计）
+        dev_count = count_by_type(running, "dev")
+        test_count = count_by_type(running, "test")
+        req_count = count_by_type(running, "requirement")
         print(f"\n🔄 运行中: {len(running)}/{MAX_CONCURRENT}")
         print(f"   开发: {dev_count}, 测试: {test_count}, 需求: {req_count}")
 
