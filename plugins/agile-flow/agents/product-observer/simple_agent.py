@@ -215,67 +215,53 @@ class ProductObserverAgent:
 没有问题则返回 []。"""
 
         # 调用 Claude SDK（添加超时控制）
-        try:
-            result_text = ""
-            query_task = None
+        result_text = ""
 
-            # 创建异步任务并设置超时
+        try:
             async def run_query():
                 nonlocal result_text
-                try:
-                    async for message in query(
-                        prompt=prompt,
-                        options=ClaudeAgentOptions(
-                            model="claude-sonnet-4-5-20250929"
-                        )
-                    ):
-                        if hasattr(message, 'result') and message.result:
-                            result_text = str(message.result)
-                            break
-                        elif hasattr(message, 'content') and message.content:
-                            for block in message.content:
-                                if hasattr(block, 'text'):
-                                    result_text = block.text
-                                    break
-                            if result_text:
+                async for message in query(
+                    prompt=prompt,
+                    options=ClaudeAgentOptions(
+                        model="claude-sonnet-4-5-20250929"
+                    )
+                ):
+                    if hasattr(message, 'result') and message.result:
+                        result_text = str(message.result)
+                        break
+                    elif hasattr(message, 'content') and message.content:
+                        for block in message.content:
+                            if hasattr(block, 'text'):
+                                result_text = block.text
                                 break
-                except Exception as e:
-                    print(f"    ⚠️  SDK 内部错误: {e}", flush=True)
-                    raise
+                        if result_text:
+                            break
 
-            # 使用 wait_for 添加超时
-            query_task = asyncio.create_task(run_query())
-            try:
-                await asyncio.wait_for(query_task, timeout=60.0)  # 60秒超时
-            except asyncio.TimeoutError:
-                print("    ⚠️  AI 分析超时（60秒），使用基础分析", flush=True)
-                if query_task and not query_task.done():
-                    query_task.cancel()
-                    try:
-                        await query_task
-                    except:
-                        pass
-                return []
+            # 使用 wait_for 添加超时（避免跨任务取消问题）
+            await asyncio.wait_for(run_query(), timeout=60.0)
 
-            # 解析结果
-            if result_text:
-                try:
-                    # 提取 JSON
-                    import re
-                    json_match = re.search(r'\[.*\]', result_text, re.DOTALL)
-                    if json_match:
-                        issues_json = json_match.group(0)
-                        issues = json.loads(issues_json)
-                        print(f"    ✓ AI 发现 {len(issues)} 个问题", flush=True)
-                except json.JSONDecodeError as e:
-                    print(f"    ⚠️  AI 返回格式错误: {e}", flush=True)
-
+        except asyncio.TimeoutError:
+            print("    ⚠️  AI 分析超时（60秒），使用基础分析", flush=True)
+            return []
         except asyncio.CancelledError:
             print("    ⚠️  AI 分析被取消，使用基础分析", flush=True)
             return []
         except Exception as e:
-            print(f"    ⚠️  AI SDK 调用失败: {e}，使用基础分析", flush=True)
+            print(f"    ⚠️  AI SDK 调用失败: {type(e).__name__}，使用基础分析", flush=True)
             return []
+
+        # 解析结果
+        if result_text:
+            try:
+                # 提取 JSON
+                import re
+                json_match = re.search(r'\[.*\]', result_text, re.DOTALL)
+                if json_match:
+                    issues_json = json_match.group(0)
+                    issues = json.loads(issues_json)
+                    print(f"    ✓ AI 发现 {len(issues)} 个问题", flush=True)
+            except json.JSONDecodeError as e:
+                print(f"    ⚠️  AI 返回格式错误: {e}", flush=True)
 
         return issues
 
