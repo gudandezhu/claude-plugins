@@ -10,6 +10,7 @@
     {
       "name": "agile-flow",
       "source": "./plugins/agile-flow",
+      "version": "5.3.3",
       "description": "AI驱动的敏捷开发闭环插件：Stop hook持续运行、TDD开发、自动化测试、进度看板、三层存储架构",
       "author": {
         "name": "agile-flow"
