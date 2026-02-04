@@ -71,6 +71,18 @@ kill_process() {
     local pid="$1"
     local name="$2"
 
+    # 验证 PID 是否为空
+    if [[ -z "$pid" ]]; then
+        echo "ℹ️  ${name} PID 为空，跳过"
+        return 0
+    fi
+
+    # 验证 PID 是否为数字
+    if ! [[ "$pid" =~ ^[0-9]+$ ]]; then
+        echo "⚠️  ${name} PID 无效: $pid"
+        return 1
+    fi
+
     if is_process_running "$pid"; then
         echo "🛑 停止 ${name} (PID: $pid)"
         kill "$pid" 2>/dev/null || true
@@ -91,7 +103,7 @@ kill_process() {
 
         echo "✅ ${name} 已停止"
     else
-        echo "⚠️  ${name} 进程不存在 (PID: $pid)"
+        echo "ℹ️  ${name} 进程已停止 (PID: $pid)"
     fi
 }
 
@@ -103,8 +115,13 @@ stop_web_server() {
 
     if [[ -f "$web_pid_file" ]]; then
         local pid
-        pid=$(cat "$web_pid_file")
-        kill_process "$pid" "Web Dashboard"
+        pid=$(cat "$web_pid_file" 2>/dev/null || echo "")
+
+        if [[ -n "$pid" ]]; then
+            kill_process "$pid" "Web Dashboard"
+        fi
+
+        # 无论成功失败，都删除 PID 文件
         rm -f "$web_pid_file"
     else
         echo "ℹ️  未找到 Web Dashboard PID 文件"
@@ -116,8 +133,13 @@ stop_observer() {
 
     if [[ -f "$observer_pid_file" ]]; then
         local pid
-        pid=$(cat "$observer_pid_file")
-        kill_process "$pid" "Observer Agent"
+        pid=$(cat "$observer_pid_file" 2>/dev/null || echo "")
+
+        if [[ -n "$pid" ]]; then
+            kill_process "$pid" "Observer Agent"
+        fi
+
+        # 无论成功失败，都删除 PID 文件
         rm -f "$observer_pid_file"
     else
         echo "ℹ️  未找到 Observer Agent PID 文件"
