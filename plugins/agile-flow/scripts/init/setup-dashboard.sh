@@ -429,8 +429,19 @@ stop_product_observer() {
 }
 
 setup_product_observer() {
-    # 每次都重启：先停止旧进程，再启动新进程
-    stop_product_observer
+    # 检查是否已运行，如果运行中则不重启
+    # Observer 可能正在执行分析，重启会中断
+    if [[ -f "$OBSERVER_PID_FILE" ]]; then
+        local existing_pid
+        existing_pid=$(cat "$OBSERVER_PID_FILE")
+        if is_process_running "$existing_pid"; then
+            log_info "产品观察者 Agent 已在运行 (PID: $existing_pid)"
+            log_info "  （不重启，避免中断正在进行的分析）"
+            return 0
+        fi
+    fi
+
+    # 未运行，启动新进程
     start_product_observer
 }
 
@@ -468,8 +479,10 @@ main() {
 
     log_success "✅ Dashboard 和 Observer 已启动"
     log_info ""
-    log_info "📌 注意：服务将独立运行，不随 Claude Code 退出而停止"
-    log_info "   如需停止服务，请执行: /agile-stop"
+    log_info "📌 服务说明："
+    log_info "   • Web Dashboard：独立运行，每次启动会更新代码"
+    log_info "   • Observer Agent：独立运行，避免重启中断分析"
+    log_info "   • 如需停止服务，请执行: /agile-stop"
 }
 
 main "$@"
