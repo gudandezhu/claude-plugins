@@ -150,288 +150,122 @@ testing_tasks=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list testing)
 # 注意：跳过 design 状态，需求分析完成后直接进入开发
 ```
 
-### 步骤 2：并行启动多个 subagent（核心）
+### 步骤 2：Subagent Prompt 模板
 
 **重要**：使用 `run_in_background=True` 实现真正的并行
 
-#### 需求分析 subagent
+#### 需求分析（填充剩余配额，最多 2 个）
 
 ```python
-for task in requirements_tasks[:MAX_PARALLEL]:
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"需求分析：{task.description}",
-        prompt=f"""
-分析项目需求并创建任务到 TASKS.json
-
-任务 ID: {task.id}
-需求内容: {task.description}
-
-环境变量：
-export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-**优先读取项目上下文**（第一步）：
-1. 读取 ai-docs/CONTEXT.md - 了解项目业务上下文
-2. 读取 ai-docs/TECH.md - 了解项目技术上下文
-
-步骤：
-1. 读取 CONTEXT.md 和 TECH.md，了解项目当前状态
-2. 读取 PRD.md
-3. 识别功能需求
-4. 评估优先级：
-   - P0: 紧急、关键、核心、阻塞、崩溃、安全、漏洞
-   - P1: 重要、优化、性能、体验、提升、改进
-   - P2: 默认优先级
-   - P3: 可选、建议、美化、调整、微调
-5. 使用 tasks.js add 创建任务
-6. 更新 CONTEXT.md
-
-完成后返回 JSON：
-{{
-  "task_id": "{task.id}",
-  "tasks_created": 数量,
-  "context_updated": true,
-  "summary": "简要总结"
-}}
-""",
-        run_in_background=True  # 关键：后台运行，真正并行
-    )
-    background_tasks.append(("requirement", task_id, task.id))
-    print(f"  🚀 启动需求分析: {task.id}")
-```
-
-#### TDD 开发 subagent（固定 1 个）
-
-```python
-# 开发：固定保持 1 个
-pending_tasks = get_tasks_by_status("pending")
-if pending_tasks and dev_count < 1:
-    task = pending_tasks[0]
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"TDD 开发：{task.description}",
-        prompt=f"""
-使用 TDD 流程完成任务：{task.description}
-
-任务 ID: {task.id}
-优先级: {task.priority}
-
-环境变量：
-export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-**优先读取项目上下文**：
-1. 读取 ai-docs/CONTEXT.md - 了解项目业务上下文
-2. 读取 ai-docs/TECH.md - 了解项目技术上下文
-
-TDD 流程：
-1. TODO 规划（如果超过 20 行）
-2. 检查测试文件
-3. 运行测试（红）→ npm run test:unit 或 pytest
-4. 编写代码（绿）→ 使用 Skill 工具调用 /typescript 或 /python-development
-5. 重构
-6. 检查覆盖率 ≥ 80%
-7. 代码审核 → 使用 Skill 工具调用 /pr-review-toolkit:code-reviewer
-8. 更新任务状态 → node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update {task.id} testing
-
-完成后返回 JSON：
-{{
-  "task_id": "{task.id}",
-  "status": "testing" | "bug",
-  "context_update": "50字更新（保存到 CONTEXT.md）",
-  "bugs": ["BUG列表"]
-}}
-""",
-        run_in_background=True
-    )
-    background_tasks.append(("dev", task_id, task.id))
-    print(f"  💻 启动TDD开发: {task.id}")
-```
-
-#### E2E 测试 subagent（最多 1 个）
-
-```python
-# 测试：最多 1 个
-testing_tasks = get_tasks_by_status("testing")
-if testing_tasks and test_count < 1 and slots_available > 0:
-    task = testing_tasks[0]
-    task_id = Task(
-        subagent_type="general-purpose",
-        description=f"E2E 测试：{task.description}",
-        prompt=f"""
-使用 Playwright 进行 E2E 测试：{task.description}
-
-任务 ID: {task.id}
-
-环境变量：
-export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-**优先读取项目上下文**：
-1. 读取 ai-docs/CONTEXT.md - 了解项目业务上下文
-2. 读取 ai-docs/TECH.md - 了解项目技术上下文
-3. 读取 ai-docs/PRD.md - 了解需求详情
-
-步骤：
-1. 启动项目
-2. 使用 Playwright MCP 工具测试
-3. 检查控制台错误
-4. 如发现 BUG，记录到 BUGS.md
-5. 更新任务状态 → node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update {task.id} tested
-
-完成后返回 JSON：
-{{
-  "task_id": "{task.id}",
-  "status": "tested" | "bug",
-  "summary": "测试结果总结",
-  "bugs": ["BUG列表"]
-}}
-""",
-        run_in_background=True
-    )
-    running[task_id] = ("test", task.id)
-    slots_available -= 1
-    print(f"  🧪 启动测试: {task.id}")
-```
-
-#### 需求分析 subagent（填充剩余配额）
-
-```python
-# 需求：填充剩余配额（最多 2 个）
 while slots_available > 0:
     req_tasks = get_tasks_by_status("requirements")
-    if not req_tasks:
-        break
+    if not req_tasks: break
     task = req_tasks[0]
     task_id = Task(
         subagent_type="general-purpose",
         description=f"需求分析：{task.description}",
         prompt=f"""
-分析项目需求并创建任务到 TASKS.json
-
-任务 ID: {task.id}
-需求内容: {task.description}
-
-环境变量：
-export AI_DOCS_PATH="$(pwd)/ai-docs"
-
-**优先读取项目上下文**（第一步）：
-1. 读取 ai-docs/CONTEXT.md - 了解项目业务上下文
-2. 读取 ai-docs/TECH.md - 了解项目技术上下文
+任务 ID: {task.id}，需求内容: {task.description}
+环境变量：export AI_DOCS_PATH="$(pwd)/ai-docs"
 
 步骤：
-1. 读取 CONTEXT.md 和 TECH.md，了解项目当前状态
-2. 读取 PRD.md
-3. 识别功能需求
-4. 评估优先级：
-   - P0: 紧急、关键、核心、阻塞、崩溃、安全、漏洞
-   - P1: 重要、优化、性能、体验、提升、改进
-   - P2: 默认优先级
-   - P3: 可选、建议、美化、调整、微调
-5. 使用 tasks.js add 创建任务
-6. 更新 CONTEXT.md
+1. 读取 CONTEXT.md、TECH.md、PRD.md
+2. 评估优先级（P0紧急/P1重要/P2默认/P3可选）
+3. 使用 tasks.js add 创建任务
+4. 更新 CONTEXT.md
 
-完成后返回 JSON：
-{{
-  "task_id": "{task.id}",
-  "tasks_created": 数量,
-  "context_updated": true,
-  "summary": "简要总结"
-}}
+返回 JSON：{{"task_id": "{task.id}", "tasks_created": 数量, "summary": "总结"}}
 """,
         run_in_background=True
     )
     running[task_id] = ("requirement", task.id)
     slots_available -= 1
-    print(f"  📋 启动需求: {task.id}")
 ```
 
-### 步骤 3：清理已完成的任务并处理结果
+#### TDD 开发（固定 1 个）
 
 ```python
-import time
+if dev_count < 1 and (pending_tasks := get_tasks_by_status("pending")):
+    task = pending_tasks[0]
+    task_id = Task(
+        subagent_type="general-purpose",
+        description=f"TDD 开发：{task.description}",
+        prompt=f"""
+任务 ID: {task.id}，优先级: {task.priority}
+环境变量：export AI_DOCS_PATH="$(pwd)/ai-docs"
 
+TDD 流程：
+1. TODO 规划（>20行时）
+2. 检查测试 → 运行测试（红）→ 编写代码（绿）→ 重构
+3. 覆盖率 ≥ 80% → 代码审核（/pr-review-toolkit:code-reviewer）
+4. 更新状态：tasks.js update {task.id} testing
+
+返回 JSON：{{"task_id": "{task.id}", "status": "testing|bug", "summary": "总结"}}
+""",
+        run_in_background=True
+    )
+    running[task_id] = ("dev", task.id)
+    slots_available -= 1
+```
+
+#### E2E 测试（最多 1 个）
+
+```python
+if test_count < 1 and slots_available > 0 and (testing_tasks := get_tasks_by_status("testing")):
+    task = testing_tasks[0]
+    task_id = Task(
+        subagent_type="general-purpose",
+        description=f"E2E 测试：{task.description}",
+        prompt=f"""
+任务 ID: {task.id}
+环境变量：export AI_DOCS_PATH="$(pwd)/ai-docs"
+
+步骤：
+1. 启动项目 → Playwright MCP 测试 → 检查控制台错误
+2. BUG 记录到 BUGS.md
+3. 更新状态：tasks.js update {task.id} tested
+
+返回 JSON：{{"task_id": "{task.id}", "status": "tested|bug", "bugs": []}}
+""",
+        run_in_background=True
+    )
+    running[task_id] = ("test", task.id)
+    slots_available -= 1
+```
+
+### 步骤 3：清理已完成的任务
+
+```python
 def cleanup_finished(running):
-    """清理已完成的任务，返回新的 running 字典"""
+    """清理已完成的任务"""
     finished = []
-
     for task_id, (task_type, original_id) in running.items():
         try:
             result = TaskOutput(task_id=task_id, block=False, timeout=1000)
             if result is not None:
-                # 任务完成，处理结果
                 process_result(task_type, result, original_id)
                 finished.append(task_id)
-                type_emoji = {
-                    "requirement": "📋",
-                    "dev": "💻",
-                    "test": "🧪"
-                }
-                print(f"  {type_emoji.get(task_type, '✅')} 完成: {original_id}")
-        except:
-            # 任务仍在运行
-            pass
+                print(f"  {['📋','💻','🧪'][['requirement','dev','test'].index(task_type)]} 完成: {original_id}")
+        except: pass
 
-    # 移除已完成的任务
-    for task_id in finished:
-        del running[task_id]
-
+    for task_id in finished: del running[task_id]
     return running
 
 def process_result(task_type, result, original_id):
-    """处理任务完成后的结果"""
+    """处理任务结果"""
     task_id = result.get("task_id", original_id)
-
     if task_type == "requirement":
-        # 需求分析完成
-        if result.get("context_update"):
-            with open("ai-docs/CONTEXT.md", "a") as f:
-                f.write(f"\n{result['context_update']}\n")
-        # 更新任务状态 → pending（跳过 design，直接进入开发）
         Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} pending")
-
     elif task_type == "dev":
-        # TDD 开发完成
-        if result.get("context_update"):
-            with open("ai-docs/CONTEXT.md", "a") as f:
-                f.write(f"\n{result['context_update']}\n")
-        # 如果有 BUG，记录到 BUGS.md
-        if result.get("bugs"):
-            with open("ai-docs/BUGS.md", "a") as f:
-                for bug in result["bugs"]:
-                    f.write(f"- {bug}\n")
-        # 更新任务状态
-        new_status = result.get("status", "testing")
-        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {new_status}")
-
+        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {result.get('status','testing')}")
     elif task_type == "test":
-        # E2E 测试完成
-        if result.get("bugs"):
-            with open("ai-docs/BUGS.md", "a") as f:
-                for bug in result["bugs"]:
-                    f.write(f"- {bug}\n")
-        # 更新任务状态
-        new_status = "tested" if result.get("status") == "tested" else "bug"
-        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {new_status}")
+        Bash(command=f"node ${{CLAUDE_PLUGIN_ROOT}}/scripts/utils/tasks.js update {task_id} {result.get('status','tested')}")
 ```
 
-## 性能对比
-
-### 场景：12个任务（3需求 + 3开发 + 3测试）
-
-| 模式 | 总耗时 | 说明 |
-|------|--------|------|
-| 串行 | 90分钟 | 需求→开发→测试，每个10分钟 |
-| 持续并发(3) | 40分钟 | 开发固定1个，测试和需求动态填充 |
-
-**加速比：约 2.25 倍**
-
-## 输出格式
+## 输出示例
 
 ```
-🚀 敏捷开发流程 (总并发=3)
-
-🔄 运行中: 3/3
-   开发: 1, 测试: 1, 需求: 1
-
+🔄 运行中: 3/3 (开发:1, 测试:1, 需求:1)
 💻 启动开发: TASK-001
 🧪 启动测试: TEST-005
 📋 启动需求: REQ-003
@@ -439,93 +273,13 @@ def process_result(task_type, result, original_id):
 [5秒后]
 💻 完成: TASK-001
 🔄 运行中: 2/3
-   开发: 0, 测试: 1, 需求: 1
-
 💻 启动开发: TASK-002
-🔄 运行中: 3/3
-   开发: 1, 测试: 1, 需求: 1
-...
 ```
-
-## 核心原则
-
-1. **总并发限制 = 3**：严格遵守 API 并发限制
-2. **开发固定 1 个**：避免代码仓库混乱
-3. **动态资源分配**：任务完成后立即启动同类型的下一个
-4. **Subagent 隔离**：每个任务在独立的 subagent 中执行
-5. **完全自动化**：持续运行，不需要人工干预
 
 ## 注意事项
 
-1. **总并发数 = 3**：不是每个阶段 3 个
-2. **开发必须 1 个**：避免多开发导致代码冲突
-3. **使用 run_in_background=True**：所有 Task 调用必须设置此参数
-4. **使用 TaskOutput(block=False)**：非阻塞获取结果
-5. **持续监控**：每 5 秒检查一次任务状态
-6. **优先读取上下文**：每个 subagent 启动时，优先读取 CONTEXT.md 和 TECH.md
-
-## 最佳实践
-
-### 1. 并发度选择
-
-```
-API 限制 = 3: MAX_CONCURRENT = 3
-API 限制 = 5: MAX_CONCURRENT = 5
-```
-
-### 2. 资源分配策略
-
-```
-开发: 固定 1 个（必须）
-测试: 最多 1 个（优先）
-需求: 填充剩余（0-2 个）
-```
-
-### 3. 错误处理
-
-```python
-try:
-    result = TaskOutput(task_id=task_id, block=False, timeout=1000)
-except Exception as e:
-    print(f"⚠️  任务 {task_id} 异常: {e}")
-    # 标记任务失败
-    update_task_status(task_id, "failed")
-```
-
-## 监控与调试
-
-### 实时状态
-
-```python
-def show_status(running):
-    """显示当前运行状态"""
-    dev_count = count_by_type(running, "dev")
-    test_count = count_by_type(running, "test")
-    req_count = count_by_type(running, "requirement")
-
-    print(f"\n🔄 运行中: {len(running)}/{MAX_CONCURRENT}")
-    print(f"   开发: {dev_count}, 测试: {test_count}, 需求: {req_count}")
-
-    # 显示各任务详情
-    for task_id, (task_type, original_id) in running.items():
-        type_emoji = {
-            "requirement": "📋",
-            "dev": "💻",
-            "test": "🧪"
-        }
-        print(f"  {type_emoji.get(task_type, '🔄')} {original_id}: 运行中")
-```
-
-## 总结
-
-**核心改进**：
-1. **总并发限制 = 3**：严格遵守 API 并发限制
-2. **开发固定 1 个**：避免代码仓库冲突
-3. **动态资源分配**：任务完成后立即启动下一个
-4. **持续运行模式**：不是批次模式，而是持续监控
-5. **使用 run_in_background=True**：实现真正的并行
-
-**性能提升**：
-- 串行：需求 → 开发 → 测试，依次执行
-- 持续并发：开发固定 + 测试需求动态填充
-- 加速比：约 2-3 倍（取决于任务分布）
+1. **总并发=3**：不是每个阶段3个
+2. **开发固定1个**：避免代码冲突
+3. **使用 `run_in_background=True`**
+4. **使用 `TaskOutput(block=False)`**
+5. **每5秒检查一次状态**
