@@ -386,9 +386,19 @@ start_product_observer() {
         log_info "使用项目虚拟环境 Python"
     fi
 
+    # 获取 Claude Code 主进程 PID（用于监控生命周期）
+    local claude_pid=""
+    claude_pid=$(pgrep -f "claude$" | head -1)
+    if [[ -n "$claude_pid" ]]; then
+        log_info "检测到 Claude Code 主进程 (PID: $claude_pid)"
+    else
+        log_warning "未检测到 Claude Code 主进程，Observer 可能无法自动退出"
+    fi
+
     # 使用 env 命令确保环境变量正确传递到 nohup 子进程
     env AI_DOCS_PATH="$AI_DOCS_DIR" \
         ANTHROPIC_API_KEY="${ANTHROPIC_AUTH_TOKEN:-}" \
+        CLAUDE_PID="${claude_pid}" \
         PYTHONUNBUFFERED=1 \
         nohup "$python_cmd" -u "$observer_script" > "$OBSERVER_LOG_FILE" 2>&1 &
     local observer_pid=$!
@@ -429,19 +439,18 @@ stop_product_observer() {
 }
 
 setup_product_observer() {
-    # 检查是否已运行，如果运行中则不重启
-    # Observer 可能正在执行分析，重启会中断
+    # 每次都重启：确保使用最新代码和最新的 CLAUDE_PID
+    # Observer 会监控 Claude Code 进程，自动跟随退出
     if [[ -f "$OBSERVER_PID_FILE" ]]; then
         local existing_pid
         existing_pid=$(cat "$OBSERVER_PID_FILE")
         if is_process_running "$existing_pid"; then
-            log_info "产品观察者 Agent 已在运行 (PID: $existing_pid)"
-            log_info "  （不重启，避免中断正在进行的分析）"
-            return 0
+            log_info "停止旧的 Observer (PID: $existing_pid)，重新启动..."
+            stop_product_observer
         fi
     fi
 
-    # 未运行，启动新进程
+    # 启动新进程
     start_product_observer
 }
 
@@ -481,8 +490,8 @@ main() {
     log_info ""
     log_info "📌 服务说明："
     log_info "   • Web Dashboard：独立运行，每次启动会更新代码"
-    log_info "   • Observer Agent：独立运行，避免重启中断分析"
-    log_info "   • 如需停止服务，请执行: /agile-stop"
+    log_info "   • Observer Agent：监控 Claude Code 生命周期，自动跟随退出"
+    log_info "   • 如需手动停止，请执行: /agile-stop"
 }
 
 main "$@"

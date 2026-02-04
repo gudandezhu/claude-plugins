@@ -26,6 +26,9 @@ CHECK_INTERVAL = 120  # 检查间隔（秒）
 AI_DOCS_PATH = os.environ.get('AI_DOCS_PATH', '')
 PROJECT_PATH = str(Path(AI_DOCS_PATH).parent) if AI_DOCS_PATH else ''
 
+# Claude Code 主进程 PID（用于监控生命周期）
+CLAUDE_PID = os.environ.get('CLAUDE_PID', '')
+
 # 已提交的问题（去重）
 submitted_issues = set()
 MAX_ISSUE_MEMORY = 100
@@ -520,6 +523,9 @@ AI 分析: 启用
             dashboard_api=self.dashboard_api,
             CHECK_INTERVAL=CHECK_INTERVAL
         ), flush=True)
+
+        # 启动 Claude Code 进程监控
+        asyncio.create_task(self._monitor_claude_process())
 
         # 立即执行一次
         await self.observe_once()
