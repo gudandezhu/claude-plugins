@@ -11,12 +11,8 @@
 
 set -e
 
-# 必须设置 AI_DOCS_PATH 环境变量
-if [ -z "$AI_DOCS_PATH" ]; then
-    echo "❌ 错误: AI_DOCS_PATH 环境变量未设置" >&2
-    exit 1
-fi
-
+# 支持 AI_DOCS_PATH 环境变量，或使用默认值
+AI_DOCS_PATH="${AI_DOCS_PATH:-$(pwd)/ai-docs}"
 TASKS_FILE="$AI_DOCS_PATH/TASKS.json"
 
 # 确保 TASKS.json 存在

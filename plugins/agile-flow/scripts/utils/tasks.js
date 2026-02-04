@@ -7,13 +7,9 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// 必须设置 AI_DOCS_PATH 环境变量
-if (!process.env.AI_DOCS_PATH) {
-    console.error('错误: AI_DOCS_PATH 环境变量未设置');
-    process.exit(1);
-}
-
-const TASKS_FILE = path.join(process.env.AI_DOCS_PATH, 'TASKS.json');
+// 支持 AI_DOCS_PATH 环境变量，或使用默认值
+const AI_DOCS_PATH = process.env.AI_DOCS_PATH || path.join(process.cwd(), 'ai-docs');
+const TASKS_FILE = path.join(AI_DOCS_PATH, 'TASKS.json');
 
 /**
  * 确保 TASKS.json 存在
