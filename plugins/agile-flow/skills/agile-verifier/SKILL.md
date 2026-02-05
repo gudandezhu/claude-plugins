@@ -36,7 +36,7 @@ version: 8.0.0
    - 通过 → `completed`
    - 失败 → `bug` + 记录到 `ai-docs/docs/BUGS.md`
 
-6. 生成报告 `ai-docs/docs/VERIFICATION_REPORT.md`
+6. 生成报告 `ai-docs/docs/VERIFICATION_REPORT-{第几次迭代}.md`
 
 ## 输出
 

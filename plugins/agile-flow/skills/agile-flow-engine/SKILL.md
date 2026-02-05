@@ -8,13 +8,6 @@ version: 8.0.0
 
 顺序执行 3 个 agent：Planner → Builder → Verifier。
 
-## 环境变量
-
-```bash
-export AI_DOCS_PATH="$(pwd)/ai-docs"
-export CLAUDE_PLUGIN_ROOT="/data/project/claude-plugins/plugins/agile-flow"
-```
-
 ## 执行步骤
 
 1. **检查需求文档**：`ai-docs/REQUIREMENTS.md`
@@ -28,7 +21,7 @@ export CLAUDE_PLUGIN_ROOT="/data/project/claude-plugins/plugins/agile-flow"
 3. **执行 3 个 Agent**（顺序调用 skill）：
    - `agile-planner` - 分析需求，生成任务
    - `agile-builder` - TDD 开发
-   - `agile-verifier` - E2E 验证
+   - `agile-verifier` - 回归和集成测试
 
 4. **显示总结**：
    ```
@@ -42,3 +35,8 @@ export CLAUDE_PLUGIN_ROOT="/data/project/claude-plugins/plugins/agile-flow"
 ## 停止
 
 执行完 3 个 agent 后自动退出，Dashboard 继续运行，用 `/agile-stop` 停止。
+
+## 说明
+
+- `${CLAUDE_PLUGIN_ROOT}` - Claude Code 自动设置，指向插件根目录
+- `ai-docs/` - 项目数据目录，自动检测或使用当前目录
