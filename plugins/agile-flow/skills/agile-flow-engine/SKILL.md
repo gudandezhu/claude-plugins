@@ -12,10 +12,9 @@ version: 8.0.0
 
 1. **检查需求文档**：`ai-docs/REQUIREMENTS.md`
 
-2. **启动 Dashboard**：
+2. **设置并启动 Dashboard**：
    ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/web/server.js &
-   echo $! > ai-docs/run/dashboard.pid
+   ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh
    ```
 
 3. **执行 3 个 Agent**（顺序调用 skill）：
@@ -38,5 +37,6 @@ version: 8.0.0
 
 ## 说明
 
-- `${CLAUDE_PLUGIN_ROOT}` - Claude Code 自动设置，指向插件根目录
-- `ai-docs/` - 项目数据目录，自动检测或使用当前目录
+- `setup-dashboard.sh` 会将 dashboard 复制到 `ai-docs/` 并启动
+- Dashboard 在项目层面运行，访问地址见日志输出
+- `${CLAUDE_PLUGIN_ROOT}` 由 Claude Code 自动设置
