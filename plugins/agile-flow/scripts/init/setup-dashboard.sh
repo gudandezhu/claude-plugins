@@ -60,13 +60,11 @@ fi
 readonly WEB_SERVER_DEFAULT_PORT=3737
 
 # File paths in user project
-readonly LOGS_DIR="${AI_DOCS_DIR}/.logs"
-readonly WEB_PORT_FILE="${LOGS_DIR}/server.port"
-readonly OBSERVER_PORT_FILE="${LOGS_DIR}/observer.port"  # 预留，未来可能需要
-readonly WEB_PID_FILE="${LOGS_DIR}/server.pid"
+readonly LOGS_DIR="${AI_DOCS_DIR}/logs"
+readonly RUN_DIR="${AI_DOCS_DIR}/run"
+readonly WEB_PORT_FILE="${RUN_DIR}/server.port"
+readonly WEB_PID_FILE="${RUN_DIR}/server.pid"
 readonly WEB_LOG_FILE="${LOGS_DIR}/server.log"
-readonly OBSERVER_PID_FILE="${LOGS_DIR}/observer.pid"
-readonly OBSERVER_LOG_FILE="${LOGS_DIR}/observer.log"
 
 # Process commands
 readonly NODE_PROCESS_PATTERN="node.*server\.js"
@@ -251,6 +249,7 @@ cleanup_web_port() {
 
 start_web_server() {
     ensure_directory "$LOGS_DIR"
+    ensure_directory "$RUN_DIR"
 
     setup_web_server_files
     cd "$AI_DOCS_DIR"

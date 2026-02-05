@@ -7,7 +7,7 @@ allowed-tools: [Bash]
 
 # Agile Stop
 
-停止自动化敏捷开发流程（Web Dashboard + Observer）。
+停止自动化敏捷开发流程（Web Dashboard）。
 
 ## 快速停止
 
@@ -22,7 +22,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/stop/stop-services.sh
 ### 1. 停止 Web Dashboard
 
 ```bash
-WEB_PID_FILE="${AI_DOCS_PATH}/.logs/server.pid"
+WEB_PID_FILE="${AI_DOCS_PATH}/run/server.pid"
 if [[ -f "$WEB_PID_FILE" ]]; then
     WEB_PID=$(cat "$WEB_PID_FILE")
     kill $WEB_PID 2>/dev/null || true
@@ -32,23 +32,10 @@ if [[ -f "$WEB_PID_FILE" ]]; then
 fi
 ```
 
-### 2. 停止 Observer Agent
+### 2. 清理端口
 
 ```bash
-OBSERVER_PID_FILE="${AI_DOCS_PATH}/.logs/observer.pid"
-if [[ -f "$OBSERVER_PID_FILE" ]]; then
-    OBSERVER_PID=$(cat "$OBSERVER_PID_FILE")
-    kill $OBSERVER_PID 2>/dev/null || true
-    sleep 1
-    kill -9 $OBSERVER_PID 2>/dev/null || true
-    rm -f "$OBSERVER_PID_FILE"
-fi
-```
-
-### 3. 清理端口
-
-```bash
-PORT_FILE="${AI_DOCS_PATH}/.logs/server.port"
+PORT_FILE="${AI_DOCS_PATH}/run/server.port"
 if [[ -f "$PORT_FILE" ]]; then
     PORT=$(cat "$PORT_FILE")
     lsof -ti:$PORT | xargs kill -9 2>/dev/null || true
@@ -65,8 +52,6 @@ fi
 🛑 停止 Web Dashboard (PID: 12345)
 ✅ Web Dashboard 已停止
 
-ℹ️  未找到 Observer Agent PID 文件
-
 ✅ 所有进程已停止
 
 ⏹️  Agile Flow 已停止
@@ -81,10 +66,8 @@ fi
 ```bash
 # 强制停止所有相关进程
 pkill -9 -f "node.*server.js"
-pkill -9 -f "observer.*agent.py"
 
 # 清理文件
-rm -f ai-docs/.logs/server.pid
-rm -f ai-docs/.logs/server.port
-rm -f ai-docs/.logs/observer.pid
+rm -f ai-docs/run/server.pid
+rm -f ai-docs/run/server.port
 ```

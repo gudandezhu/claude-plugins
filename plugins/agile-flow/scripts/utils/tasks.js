@@ -64,7 +64,7 @@ function findAiDocsPath() {
 }
 
 const AI_DOCS_PATH = findAiDocsPath();
-const TASKS_FILE = path.join(AI_DOCS_PATH, 'TASKS.json');
+const TASKS_FILE = path.join(AI_DOCS_PATH, 'data', 'TASKS.json');
 
 /**
  * 确保 TASKS.json 存在

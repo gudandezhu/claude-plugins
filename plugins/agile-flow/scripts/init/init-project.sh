@@ -12,8 +12,11 @@ NC='\033[0m'
 
 echo "=== 初始化 Agile Flow 项目 ==="
 
-# 确保 ai-docs 目录存在
-mkdir -p ai-docs
+# 创建新的目录结构
+mkdir -p ai-docs/docs      # 文档目录
+mkdir -p ai-docs/data      # 数据文件目录
+mkdir -p ai-docs/logs      # 日志目录
+mkdir -p ai-docs/run       # 运行时文件目录
 
 # 添加 ai-docs 到 .gitignore
 if [ -f ".gitignore" ]; then
@@ -32,7 +35,7 @@ fi
 # 文档模板创建函数
 create_doc_template() {
     local doc_name=$1
-    local doc_file="ai-docs/$doc_name"
+    local doc_file="ai-docs/docs/$doc_name"
 
     if [ -f "$doc_file" ]; then
         echo "  ✓ $doc_name 已存在，跳过"
@@ -97,14 +100,6 @@ create_doc_template() {
 
 ### 依赖
 - 外部依赖 1
-EOF
-            ;;
-        "TASKS.json")
-            cat > "$doc_file" << 'EOF'
-{
-  "iteration": 1,
-  "tasks": []
-}
 EOF
             ;;
         "BUGS.md")
@@ -304,8 +299,21 @@ done
 echo ""
 echo "创建文档模板..."
 
+# 数据文件（放到 data/ 目录）
+if [ ! -f "ai-docs/data/TASKS.json" ]; then
+    cat > ai-docs/data/TASKS.json << 'EOF'
+{
+  "iteration": 1,
+  "tasks": []
+}
+EOF
+    echo "  + TASKS.json 已创建"
+else
+    echo "  ✓ TASKS.json 已存在，跳过"
+fi
+
 # 必需文档
-required_docs=("TASKS.json" "BUGS.md")
+required_docs=("BUGS.md")
 # 可选文档
 optional_docs=("PRD.md" "OPS.md" "CONTEXT.md" "API.md" "PLAN.md")
 
@@ -321,8 +329,10 @@ echo ""
 echo -e "${GREEN}✅ 项目初始化完成${NC}"
 echo ""
 echo "💡 提示："
-echo "  - 所有文档位于 ai-docs/ 目录"
-echo "  - 任务数据: ai-docs/TASKS.json (不要手动编辑，使用工具脚本)"
+echo "  - 文档目录: ai-docs/docs/"
+echo "  - 数据文件: ai-docs/data/TASKS.json (不要手动编辑，使用工具脚本)"
+echo "  - 日志目录: ai-docs/logs/"
+echo "  - 运行时目录: ai-docs/run/"
 echo "  - 添加任务: node \${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add <P0|P1|P2|P3> \"描述\""
 echo "  - 查看进度: /agile-dashboard 或访问 http://localhost:3737"
-echo "  - 更多信息: 查看 ai-docs/OPS.md"
+echo "  - 更多信息: 查看 ai-docs/docs/OPS.md"

@@ -12,7 +12,7 @@ version: 5.1.0
 
 主循环逻辑：
 0. **检查引擎锁，防止重复启动**
-1. 读取slot状态文件（ai-docs/.slots.json）
+1. 读取slot状态文件（ai-docs/run/.slots.json）
 2. 为空闲slot启动subagent
 3. 等待5秒
 4. 检查完成的subagent并更新slot状态
@@ -25,10 +25,39 @@ version: 5.1.0
 
 | Slot | 数量 | 处理任务 | 使用的技能 |
 |------|------|----------|-----------|
-| 需求 | 1个 | PRD.md中未处理的需求 | agile-product-analyze |
-| 技术设计 | 1个 | PRD.md中的用户故事 | agile-tech-design |
+| 需求 | 1个 | docs/PRD.md中未处理的需求 | agile-product-analyze |
+| 技术设计 | 1个 | docs/PRD.md中的用户故事 | agile-tech-design |
 | 开发 | 1个 | 状态为pending的任务 | agile-develop-task |
 | 测试 | 1个 | 状态为testing的任务 | agile-e2e-test |
+
+## Observer Subagent
+
+Observer 作为独立的 subagent 运行，不占用 slot：
+- **启动时机**：引擎启动时立即启动
+- **运行方式**：后台运行（run_in_background: true）
+- **生命周期**：随 Claude Code 退出而自动结束
+- **职责**：持续监控项目并智能提出改进建议
+
+**启动 Observer Subagent**：
+
+使用 Task 工具启动 Observer：
+- subagent_type: general-purpose
+- run_in_background: true
+- description: Observer Agent
+- prompt内容：
+```
+使用 Observer Agent 监控项目状态并智能提出改进建议。
+
+执行步骤：
+1. 读取 ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/agent.py
+2. 实例化 ProductObserverAgent
+3. 执行 observe_once() 方法进行一次观察分析
+4. 等待 120 秒
+5. 重复步骤 3-4，持续监控
+6. 每次输出限制在 20 字以内
+
+重要：Observer 作为 subagent 运行，当 Claude Code 退出时会自动结束。
+```
 
 ---
 
@@ -42,7 +71,7 @@ version: 5.1.0
 
 ## 状态文件
 
-### 引擎锁文件：`ai-docs/.engine.lock`
+### 引擎锁文件：`ai-docs/run/.engine.lock`
 
 防止重复启动引擎，格式：
 ```json
@@ -52,7 +81,7 @@ version: 5.1.0
 }
 ```
 
-### Slot状态文件：`ai-docs/.slots.json`
+### Slot状态文件：`ai-docs/run/.slots.json`
 
 持久化4个slot的运行状态，格式：
 ```json
@@ -72,16 +101,41 @@ version: 5.1.0
 
 ### 步骤0：初始化与锁检查
 
-1. 检查引擎锁文件 `ai-docs/.engine.lock` 是否存在
+1. 检查引擎锁文件 `ai-docs/run/.engine.lock` 是否存在
 2. 如果存在，读取锁文件，检查进程是否仍在运行
    - 如果进程仍在运行，立即退出（防止重复启动）
    - 如果进程已死，清理锁文件并继续
 3. 创建新的引擎锁文件
-4. 初始化slot状态文件 `ai-docs/.slots.json`（如果不存在）
+4. 初始化slot状态文件 `ai-docs/run/.slots.json`（如果不存在）
+
+### 步骤0.5：启动 Observer Subagent
+
+引擎启动时立即启动 Observer subagent（仅启动一次，不在循环中重复启动）：
+
+使用 Task 工具启动 Observer：
+- subagent_type: general-purpose
+- run_in_background: true
+- description: Observer Agent
+- prompt内容：
+```
+使用 Observer Agent 监控项目状态并智能提出改进建议。
+
+执行步骤：
+1. 读取 ${CLAUDE_PLUGIN_ROOT}/agents/product-observer/agent.py
+2. 实例化 ProductObserverAgent
+3. 执行 observe_once() 方法进行一次观察分析
+4. 等待 120 秒
+5. 重复步骤 3-4，持续监控
+6. 每次输出限制在 20 字以内
+
+重要：Observer 作为 subagent 运行，当 Claude Code 退出时会自动结束。
+```
+
+启动成功后记录 observer agentId（不写入 slots.json，Observer 不占用 slot）。
 
 ### 步骤1：读取slot状态
 
-使用Read工具读取 `ai-docs/.slots.json`，获取4个slot的当前状态：
+使用Read工具读取 `ai-docs/run/.slots.json`，获取4个slot的当前状态：
 - requirement: 需求分析slot
 - design: 技术设计slot
 - develop: 开发slot
@@ -91,28 +145,28 @@ version: 5.1.0
 
 **关键**：只有当slot状态为null时才启动新agent
 
-**需求slot启动条件**：slots.requirement === null 且 PRD.md存在未处理需求
+**需求slot启动条件**：slots.requirement === null 且 docs/PRD.md存在未处理需求
 
 使用Task工具启动subagent：
 - subagent_type: general-purpose
 - run_in_background: true
-- prompt内容：使用agile-product-analyze技能，从PRD.md读取一个未处理需求，评估优先级并创建任务，更新CONTEXT.md，立即结束
+- prompt内容：使用agile-product-analyze技能，从docs/PRD.md读取一个未处理需求，评估优先级并创建任务，更新docs/CONTEXT.md，立即结束
 
-启动成功后，更新 `ai-docs/.slots.json`：
+启动成功后，更新 `ai-docs/run/.slots.json`：
 ```json
 {
   "requirement": {"agentId": "返回的agentId", "status": "running", "taskId": null, "startTime": 当前时间戳}
 }
 ```
 
-**技术设计slot启动条件**：slots.design === null 且 PRD.md存在用户故事
+**技术设计slot启动条件**：slots.design === null 且 docs/PRD.md存在用户故事
 
 使用Task工具启动subagent：
 - subagent_type: general-purpose
 - run_in_background: true
-- prompt内容：使用agile-tech-design技能，从PRD.md读取一个用户故事，拆分为技术任务，更新TECH.md，立即结束
+- prompt内容：使用agile-tech-design技能，从docs/PRD.md读取一个用户故事，拆分为技术任务，更新docs/TECH.md，立即结束
 
-启动成功后，更新 `ai-docs/.slots.json`
+启动成功后，更新 `ai-docs/run/.slots.json`
 
 **开发slot启动条件**：slots.develop === null 且 存在pending状态的任务
 
@@ -121,7 +175,7 @@ version: 5.1.0
 - run_in_background: true
 - prompt内容：使用agile-develop-task技能，获取一个pending任务，执行TDD开发，完成后更新状态为testing，立即结束
 
-启动成功后，更新 `ai-docs/.slots.json`，记录taskId
+启动成功后，更新 `ai-docs/run/.slots.json`，记录taskId
 
 **测试slot启动条件**：slots.test === null 且 存在testing状态的任务
 
@@ -130,7 +184,7 @@ version: 5.1.0
 - run_in_background: true
 - prompt内容：使用agile-e2e-test技能，获取一个testing任务，执行E2E测试，通过则更新为tested，发现bug则更新为bug，立即结束
 
-启动成功后，更新 `ai-docs/.slots.json`，记录taskId
+启动成功后，更新 `ai-docs/run/.slots.json`，记录taskId
 
 ### 步骤3：检查完成的subagent
 
@@ -138,11 +192,11 @@ version: 5.1.0
 - 如果状态为completed：
   1. 输出完成信息
   2. 将slot状态设为null
-  3. 更新 `ai-docs/.slots.json`
+  3. 更新 `ai-docs/run/.slots.json`
 - 如果状态为error或failed：
   1. 输出错误信息
   2. 将slot状态设为null
-  3. 更新 `ai-docs/.slots.json`
+  3. 更新 `ai-docs/run/.slots.json`
 
 ### 步骤4：检查退出条件
 
@@ -150,23 +204,16 @@ version: 5.1.0
 - 4个slot都空闲（全为null）
 - 没有pending状态的任务
 - 没有testing状态的任务
-- PRD.md没有未处理需求和用户故事
+- docs/PRD.md没有未处理需求和用户故事
 
 退出时：
 1. 输出：所有任务已完成
-2. 删除 `ai-docs/.slots.json`
-3. 删除 `ai-docs/.engine.lock`
+2. 删除 `ai-docs/run/.slots.json`
+3. 删除 `ai-docs/run/.engine.lock`
 
 ### 步骤5：等待并继续
 
 等待5秒后，返回步骤1继续循环
-
-**重要**：在每次循环中，使用 Bash 工具更新引擎锁文件的时间戳：
-```bash
-touch ai-docs/.engine.lock
-```
-
-这确保 Observer 能检测到引擎仍在运行。
 
 ---
 
@@ -203,10 +250,10 @@ pending → inProgress → testing → tested → completed
 
 ## 关键文件
 
-- PRD.md：产品需求文档
-- TASKS.json：任务数据
-- CONTEXT.md：项目业务上下文
-- TECH.md：项目技术上下文
+- docs/PRD.md：产品需求文档
+- data/TASKS.json：任务数据
+- docs/CONTEXT.md：项目业务上下文
+- docs/TECH.md：项目技术上下文
 - BUGS.md：Bug列表
 - CLAUDE_PLUGIN_ROOT/scripts/utils/tasks.js：任务管理工具
 

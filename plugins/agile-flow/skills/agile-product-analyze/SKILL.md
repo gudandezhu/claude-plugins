@@ -29,8 +29,8 @@ version: 5.0.0
 
 ## 任务
 
-1. 分析项目需求文档（PRD），评估优先级，创建任务到 `ai-docs/TASKS.json`
-2. 维护项目业务上下文 `ai-docs/CONTEXT.md`
+1. 分析项目需求文档（PRD），评估优先级，创建任务到 `ai-docs/data/TASKS.json`
+2. 维护项目业务上下文 `ai-docs/docs/CONTEXT.md`
 
 ---
 
@@ -47,11 +47,11 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 
 ### 第一步：读取现有上下文
 
-**优先读取 `ai-docs/CONTEXT.md`**，了解项目当前状态。
+**优先读取 `ai-docs/docs/CONTEXT.md`**，了解项目当前状态。
 
 ### 第二步：读取 PRD
 
-读取 `ai-docs/PRD.md` 文件，识别核心功能需求。
+读取 `ai-docs/docs/PRD.md` 文件，识别核心功能需求。
 
 ### 第三步：评估优先级
 
@@ -71,7 +71,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/utils/priority-evaluator.sh
 
 ### 第四步：创建任务
 
-**重要**：将任务添加到 `ai-docs/TASKS.json`（不是 PLAN.md）
+**重要**：将任务添加到 `ai-docs/data/TASKS.json`（不是 PLAN.md）
 
 使用任务管理工具：
 ```bash
@@ -89,7 +89,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add P1 "优化数据库查询�
 
 ### 第五步：更新项目上下文
 
-**每次分析需求后，更新 `ai-docs/CONTEXT.md`**，记录项目业务信息。
+**每次分析需求后，更新 `ai-docs/docs/CONTEXT.md`**，记录项目业务信息。
 
 ---
 

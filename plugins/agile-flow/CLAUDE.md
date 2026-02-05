@@ -21,14 +21,24 @@
 
 **所有数据统一在 `ai-docs/` 目录管理**：
 
-| 文档 | 用途 |
-|------|------|
-| PRD.md | 项目需求文档（需求池） |
-| TASKS.json | 任务数据（JSON格式） |
-| TECH.md | 技术上下文（技术地图） |
-| BUGS.md | Bug 列表 |
-| CONTEXT.md | 项目上下文 |
-| API.md | API 清单 |
+```
+ai-docs/
+├── docs/           # 文档目录
+│   ├── PRD.md      # 项目需求文档（需求池）
+│   ├── BUGS.md     # Bug 列表
+│   ├── CONTEXT.md  # 项目业务上下文
+│   ├── TECH.md     # 技术上下文（技术地图）
+│   ├── API.md      # API 清单
+│   └── OPS.md      # 操作指南
+├── data/           # 数据目录
+│   └── TASKS.json  # 任务数据（JSON格式）
+├── logs/           # 日志目录
+│   └── *.log       # 各种日志文件
+└── run/            # 运行时目录
+    ├── *.pid       # 进程 ID 文件
+    ├── *.port      # 端口文件
+    └── *.lock      # 锁文件
+```
 
 ---
 

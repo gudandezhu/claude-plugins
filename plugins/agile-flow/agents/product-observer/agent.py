@@ -26,9 +26,6 @@ CHECK_INTERVAL = 120  # 检查间隔（秒）
 AI_DOCS_PATH = os.environ.get('AI_DOCS_PATH', '')
 PROJECT_PATH = str(Path(AI_DOCS_PATH).parent) if AI_DOCS_PATH else ''
 
-# Claude Code 主进程 PID（用于监控生命周期）
-CLAUDE_PID = os.environ.get('CLAUDE_PID', '')
-
 # 已提交的问题（去重）
 submitted_issues = set()
 MAX_ISSUE_MEMORY = 100
@@ -36,7 +33,7 @@ MAX_ISSUE_MEMORY = 100
 
 def get_dashboard_port() -> int:
     """获取 Dashboard 端口"""
-    port_file = Path(AI_DOCS_PATH) / '.logs' / 'server.port'
+    port_file = Path(AI_DOCS_PATH) / 'logs' / 'server.port'
     if port_file.exists():
         try:
             return int(port_file.read_text().strip())
@@ -389,7 +386,7 @@ class ProductObserverAgent:
         print("  📋 检查日志...", flush=True)
 
         try:
-            log_dir = Path(AI_DOCS_PATH) / '.logs'
+            log_dir = Path(AI_DOCS_PATH) / 'logs'
             server_log = log_dir / 'server.log'
 
             if server_log.exists():
@@ -530,97 +527,20 @@ class ProductObserverAgent:
         print(f"⏰ 下次分析: {datetime.fromtimestamp(datetime.now().timestamp() + CHECK_INTERVAL).strftime('%H:%M:%S')}", flush=True)
         print(f"{'='*70}\n", flush=True)
 
-    async def _monitor_engine_status(self):
-        """监控 agile-flow-engine 状态，引擎停止时自动停止 Observer"""
-        engine_lock_file = Path(AI_DOCS_PATH) / '.engine.lock'
-        print(f"  👁️  监控 agile-flow-engine 状态", flush=True)
-
-        while True:
-            await asyncio.sleep(10)  # 每 10 秒检查一次
-
-            # 检查引擎锁文件是否存在
-            if not engine_lock_file.exists():
-                # 引擎已停止
-                print(f"\n🛑 agile-flow-engine 已停止，Observer 自动停止", flush=True)
-                print(f"   {datetime.now().strftime('%H:%M:%S')} - Observer 监控结束\n", flush=True)
-                os._exit(0)  # 立即退出，不执行清理
-
-            # 检查锁文件是否过期（超过 5 分钟未更新视为过期）
-            try:
-                import time
-                lock_mtime = engine_lock_file.stat().st_mtime
-                if time.time() - lock_mtime > 300:  # 5 分钟
-                    print(f"\n⚠️  引擎锁文件已过期，Observer 自动停止", flush=True)
-                    print(f"   {datetime.now().strftime('%H:%M:%S')} - Observer 监控结束\n", flush=True)
-                    os._exit(0)
-            except Exception:
-                pass
-
     async def run(self):
-        """持续运行"""
-        print("""
-╔═══════════════════════════════════════════════════════════╗
-║     👁️  Product Observer Agent (AI-Powered)             ║
-║                                                           ║
-║     主动的产品分析与改进建议                               ║
-╚═══════════════════════════════════════════════════════════╝
-
-项目: {PROJECT_PATH}
-API: {dashboard_api}
-分析间隔: {CHECK_INTERVAL}s
-AI 分析: 启用
-
-观察内容:
-  • AI 深度分析（代码质量、架构、功能、性能、安全）
-  • Dashboard 健康检查
-  • 代码质量检查
-  • 日志错误分析
-        """.format(
-            PROJECT_PATH=PROJECT_PATH,
-            dashboard_api=self.dashboard_api,
-            CHECK_INTERVAL=CHECK_INTERVAL
-        ), flush=True)
-
-        # 启动引擎状态监控
-        asyncio.create_task(self._monitor_engine_status())
-
-        # 立即执行一次
+        """运行一次观察后退出（作为 subagent）"""
+        # 执行一次观察
         await self.observe_once()
-
-        # 定时执行（带异常处理）
-        while True:
-            try:
-                await asyncio.sleep(CHECK_INTERVAL)
-                await self.observe_once()
-            except Exception as e:
-                print(f"\n❌ 分析循环异常: {type(e).__name__}: {e}", flush=True)
-                print(f"   将在 {CHECK_INTERVAL} 秒后重试...\n", flush=True)
-                # 等待后继续
-                await asyncio.sleep(CHECK_INTERVAL)
 
 
 async def main():
-    """主入口"""
+    """主入口（用于直接运行，subagent 模式下由 engine 调用）"""
     agent = ProductObserverAgent()
-
-    while True:
-        try:
-            await agent.run()
-        except KeyboardInterrupt:
-            print("\n🛑 Product Observer Agent 停止\n", flush=True)
-            break
-        except Exception as e:
-            print(f"\n❌ Agent 发生异常: {e}", flush=True)
-            print(f"   异常类型: {type(e).__name__}", flush=True)
-            print(f"   Agent 将在 {CHECK_INTERVAL} 秒后重试...\n", flush=True)
-
-            # 等待后继续运行
-            try:
-                await asyncio.sleep(CHECK_INTERVAL)
-            except KeyboardInterrupt:
-                print("\n🛑 Product Observer Agent 停止\n", flush=True)
-                break
-            continue
+    try:
+        await agent.run()
+    except Exception as e:
+        print(f"\n❌ Agent 发生异常: {e}\n", flush=True)
+        raise
 
 
 if __name__ == '__main__':

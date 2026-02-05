@@ -8,8 +8,8 @@ version: 5.0.0
 
 ## 任务
 
-1. 将用户故事拆分为具体的技术任务，添加到 `ai-docs/TASKS.json`
-2. 维护项目技术上下文 `ai-docs/TECH.md`，帮助后续 agent 快速理解项目结构
+1. 将用户故事拆分为具体的技术任务，添加到 `ai-docs/data/TASKS.json`
+2. 维护项目技术上下文 `ai-docs/docs/TECH.md`，帮助后续 agent 快速理解项目结构
 
 ---
 
@@ -26,7 +26,7 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 
 ### 第一步：读取用户需求
 
-从 `ai-docs/PRD.md` 读取用户需求。
+从 `ai-docs/docs/PRD.md` 读取用户需求。
 
 ### 第二步：分析技术需求
 
@@ -39,7 +39,7 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 
 ### 第三步：拆分技术任务
 
-**重要**：将任务添加到 `ai-docs/TASKS.json`（不是 PLAN.md）
+**重要**：将任务添加到 `ai-docs/data/TASKS.json`（不是 PLAN.md）
 
 使用任务管理工具：
 ```bash
@@ -107,7 +107,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add P0 "实现用户登录功�
 
 ### 第四步：更新技术上下文
 
-**每次拆分任务后，更新 `ai-docs/TECH.md`**，记录技术架构和约定。
+**每次拆分任务后，更新 `ai-docs/docs/TECH.md`**，记录技术架构和约定。
 
 ---
 
@@ -356,8 +356,8 @@ project-root/
 - TASK-006: 创建登录页面 (P1)
 - TASK-007: 集成测试 (P1)
 
-📊 任务已添加到 ai-docs/TASKS.json
-📝 技术上下文已更新到 ai-docs/TECH.md
+📊 任务已添加到 ai-docs/data/TASKS.json
+📝 技术上下文已更新到 ai-docs/docs/TECH.md
 ```
 
 ---

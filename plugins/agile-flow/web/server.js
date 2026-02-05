@@ -14,8 +14,10 @@ const HOST = '127.0.0.1'; // 只监听本地，提高安全性
 
 // ai-docs 路径（由启动脚本设置 AI_DOCS_PATH 环境变量）
 const AI_DOCS_PATH = process.env.AI_DOCS_PATH;
-const PLAN_FILE = path.join(AI_DOCS_PATH, 'PLAN.md');
-const PRD_FILE = path.join(AI_DOCS_PATH, 'PRD.md');
+const DOCS_DIR = path.join(AI_DOCS_PATH, 'docs');
+const DATA_DIR = path.join(AI_DOCS_PATH, 'data');
+const PLAN_FILE = path.join(DOCS_DIR, 'PLAN.md');
+const PRD_FILE = path.join(DOCS_DIR, 'PRD.md');
 
 // 中间件
 app.use(express.json({ limit: '1mb' }));
@@ -58,7 +60,7 @@ function escapeHtml(unsafe) {
 /**
  * 解析 TASKS.json 中的任务数据
  */
-const TASKS_FILE = path.join(AI_DOCS_PATH, 'TASKS.json');
+const TASKS_FILE = path.join(DATA_DIR, 'TASKS.json');
 
 async function parseTasks() {
     try {

@@ -75,7 +75,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <task_id> tested
 ```
 
 **发现 BUG**：
-1. 详细记录 BUG 到 `ai-docs/BUGS.md`
+1. 详细记录 BUG 到 `ai-docs/docs/BUGS.md`
 2. 更新任务状态到 bug
 ```bash
 node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <task_id> bug
@@ -83,13 +83,13 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update <task_id> bug
 
 ### 第五步：记录测试结果
 
-将测试结果记录到 `ai-docs/BUGS.md`（如果发现 BUG）。
+将测试结果记录到 `ai-docs/docs/BUGS.md`（如果发现 BUG）。
 
 ---
 
 ## BUG 记录模板
 
-记录到 `ai-docs/BUGS.md`：
+记录到 `ai-docs/docs/BUGS.md`：
 
 ```markdown
 ## BUG-<编号>: <简短描述>

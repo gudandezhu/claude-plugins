@@ -194,26 +194,6 @@ verify_stop() {
         fi
     fi
 
-    # 检查 Observer（限制在项目目录内）
-    if pgrep -f "observer.*agent.py" >/dev/null 2>&1; then
-        local pids
-        pids=$(pgrep -f "observer.*agent.py" 2>/dev/null | while read -r pid; do
-            if [[ -d "/proc/$pid" ]]; then
-                local cmdline
-                cmdline=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null)
-                if [[ "$cmdline" == *"$project_dir"* ]]; then
-                    echo "$pid"
-                fi
-            fi
-        done)
-
-        if [[ -n "$pids" ]]; then
-            echo "⚠️  警告: 仍有 Observer 进程运行"
-            echo "$pids" | head -3
-            ((remaining++))
-        fi
-    fi
-
     if (( remaining == 0 )); then
         echo "✅ 所有进程已停止"
         return 0
@@ -259,10 +239,10 @@ main() {
 
     # 设置路径
     local ai_docs_dir="${project_dir}/ai-docs"
-    local logs_dir="${ai_docs_dir}/.logs"
-    local web_pid_file="${logs_dir}/server.pid"
-    local web_port_file="${logs_dir}/server.port"
-    local observer_pid_file="${logs_dir}/observer.pid"
+    local logs_dir="${ai_docs_dir}/logs"
+    local run_dir="${ai_docs_dir}/run"
+    local web_pid_file="${run_dir}/server.pid"
+    local web_port_file="${run_dir}/server.port"
 
     # 验证 ai-docs 目录
     if [[ ! -d "$ai_docs_dir" ]]; then
@@ -279,8 +259,6 @@ main() {
 
     # 停止服务
     stop_web_server "$web_pid_file"
-    echo ""
-    stop_observer "$observer_pid_file"
     echo ""
 
     # 清理端口
@@ -299,8 +277,8 @@ main() {
         echo "❌ 停止失败，请手动检查"
         echo ""
         echo "提示："
-        echo "  查看进程: ps aux | grep -E 'node.*server.js|observer.*agent.py'"
-        echo "  强制停止: pkill -9 -f 'node.*server.js|observer.*agent.py'"
+        echo "  查看进程: ps aux | grep 'node.*server.js'"
+        echo "  强制停止: pkill -9 -f 'node.*server.js'"
         exit 1
     fi
 }
