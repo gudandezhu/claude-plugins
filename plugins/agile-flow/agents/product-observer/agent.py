@@ -530,26 +530,31 @@ class ProductObserverAgent:
         print(f"⏰ 下次分析: {datetime.fromtimestamp(datetime.now().timestamp() + CHECK_INTERVAL).strftime('%H:%M:%S')}", flush=True)
         print(f"{'='*70}\n", flush=True)
 
-    async def _monitor_claude_process(self):
-        """监控 Claude Code 主进程，退出时自动停止 Observer"""
-        if not CLAUDE_PID or not CLAUDE_PID.isdigit():
-            print("  ⚠️  未设置 CLAUDE_PID，无法监控 Claude Code 进程", flush=True)
-            return
-
-        claude_pid = int(CLAUDE_PID)
-        print(f"  👁️  监控 Claude Code 主进程 (PID: {claude_pid})", flush=True)
+    async def _monitor_engine_status(self):
+        """监控 agile-flow-engine 状态，引擎停止时自动停止 Observer"""
+        engine_lock_file = Path(AI_DOCS_PATH) / '.engine.lock'
+        print(f"  👁️  监控 agile-flow-engine 状态", flush=True)
 
         while True:
             await asyncio.sleep(10)  # 每 10 秒检查一次
 
-            # 检查 Claude Code 进程是否还在运行
-            try:
-                os.kill(claude_pid, 0)  # 发送信号 0 检查进程是否存在
-            except ProcessLookupError:
-                # Claude Code 已退出
-                print(f"\n🛑 Claude Code (PID: {claude_pid}) 已退出，Observer 自动停止", flush=True)
+            # 检查引擎锁文件是否存在
+            if not engine_lock_file.exists():
+                # 引擎已停止
+                print(f"\n🛑 agile-flow-engine 已停止，Observer 自动停止", flush=True)
                 print(f"   {datetime.now().strftime('%H:%M:%S')} - Observer 监控结束\n", flush=True)
                 os._exit(0)  # 立即退出，不执行清理
+
+            # 检查锁文件是否过期（超过 5 分钟未更新视为过期）
+            try:
+                import time
+                lock_mtime = engine_lock_file.stat().st_mtime
+                if time.time() - lock_mtime > 300:  # 5 分钟
+                    print(f"\n⚠️  引擎锁文件已过期，Observer 自动停止", flush=True)
+                    print(f"   {datetime.now().strftime('%H:%M:%S')} - Observer 监控结束\n", flush=True)
+                    os._exit(0)
+            except Exception:
+                pass
 
     async def run(self):
         """持续运行"""
@@ -576,8 +581,8 @@ AI 分析: 启用
             CHECK_INTERVAL=CHECK_INTERVAL
         ), flush=True)
 
-        # 启动 Claude Code 进程监控
-        asyncio.create_task(self._monitor_claude_process())
+        # 启动引擎状态监控
+        asyncio.create_task(self._monitor_engine_status())
 
         # 立即执行一次
         await self.observe_once()

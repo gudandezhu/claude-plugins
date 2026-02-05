@@ -10,7 +10,7 @@
     {
       "name": "agile-flow",
       "source": "./plugins/agile-flow",
-      "version": "6.7.0",
+      "version": "6.8.0",
       "description": "AI驱动的自动化敏捷开发插件：总并发限制=3、智能路径检测、TDD开发、E2E测试、自动化流程",
       "author": {
         "name": "agile-flow"
