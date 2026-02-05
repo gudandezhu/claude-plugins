@@ -47,4 +47,4 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add '{
 
 ## 输出
 
-`✓ 创建 5 个任务: TASK-001~005`
+仅输出一行数据,不超过20字符 `✓ 创建 5 个任务: TASK-001~005`

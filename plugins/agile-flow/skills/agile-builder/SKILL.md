@@ -43,6 +43,10 @@ version: 8.0.0
 - `browser_click`, `browser_type`, `browser_fill_form`
 - `browser_console_messages`（检查错误）
 
+## Bug 记录
+
+发现 bug 时记录到 `ai-docs/docs/BUGS.md`
+
 ## 输出
 
 `✓ TASK-001 → tested (unit: 10 passed, e2e: 2 passed)`

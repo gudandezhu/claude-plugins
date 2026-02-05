@@ -38,6 +38,13 @@ version: 8.0.0
 
 6. 生成报告 `ai-docs/docs/VERIFICATION_REPORT-{第几次迭代}.md`
 
+## 报告内容
+
+- 回归测试结果
+- 集成测试结果
+- 发现的问题
+- 建议的改进
+
 ## 输出
 
 `✓ 回归: 5 passed, 集成: 2 passed`
