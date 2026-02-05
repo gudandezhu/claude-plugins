@@ -1,7 +1,7 @@
 {
   "name": "agile-flow",
-  "version": "9.2.0",
-  "description": "AI驱动的自动化敏捷开发插件：5个持续运行的subagent（需求+设计+开发+测试+Observer）+ 实时监控输出",
+  "version": "8.0.0",
+  "description": "AI驱动的自动化敏捷开发插件：3个顺序执行的agent（规划+构建+验证）",
   "author": {
     "name": "agile-flow"
   },
@@ -12,7 +12,8 @@
     "workflow",
     "project-management",
     "testing",
-    "ci-cd"
+    "tdd",
+    "e2e"
   ],
   "hooks": {
     "Stop": [

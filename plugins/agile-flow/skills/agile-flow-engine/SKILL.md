@@ -1,12 +1,12 @@
 ---
 name: agile-flow-engine
-description: 极简敏捷开发流程引擎：启动并监控5个持续运行的subagent（需求+设计+开发+测试+Observer）
-version: 7.2.0
+description: 极简敏捷开发流程引擎：顺序执行3个agent（规划+构建+验证）
+version: 8.0.0
 ---
 
 # Agile Flow Engine
 
-启动并监控 5 个持续运行的 subagent（4个流程 subagent + 1个 Observer）。
+顺序执行 3 个 agent（Planner → Builder → Verifier），完成需求分析、开发和验证。
 
 ## 环境变量（必须设置）
 
@@ -15,122 +15,82 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 export CLAUDE_PLUGIN_ROOT="/data/project/claude-plugins/plugins/agile-flow"
 ```
 
-## 5 个 Subagent
+## 3 个 Agent
 
-| Subagent | 职责 | 核心逻辑 |
+| Agent | 职责 | 执行模式 |
 |----------|------|----------|
-| 需求分析 | 监控 PRD，创建用户故事级任务 | 读取 PRD.md → 调用 agile-product-analyze |
-| 技术设计 | 拆分用户故事为技术任务 | 读取 PRD.md → 调用 agile-tech-design |
-| TDD 开发 | 处理 pending 任务 | 获取 pending 任务 → 调用 agile-develop-task |
-| E2E 测试 | 处理 testing 任务 | 获取 testing 任务 → 调用 agile-e2e-test |
-| Observer | 持续监控项目，智能提出改进建议 | 每 120 秒执行一次观察分析 |
+| Planner Agent | 分析需求文档，生成任务列表 | 运行一次 |
+| Builder Agent | 循环处理 pending 任务，执行 TDD | 循环直到完成 |
+| Verifier Agent | E2E 测试验证，生成报告 | 运行一次 |
 
 ## 执行步骤
 
 ### 步骤 0：初始化
 
-1. 检查 `ai-docs/run/.engine.lock`，防止重复启动
-2. 创建引擎锁文件：`echo $$ > ai-docs/run/.engine.lock`
-3. 初始化 `ai-docs/run/.subagents.json`：`echo "{}" > ai-docs/run/.subagents.json`
+1. 检查 `ai-docs/REQUIREMENTS.md` 是否存在
+2. 如果不存在，提示用户先运行 `scripts/init/init-project.sh`
+3. 创建 `ai-docs/run/.engine.lock` 防止重复启动
 
-### 步骤 1：启动 5 个 Subagent
+### 步骤 1：启动 Web Dashboard
 
-使用 `Task` 工具启动（后台运行）：
-
-**Requirement Agent**：
-```
-- subagent_type: agile-flow:requirement-agent
-- run_in_background: true
-- description: 需求分析 Agent
+后台启动 Dashboard：
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/web/server.js &
+echo $! > ai-docs/run/dashboard.pid
 ```
 
-**Design Agent**：
-```
-- subagent_type: agile-flow:design-agent
-- run_in_background: true
-- description: 技术设计 Agent
-```
+### 步骤 2：执行 Planner Agent
 
-**Develop Agent**：
+**直接调用 agile-planner skill**：
+- 分析 `ai-docs/REQUIREMENTS.md`
+- 生成任务列表到 `ai-docs/data/TASKS.json`
+- 输出：`✓ Planner: 创建 5 个任务`
+
+### 步骤 3：执行 Builder Agent
+
+**直接调用 agile-builder skill**：
+- 获取 pending 任务
+- 循环执行 TDD 流程
+- 标记为 tested
+- 输出：`✓ Builder: 完成 3 个任务`
+
+### 步骤 4：执行 Verifier Agent
+
+**直接调用 agile-verifier skill**：
+- 读取 tested 任务
+- 运行 Playwright E2E 测试
+- 生成验证报告
+- 输出：`✓ Verifier: 验证完成，5 passed`
+
+### 步骤 5：显示总结
+
 ```
-- subagent_type: agile-flow:develop-agent
-- run_in_background: true
-- description: TDD 开发 Agent
+┌─────────────────────────────────────────┐
+│ ✅ Agile Flow 执行完成                   │
+├─────────────────────────────────────────┤
+│ ✓ Planner: 创建 5 个任务                 │
+│ ✓ Builder: 完成 3 个任务                 │
+│ ✓ Verifier: 验证完成，5 passed           │
+├─────────────────────────────────────────┤
+│ 📊 Dashboard: http://localhost:3737      │
+│ 📝 验证报告: ai-docs/docs/VERIFICATION_REPORT.md │
+└─────────────────────────────────────────┘
 ```
-
-**Test Agent**：
-```
-- subagent_type: agile-flow:test-agent
-- run_in_background: true
-- description: E2E 测试 Agent
-```
-
-**Observer Agent**：
-```
-- subagent_type: agile-flow:product-observer
-- run_in_background: true
-- description: Observer Agent
-```
-
-记录 agentId 到 `.subagents.json`：
-```json
-{
-  "requirement": {"agentId": "xxx", "startTime": 1234567890},
-  "design": {"agentId": "xxx", "startTime": 1234567890},
-  "develop": {"agentId": "xxx", "startTime": 1234567890},
-  "test": {"agentId": "xxx", "startTime": 1234567890},
-  "observer": {"agentId": "xxx", "startTime": 1234567890}
-}
-```
-
-### 步骤 2：监控循环（永不退出，必须执行）
-
-**重要**：你必须进入无限循环，持续监控 subagent 状态，直到用户停止或会话结束。
-
-每 10 秒执行一次：
-
-1. 使用 `Read` 工具读取 `ai-docs/run/.subagents.json`
-2. 对**每个 subagent**（requirement, design, develop, test, observer），使用 `TaskGet` 工具检查状态
-3. 如果某个 subagent 状态不是 `running`（如 completed/error/failed）：
-   - **使用对应的 subagent_type 重新启动**（requirement, design, develop, test, observer）
-   - 更新 `.subagents.json` 中的 agentId
-4. **输出详细状态**（必须执行，让用户看到 agent 在运行）：
-   ```
-   ┌─────────────────────────────────────────┐
-   │ 🤖 Agile Flow 引擎监控中                │
-   ├─────────────────────────────────────────┤
-   │ ✓ Requirement Agent: running            │
-   │ ✓ Design Agent: running                 │
-   │ ✓ Develop Agent: running                │
-   │ ✓ Test Agent: running                   │
-   │ ✓ Observer Agent: running               │
-   ├─────────────────────────────────────────┤
-   │ 📊 任务: 3 pending, 2 in_progress        │
-   │ 🔍 Observer: 下次运行 22:30:00           │
-   └─────────────────────────────────────────┘
-   ```
-5. 使用 `Bash` 工具执行 `sleep 10`
-6. **返回步骤1，永不退出**
-
-**循环终止条件**：
-- 用户手动停止（Ctrl+C）
-- Claude Code 会话结束
 
 ## 停止条件
 
-引擎永不退出，停止方式：
-- 用户执行 `/agile-stop`
-- Claude Code 会话结束
-
-停止时清理锁文件。
+- 执行完 3 个 agent 后自动退出
+- Web Dashboard 继续运行
+- 用户执行 `/agile-stop` 停止 Dashboard
 
 ## 输出要求
 
 **启动阶段**：
-- 简洁输出（如 `✓ 启动 5 个 subagents`）
+- 简洁输出（如 `✓ 启动 Web Dashboard`）
 
-**监控阶段**：
-- 必须持续输出，让用户看到引擎在运行
-- 每 10 秒输出一次详细状态表格
-- 显示每个 subagent 的运行状态
-- 如果 Observer 有新日志，显示最后 5 行
+**执行阶段**：
+- 每完成一个 agent，输出一行简洁结果
+- 不输出详细步骤
+
+**完成阶段**：
+- 显示总结表格
