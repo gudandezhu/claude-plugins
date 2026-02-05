@@ -189,29 +189,43 @@ class ProductObserverAgent:
         # 使用独立线程运行 SDK，避免 cancel scope 问题
         try:
             result_queue = queue.Queue()
+            query_started = threading.Event()
 
             def run_in_thread():
                 """在单独线程中运行"""
                 async def thread_query():
+                    query_generator = None
                     try:
-                        async for message in query(
+                        query_started.set()
+                        query_generator = query(
                             prompt=prompt,
                             options=ClaudeAgentOptions(
                                 model="claude-sonnet-4-5-20250929",
                                 tools=[],  # 禁用工具
                                 permission_mode="bypassPermissions"
                             )
-                        ):
+                        )
+
+                        async for message in query_generator:
                             if hasattr(message, 'result') and message.result:
                                 result_queue.put(str(message.result))
-                                return
+                                break
                             elif hasattr(message, 'content') and message.content:
                                 for block in message.content:
                                     if hasattr(block, 'text'):
                                         result_queue.put(block.text)
-                                        return
+                                        break
+                                break
+
                     except Exception as e:
                         result_queue.put(f"ERROR: {e}")
+                    finally:
+                        # 正确关闭异步生成器
+                        if query_generator is not None:
+                            try:
+                                await query_generator.aclose()
+                            except Exception:
+                                pass
 
                 # 新线程 + 新事件循环
                 loop = asyncio.new_event_loop()
@@ -219,11 +233,27 @@ class ProductObserverAgent:
                 try:
                     loop.run_until_complete(thread_query())
                 finally:
-                    loop.close()
+                    # 清理所有未完成的任务
+                    try:
+                        pending = asyncio.all_tasks(loop)
+                        if pending:
+                            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                    except Exception:
+                        pass
+                    finally:
+                        loop.close()
 
             # 启动线程
             thread = threading.Thread(target=run_in_thread, daemon=True)
             thread.start()
+
+            # 等待线程启动
+            query_started.wait(timeout=5.0)
+            if not query_started.is_set():
+                print("    ⚠️  AI 线程启动失败", flush=True)
+                return []
+
+            # 等待结果或超时
             thread.join(timeout=120.0)
 
             if thread.is_alive():
