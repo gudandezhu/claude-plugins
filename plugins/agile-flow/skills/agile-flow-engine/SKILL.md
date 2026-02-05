@@ -133,11 +133,11 @@ pending → inProgress → testing → tested → completed
 
 ## 关键文件
 
-- AI_DOCS_PATH/PRD.md：产品需求文档
-- AI_DOCS_PATH/TASKS.json：任务数据
-- AI_DOCS_PATH/CONTEXT.md：项目业务上下文
-- AI_DOCS_PATH/TECH.md：项目技术上下文
-- AI_DOCS_PATH/BUGS.md：Bug列表
+- PRD.md：产品需求文档
+- TASKS.json：任务数据
+- CONTEXT.md：项目业务上下文
+- TECH.md：项目技术上下文
+- BUGS.md：Bug列表
 - CLAUDE_PLUGIN_ROOT/scripts/utils/tasks.js：任务管理工具
 
 ---
