@@ -1,7 +1,7 @@
 ---
 name: agile-flow-engine
 description: 极简敏捷开发流程引擎：固定4个slot（需求1+设计1+开发1+测试1），完整流程（product→techdesign→develop→test）
-version: 5.0.0
+version: 5.1.0
 ---
 
 # Agile Flow Engine - 极简敏捷开发流程引擎
@@ -11,11 +11,13 @@ version: 5.0.0
 **引擎只负责调度，subagent处理单任务后立即退出（清理上下文）**
 
 主循环逻辑：
-1. 检查4个slot状态
+0. **检查引擎锁，防止重复启动**
+1. 读取slot状态文件（ai-docs/.slots.json）
 2. 为空闲slot启动subagent
 3. 等待5秒
-4. 检查完成的subagent并输出状态
+4. 检查完成的subagent并更新slot状态
 5. 重复循环，直到所有slot空闲且无任务
+6. 退出时清理slot状态文件和引擎锁
 
 ---
 
@@ -38,65 +40,126 @@ version: 5.0.0
 
 ---
 
+## 状态文件
+
+### 引擎锁文件：`ai-docs/.engine.lock`
+
+防止重复启动引擎，格式：
+```json
+{
+  "pid": "进程ID",
+  "startTime": "启动时间戳"
+}
+```
+
+### Slot状态文件：`ai-docs/.slots.json`
+
+持久化4个slot的运行状态，格式：
+```json
+{
+  "requirement": {"agentId": "xxx", "status": "running", "taskId": null, "startTime": 1234567890},
+  "design": {"agentId": "xxx", "status": "running", "taskId": null, "startTime": 1234567890},
+  "develop": {"agentId": "xxx", "status": "running", "taskId": "TASK-001", "startTime": 1234567890},
+  "test": {"agentId": "xxx", "status": "running", "taskId": "TASK-002", "startTime": 1234567890}
+}
+```
+
+空闲slot状态：`null`
+
+---
+
 ## 实现步骤
 
-### 步骤1：状态管理
+### 步骤0：初始化与锁检查
 
-维护4个slot的运行状态：
-- 需求slot：记录true（运行中）或null（空闲）
-- 技术设计slot：记录true（运行中）或null（空闲）
-- 开发slot：记录当前运行的任务ID或null（空闲）
-- 测试slot：记录当前运行的任务ID或null（空闲）
+1. 检查引擎锁文件 `ai-docs/.engine.lock` 是否存在
+2. 如果存在，读取锁文件，检查进程是否仍在运行
+   - 如果进程仍在运行，立即退出（防止重复启动）
+   - 如果进程已死，清理锁文件并继续
+3. 创建新的引擎锁文件
+4. 初始化slot状态文件 `ai-docs/.slots.json`（如果不存在）
+
+### 步骤1：读取slot状态
+
+使用Read工具读取 `ai-docs/.slots.json`，获取4个slot的当前状态：
+- requirement: 需求分析slot
+- design: 技术设计slot
+- develop: 开发slot
+- test: 测试slot
 
 ### 步骤2：为空闲slot启动subagent
 
-**需求slot启动条件**：slot空闲 且 PRD.md存在未处理需求
+**关键**：只有当slot状态为null时才启动新agent
+
+**需求slot启动条件**：slots.requirement === null 且 PRD.md存在未处理需求
 
 使用Task工具启动subagent：
 - subagent_type: general-purpose
 - run_in_background: true
 - prompt内容：使用agile-product-analyze技能，从PRD.md读取一个未处理需求，评估优先级并创建任务，更新CONTEXT.md，立即结束
 
-**技术设计slot启动条件**：slot空闲 且 PRD.md存在用户故事
+启动成功后，更新 `ai-docs/.slots.json`：
+```json
+{
+  "requirement": {"agentId": "返回的agentId", "status": "running", "taskId": null, "startTime": 当前时间戳}
+}
+```
+
+**技术设计slot启动条件**：slots.design === null 且 PRD.md存在用户故事
 
 使用Task工具启动subagent：
 - subagent_type: general-purpose
 - run_in_background: true
 - prompt内容：使用agile-tech-design技能，从PRD.md读取一个用户故事，拆分为技术任务，更新TECH.md，立即结束
 
-**开发slot启动条件**：slot空闲 且 存在pending状态的任务
+启动成功后，更新 `ai-docs/.slots.json`
+
+**开发slot启动条件**：slots.develop === null 且 存在pending状态的任务
 
 使用Task工具启动subagent：
 - subagent_type: general-purpose
 - run_in_background: true
 - prompt内容：使用agile-develop-task技能，获取一个pending任务，执行TDD开发，完成后更新状态为testing，立即结束
 
-**测试slot启动条件**：slot空闲 且 存在testing状态的任务
+启动成功后，更新 `ai-docs/.slots.json`，记录taskId
+
+**测试slot启动条件**：slots.test === null 且 存在testing状态的任务
 
 使用Task工具启动subagent：
 - subagent_type: general-purpose
 - run_in_background: true
 - prompt内容：使用agile-e2e-test技能，获取一个testing任务，执行E2E测试，通过则更新为tested，发现bug则更新为bug，立即结束
 
+启动成功后，更新 `ai-docs/.slots.json`，记录taskId
+
 ### 步骤3：检查完成的subagent
 
 对每个非空闲的slot，使用TaskGet工具检查状态：
-- 如果状态为completed，输出完成信息，将slot设为空闲
-- 如果状态为error或failed，输出错误信息，将slot设为空闲
+- 如果状态为completed：
+  1. 输出完成信息
+  2. 将slot状态设为null
+  3. 更新 `ai-docs/.slots.json`
+- 如果状态为error或failed：
+  1. 输出错误信息
+  2. 将slot状态设为null
+  3. 更新 `ai-docs/.slots.json`
 
 ### 步骤4：检查退出条件
 
 当满足以下所有条件时，引擎退出：
-- 4个slot都空闲
+- 4个slot都空闲（全为null）
 - 没有pending状态的任务
 - 没有testing状态的任务
 - PRD.md没有未处理需求和用户故事
 
-退出时输出：所有任务已完成
+退出时：
+1. 输出：所有任务已完成
+2. 删除 `ai-docs/.slots.json`
+3. 删除 `ai-docs/.engine.lock`
 
 ### 步骤5：等待并继续
 
-等待5秒后，返回步骤2继续循环
+等待5秒后，返回步骤1继续循环
 
 ---
 
