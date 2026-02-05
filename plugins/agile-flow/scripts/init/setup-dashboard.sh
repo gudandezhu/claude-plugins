@@ -242,8 +242,18 @@ cleanup_web_port() {
     port=$(get_server_port)
     if is_port_in_use "$port"; then
         log_warning "端口 ${port} 已被占用，尝试终止旧进程..."
-        pkill -f "$NODE_PROCESS_PATTERN" || true
-        sleep 1
+        # 更精确的匹配：只杀掉监听该端口的 node server.js 进程
+        local old_pid
+        old_pid=$(lsof -ti:"$port" 2>/dev/null)
+        if [[ -n "$old_pid" ]]; then
+            kill "$old_pid" 2>/dev/null || true
+            sleep 1
+            # 如果还在运行，强制杀死
+            if is_process_running "$old_pid"; then
+                kill -9 "$old_pid" 2>/dev/null || true
+                sleep 1
+            fi
+        fi
     fi
 }
 
