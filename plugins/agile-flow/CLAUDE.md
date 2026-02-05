@@ -16,7 +16,7 @@
 
 **工作流程**：
 ```
-用户编辑 REQUIREMENTS.md
+用户编辑 PRD.md
     ↓
 /agile-start 启动流程
     ↓
@@ -37,7 +37,7 @@ Verifier Agent → E2E测试 → 生成报告
 
 ```
 ai-docs/
-├── REQUIREMENTS.md   # 需求文档（合并了 PRD 和用户故事）
+├── PRD.md            # 产品需求文档
 ├── docs/             # 文档目录
 │   ├── BUGS.md       # Bug 列表
 │   └── OPS.md        # 操作指南
@@ -50,12 +50,6 @@ ai-docs/
     ├── *.port        # 端口文件
     └── *.lock        # 锁文件
 ```
-
-**文档变更说明**：
-- ✅ 保留：`REQUIREMENTS.md`（新的需求文档）
-- ✅ 保留：`BUGS.md`
-- ✅ 保留：`OPS.md`
-- ❌ 移除：`PRD.md`（合并到 REQUIREMENTS.md）
 - ❌ 移除：`CONTEXT.md`
 - ❌ 移除：`TECH.md`
 - ❌ 移除：`API.md`

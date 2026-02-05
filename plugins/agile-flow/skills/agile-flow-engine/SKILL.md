@@ -12,7 +12,7 @@ version: 8.0.0
 
 ## 执行步骤
 
-1. **检查需求文档**：`ai-docs/REQUIREMENTS.md`
+1. **检查需求文档**：`ai-docs/PRD.md`
 
 2. **执行 3 个 Agent**（顺序调用 skill）：
    - `agile-planner` - 分析需求，生成任务

@@ -6,7 +6,7 @@ version: 8.0.0
 
 # Agile Planner
 
-分析 `ai-docs/REQUIREMENTS.md`，生成任务列表。
+分析 `ai-docs/PRD.md`，生成任务列表。
 
 ## 执行步骤
 

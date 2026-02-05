@@ -166,12 +166,12 @@ for doc in "${required_docs[@]}"; do
     create_doc_template "$doc"
 done
 
-# 复制 REQUIREMENTS.md 模板
-if [ ! -f "ai-docs/REQUIREMENTS.md" ]; then
-    cp "${CLAUDE_PLUGIN_ROOT}/scripts/init/templates/REQUIREMENTS.md" ai-docs/REQUIREMENTS.md
-    echo "  + REQUIREMENTS.md 已创建"
+# 复制 PRD.md 模板
+if [ ! -f "ai-docs/PRD.md" ]; then
+    cp "${CLAUDE_PLUGIN_ROOT}/scripts/init/templates/PRD.md" ai-docs/PRD.md
+    echo "  + PRD.md 已创建"
 else
-    echo "  ✓ REQUIREMENTS.md 已存在，跳过"
+    echo "  ✓ PRD.md 已存在，跳过"
 fi
 
 echo ""
@@ -179,10 +179,10 @@ echo -e "${GREEN}✅ 项目初始化完成${NC}"
 echo ""
 echo "💡 提示："
 echo "  - 文档目录: ai-docs/docs/"
-echo "  - 需求文档: ai-docs/REQUIREMENTS.md"
+echo "  - 需求文档: ai-docs/PRD.md"
 echo "  - 数据文件: ai-docs/data/TASKS.json (不要手动编辑，使用工具脚本)"
 echo "  - 日志目录: ai-docs/logs/"
 echo "  - 运行时目录: ai-docs/run/"
-echo "  - 添加需求: 编辑 ai-docs/REQUIREMENTS.md"
+echo "  - 添加需求: 编辑 ai-docs/PRD.md"
 echo "  - 查看进度: 访问 http://localhost:3737"
 echo "  - 更多信息: 查看 ai-docs/docs/OPS.md"
