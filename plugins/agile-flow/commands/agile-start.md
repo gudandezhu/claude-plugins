@@ -28,18 +28,25 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/init/setup-dashboard.sh "$(pwd)"
 
 使用 `Task` 工具启动 Observer 作为后台 subagent：
 
-```
-Launch a subagent with the Task tool
 - subagent_type: general-purpose
 - description: Product Observer
-- prompt: 运行产品观察者 Agent，持续监控项目并分析改进建议
-- run_in_background: true
-```
+- prompt: |
+  运行产品观察者 Agent，持续监控项目并分析改进建议。
 
-具体命令：
-```python
-python3 /path/to/product-observer/agent.py
-```
+  使用 Bash 工具执行以下命令启动 Observer：
+
+  ```bash
+  export AI_DOCS_PATH="$(pwd)/ai-docs"
+  export CLAUDE_PID=$$
+  export ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-${ANTHROPIC_AUTH_TOKEN}}
+  cd ${CLAUDE_PLUGIN_ROOT}/agents/product-observer
+  nohup python3 agent.py > ai-docs/.logs/observer.log 2>&1 &
+  echo $! > ai-docs/.logs/observer.pid
+  echo "✓ Observer Agent 已启动 (PID: $(cat ai-docs/.logs/observer.pid))"
+  ```
+
+  启动后立即结束（Observer 作为独立进程运行）
+- run_in_background: true
 
 ### 4. 启动流程引擎
 
