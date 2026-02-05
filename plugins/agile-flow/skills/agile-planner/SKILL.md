@@ -17,30 +17,25 @@ version: 8.0.0
 
 ## 创建任务
 
+**简单格式**（推荐）：
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add <P0|P1|P2|P3> "任务描述"
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add P0 "实现用户登录"
 ```
 
-或使用扩展格式：
+**扩展格式**（带上下文）：
 ```bash
-cat > /tmp/task.json << 'EOF'
-{
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add '{
   "priority": "P0",
   "title": "实现用户登录",
   "description": "简短描述",
   "context": {
-    "userStory": "作为用户，我希望能够使用邮箱和密码登录",
-    "acceptanceCriteria": ["验证邮箱格式", "密码加密"],
-    "techNotes": "使用现有认证中间件",
-    "dependencies": ["TASK-002"],
-    "relatedFiles": ["src/routes/auth.ts"]
+    "userStory": "作为用户，我希望能登录",
+    "acceptanceCriteria": ["验证邮箱", "密码加密"],
+    "dependencies": ["TASK-002"]
   }
-}
-EOF
-
-node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add /tmp/task.json
+}'
 ```
 
 ## 输出
 
-最多一行，如 `✓ 创建 5 个任务: TASK-001~005`
+`✓ 创建 5 个任务: TASK-001~005`
