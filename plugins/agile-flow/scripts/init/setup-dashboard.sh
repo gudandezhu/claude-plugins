@@ -34,7 +34,6 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
     readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/web"
     readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
     readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
-    readonly PRODUCT_OBSERVER_DIR="${PLUGIN_ROOT}/agents/product-observer"
 else
     # 根据脚本位置自动检测
     # 检测是否在版本化缓存目录中（如 4.0.0）
@@ -44,7 +43,6 @@ else
         readonly PLUGIN_WEB_DIR="${VERSION_ROOT}/web"
         readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
         readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
-        readonly PRODUCT_OBSERVER_DIR="${VERSION_ROOT}/agents/product-observer"
         readonly PLUGIN_ROOT="$VERSION_ROOT"  # 保持变量名一致性
     else
         # 源码目录结构: plugins/agile-flow/scripts/init → plugins/agile-flow
@@ -52,7 +50,6 @@ else
         readonly PLUGIN_WEB_DIR="${PLUGIN_ROOT}/web"
         readonly PLUGIN_SERVER_JS="${PLUGIN_WEB_DIR}/server.js"
         readonly PLUGIN_DASHBOARD_HTML="${PLUGIN_WEB_DIR}/dashboard.html"
-        readonly PRODUCT_OBSERVER_DIR="${PLUGIN_ROOT}/agents/product-observer"
     fi
 fi
 
@@ -323,43 +320,6 @@ setup_web_dashboard() {
 }
 
 # ============================================
-# ============================================
-# Product Observer Functions (仅安装依赖)
-# ============================================
-install_observer_dependencies() {
-    cd "$PRODUCT_OBSERVER_DIR"
-
-    # 检查依赖是否已安装
-    if python3 -c "import claude_agent_sdk" 2>/dev/null; then
-        return 0
-    fi
-
-    log_info "📦 安装 Agent SDK 依赖..."
-
-    # 优先使用项目虚拟环境
-    local venv_pip="${PROJECT_ROOT}/.venv/bin/pip"
-    if [[ -f "$venv_pip" ]]; then
-        log_info "使用项目虚拟环境安装依赖..."
-        if ! "$venv_pip" install -q -r requirements.txt; then
-            log_error "虚拟环境依赖安装失败"
-            return 1
-        fi
-    else
-        # 使用用户级 pip 安装
-        if ! pip3 install -q --user -r requirements.txt; then
-            log_error "依赖安装失败"
-            return 1
-        fi
-    fi
-}
-
-setup_product_observer() {
-    # 仅安装依赖，Observer 由 Task 工具作为 subagent 启动
-    install_observer_dependencies
-    log_info "Observer Agent 依赖已就绪，将由 Task 工具启动"
-}
-
-# ============================================
 # Main Function
 # ============================================
 main() {
@@ -374,14 +334,10 @@ main() {
     # 设置 Web Dashboard
     setup_web_dashboard
 
-    # 设置产品观察者 Agent
-    setup_product_observer
-
     log_success "✅ Web Dashboard 已启动"
     log_info ""
     log_info "📌 服务说明："
     log_info "   • Web Dashboard：独立运行"
-    log_info "   • Observer Agent：请使用 Task 工具作为后台 subagent 启动"
     log_info "   • 如需停止，请执行: /agile-stop"
 }
 
