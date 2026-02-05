@@ -1,174 +1,262 @@
 ---
 name: agile-flow-engine
-description: 自动化敏捷开发流程引擎（固定3个slot：开发1+测试1+需求1，智能上下文管理）
-version: 4.1.0
+description: 极简敏捷开发流程引擎：固定3个slot（开发1+测试1+需求1），完整流程（product→develop→test）
+version: 5.0.0
 ---
 
-# Agile Flow Engine
+# Agile Flow Engine - 极简敏捷开发流程引擎
 
-自动化敏捷开发流程引擎，固定保持 3 个 slot，每个 subagent 完成后立即启动新的。**智能管理对话上下文，避免超限。**
+## 核心设计
 
-## 核心原理
-
-**为什么需要引擎循环**？
-- 每个 subagent 只处理一个任务就结束（清理上下文，避免 token 浪费）
-- 引擎检测到完成后，立即启动新的同类型 subagent
-- 这样始终有 3 个 subagent 在工作，但上下文不会堆积
-
-**智能上下文管理**：
-- 定期检查上下文使用情况
-- 当接近限制时，使用 `/clear` 清理
-- 确保主对话始终保持健康状态
-
-## 并发策略
-
-**固定 3 个 slot**：
-- 开发 slot：1 个（持续处理 pending 任务）
-- 测试 slot：1 个（持续处理 testing 任务）
-- 需求 slot：1 个（持续处理 PRD.md 需求）
-
-## 你需要做的
-
-**重要**：直接执行，不要创建任何脚本文件。
-
-### 主循环（智能上下文管理版）
-
-**执行以下循环，直到 3 个 slot 都没有任务**：
-
-#### 步骤 0：检查并管理上下文（每 10 轮检查一次）
-
-**重要**：维护一个计数器，每执行 10 轮循环后，执行上下文管理：
-
-1. **使用 Bash 工具模拟 `/context` 命令**：
-   ```bash
-   # 查看当前 token 使用估算
-   # 粗略估算：假设每轮循环产生约 3-5k tokens
-   # 已执行轮数 × 4k ≈ 当前 tokens
-   ```
-
-2. **判断是否需要清理**：
-   - 如果当前 tokens > 150k（约 75% 使用率）
-   - 或者 Messages 部分占比 > 80%
-
-3. **执行清理**：
-   - **不要使用 `/clear` 命令**（这会清除所有内容）
-   - **而是：记录当前运行状态到文件，然后建议用户清理**
-   - 或者：**减少循环输出的详细程度**
-
-#### 步骤 1：检查是否有任务
-
-```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list
-```
-
-**重要**：只读取必要信息，不要输出完整 JSON 到对话中。使用 Bash 工具的静默模式：
-```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js list 2>/dev/null | jq '.tasks | length'
-```
-
-#### 步骤 2：清理已完成的 subagent
-
-对每个运行中的 subagent，使用 `TaskOutput(task_id, block=False, timeout=1000)` 检查：
-- 如果已完成，从运行列表移除，记录该类型 slot 变为空闲
-
-**不要输出详细状态**，只记录在内部变量中。
-
-#### 步骤 3：为空闲的 slot 启动新的 subagent
-
-**开发 slot（如果空闲且有待开发任务）**：
-- 使用 `Task` 工具，subagent_type="general-purpose", run_in_background=true
-- prompt: "使用 /agile-flow:agile-develop-task 技能，从 TASKS.json 中获取一个 status='pending' 的任务并执行 TDD 开发。处理完这个任务后就结束"
-- 记录到运行列表：running["dev"] = task_id
-
-**测试 slot（如果空闲且有测试任务）**：
-- 使用 `Task` 工具，subagent_type="general-purpose", run_in_background=true
-- prompt: "使用 /agile-flow:agile-e2e-test 技能，从 TASKS.json 中获取一个 status='testing' 的任务并执行 E2E 测试。处理完这个任务后就结束"
-- 记录到运行列表：running["test"] = task_id
-
-**需求 slot（如果空闲且 PRD.md 有未处理需求）**：
-- 使用 `Task` 工具，subagent_type="general-purpose", run_in_background=true
-- prompt: "使用 /agile-flow:agile-product-analyze 技能，从 PRD.md 中读取一个未处理的需求，评估并创建任务到 TASKS.json。处理完这个需求后就结束"
-- 记录到运行列表：running["requirement"] = task_id
-
-#### 步骤 4：检查是否全部完成
-
-如果：
-- 3 个 slot 都空闲
-- 且没有 pending 任务
-- 且没有 testing 任务
-- 且 PRD.md 没有未处理需求
-
-则显示 "✅ 所有任务已完成" 并结束。
-
-#### 步骤 5：等待 5 秒
-
-使用 Bash 工具：`sleep 5`
-
-然后回到步骤 0，继续下一轮循环。
-
-## 上下文管理策略
-
-### 减少输出的方法
-
-**❌ 不要这样做**：
-```
-🔄 运行中: 3/3
-   开发: 1, 测试: 1, 需求: 1
-💻 启动开发: TASK-001
-🧪 启动测试: TASK-002
-📋 启动需求: REQ-003
-💻 完成: TASK-001
-```
-
-**✅ 应该这样做**：
-- 只在关键事件输出（任务完成、错误）
-- 使用简洁格式
-- 或者**完全不输出**，只在完成时报告
-
-### 推荐的输出策略
-
-```python
-# 每轮循环不输出，或者：
-if 有新任务完成:
-    输出 "✓ 完成: TASK-001"
-if 发生错误:
-    输出 "⚠️ 错误: ..."
-```
-
-### 自动清理阈值
-
-- **每 30 轮检查一次**上下文使用情况
-- **如果超过 150k tokens**：
-  - 保存当前运行状态到文件
-  - 输出：⚠️ 上下文接近限制，建议执行 /clear 清理
-  - 继续运行（不清除，避免中断）
-
-## 工作流程
+**引擎只负责调度，subagent处理单任务后立即退出（清理上下文）**
 
 ```
-主循环：
-├── 步骤 0: 检查上下文（每 10 轮）
-│   ├── 估算当前 tokens
-│   ├── 如果 > 150k: 提示清理
-│   └── 减少输出详细程度
-├── 步骤 1: 检查任务（静默模式）
-├── 步骤 2: 清理已完成的 SA（不输出）
-├── 步骤 3: 启动新的 SA（不输出）
-├── 步骤 4: 检查是否完成
-└── 步骤 5: 等待 5 秒
+主循环:
+  1. 检查3个slot状态
+  2. 为空闲slot启动subagent
+  3. 等待5秒
+  4. 检查完成的subagent → 输出状态
+  5. 重复，直到所有slot空闲且无任务
 ```
+
+---
+
+## 固定3 Slot策略
+
+| Slot | 数量 | 处理任务 | 技能 |
+|------|------|----------|------|
+| 开发 | 1个 | status='pending' | /agile-flow:agile-develop-task |
+| 测试 | 1个 | status='testing' | /agile-flow:agile-e2e-test |
+| 需求 | 1个 | PRD.md未处理需求 | /agile-flow:agile-product-analyze |
+
+---
 
 ## 环境变量
 
+**必须设置**：
 ```bash
 export AI_DOCS_PATH="$(pwd)/ai-docs"
+export CLAUDE_PLUGIN_ROOT="/path/to/claude-plugins/plugins/agile-flow"
 ```
 
-## 关键说明
+---
 
-1. **每个 subagent 只处理一个任务** - 避免上下文堆积
-2. **引擎主循环** - 检测完成并启动新的 subagent
-3. **固定 3 个 slot** - 开发、测试、需求各一个
-4. **使用 run_in_background=true** - 并行执行
-5. **智能上下文管理** - 定期检查并控制输出，避免超限
-6. **静默运行** - 减少不必要的输出，降低 token 消耗
+## 实现步骤
+
+### 1. 状态管理
+
+使用3个变量跟踪slot状态：
+```javascript
+running = {
+  "dev": null,           // null 或 task_id
+  "test": null,          // null 或 task_id
+  "requirement": null    // null 或 task_id
+}
+```
+
+### 2. 主循环（5步骤）
+
+#### 步骤1：启动空闲slot
+
+**开发slot（如果空闲）**：
+```bash
+# 获取pending任务
+pending=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-by-status pending | head -1)
+
+if [ -n "$pending" ]; then
+  # 提取task_id
+  task_id=$(echo "$pending" | cut -d'|' -f1)
+
+  # 启动开发subagent
+  Task(subagent_type="general-purpose", run_in_background=true,
+    prompt="使用 /agile-flow:agile-develop-task 技能
+           从 ${AI_DOCS_PATH}/TASKS.json 获取status='pending'的任务
+           执行TDD开发: 测试检查→红→绿→重构→覆盖率≥80%→代码审核
+           完成后更新状态: node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update TASK-XXX testing
+           然后立即结束
+           输出限制: 只输出 ✓ TASK-XXX → testing (不超过20字)")
+
+  running["dev"] = task_id
+fi
+```
+
+**测试slot（如果空闲）**：
+```bash
+# 获取testing任务
+testing=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-by-status testing | head -1)
+
+if [ -n "$testing" ]; then
+  # 提取task_id
+  task_id=$(echo "$testing" | cut -d'|' -f1)
+
+  # 启动测试subagent
+  Task(subagent_type="general-purpose", run_in_background=true,
+    prompt="使用 /agile-flow:agile-e2e-test 技能
+           从 ${AI_DOCS_PATH}/TASKS.json 获取status='testing'的任务
+           使用Playwright执行E2E测试
+           测试通过: node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update TASK-XXX tested
+           发现bug: node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js update TASK-XXX bug
+           然后立即结束
+           输出限制: 只输出 ✓ TASK-XXX → tested (不超过20字)")
+
+  running["test"] = task_id
+fi
+```
+
+**需求slot（如果空闲）**：
+```bash
+# 检查PRD.md是否有未处理需求
+prd_content=$(cat ${AI_DOCS_PATH}/PRD.md)
+
+if echo "$prd_content" | grep -q "\[.*\]"; then
+  # 启动需求分析subagent
+  Task(subagent_type="general-purpose", run_in_background=true,
+    prompt="使用 /agile-flow:agile-product-analyze 技能
+           从 ${AI_DOCS_PATH}/PRD.md 读取一个未处理需求
+           评估优先级，创建任务: node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add P0 '描述'
+           更新CONTEXT.md
+           然后立即结束
+           输出限制: 只输出 ✓ 创建 N 个任务 (不超过20字)")
+
+  running["requirement"] = true
+fi
+```
+
+#### 步骤2：检查完成的subagent
+
+对每个slot检查状态：
+```bash
+for slot in dev test requirement; do
+  if [ "${running[$slot]}" != "null" ]; then
+    task_info=$(TaskGet task_id="${running[$slot]}")
+    status=$(echo "$task_info" | jq -r '.status')
+
+    if [ "$status" = "completed" ]; then
+      echo "[$slot] ✓ 完成"
+      running[$slot]=null
+    fi
+  fi
+done
+```
+
+#### 步骤3：检查退出条件
+
+```bash
+all_free=$([ "${running[dev]}" = "null" ] && [ "${running[test]}" = "null" ] && [ "${running[requirement]}" = "null" ] && echo "yes" || echo "no")
+
+no_pending=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-by-status pending | wc -l)
+no_testing=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-by-status testing | wc -l)
+no_prd=$(grep -c "\[.*\]" ${AI_DOCS_PATH}/PRD.md || echo "0")
+
+if [ "$all_free" = "yes" ] && [ "$no_pending" = "0" ] && [ "$no_testing" = "0" ] && [ "$no_prd" = "0" ]; then
+  echo "✅ 所有任务已完成"
+  exit
+fi
+```
+
+#### 步骤4：等待5秒
+```bash
+sleep 5
+```
+
+#### 步骤5：返回步骤1
+
+---
+
+## 输出格式规范
+
+### Subagent输出（严格限制20字）
+
+每个subagent必须严格限制输出：
+
+```
+✓ TASK-001 → testing
+✓ TASK-002 → tested
+✓ 创建 5 个任务
+```
+
+或更简洁：
+```
+✓
+```
+
+### 引擎主循环输出
+
+```
+[dev] ✓ TASK-001完成
+[test] ✓ TASK-002通过
+[req] ✓ 3个新任务
+```
+
+---
+
+## 任务状态流转
+
+```
+pending → inProgress → testing → tested → completed
+                    ↓
+                   bug
+```
+
+---
+
+## 关键文件
+
+- `${AI_DOCS_PATH}/PRD.md` - 产品需求文档
+- `${AI_DOCS_PATH}/TASKS.json` - 任务数据
+- `${AI_DOCS_PATH}/CONTEXT.md` - 项目上下文
+- `${AI_DOCS_PATH}/BUGS.md` - Bug列表
+- `${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js` - 任务管理工具
+
+---
+
+## 完整流程示例
+
+```bash
+# 初始化状态
+running = { dev: null, test: null, requirement: null }
+
+# 循环开始
+while true; do
+  # 步骤1：启动空闲slot
+  if [ "$running[dev]" = "null" ]; then
+    pending=$(node get-by-status pending | head -1)
+    if [ -n "$pending" ]; then
+      Task(prompt="开发任务", run_in_background=true)
+      running[dev] = task_id
+    fi
+  fi
+
+  # 步骤2：检查完成的subagent
+  for slot in dev test requirement; do
+    if running[$slot] != null; then
+      status=$(TaskGet task_id=running[$slot])
+      if [ "$status" = "completed" ]; then
+        echo "[$slot] ✓ 完成"
+        running[$slot] = null
+      fi
+    fi
+  done
+
+  # 步骤3：检查退出条件
+  if [ 所有slot空闲 ] && [ 无pending任务 ] && [ 无testing任务 ] && [ PRD无未处理需求 ]; then
+    echo "✅ 所有任务已完成"
+    exit
+  fi
+
+  # 步骤4：等待5秒
+  sleep 5
+
+  # 步骤5：继续循环
+done
+```
+
+---
+
+## 注意事项
+
+1. **环境变量**：确保 `AI_DOCS_PATH` 和 `CLAUDE_PLUGIN_ROOT` 已设置
+2. **Subagent输出限制**：严格限制20字以内，避免上下文累积
+3. **任务状态管理**：使用 `tasks.js` 工具管理任务状态
+4. **固定3个slot**：不要同时运行超过3个subagent
+5. **完全自动化**：不要使用 `AskUserQuestion` 工具
