@@ -1,7 +1,7 @@
 ---
 name: agile-flow-engine
 description: 极简敏捷开发流程引擎：启动并监控5个持续运行的subagent（需求+设计+开发+测试+Observer）
-version: 7.1.0
+version: 7.2.0
 ---
 
 # Agile Flow Engine
@@ -67,13 +67,9 @@ export CLAUDE_PLUGIN_ROOT="/data/project/claude-plugins/plugins/agile-flow"
 
 **Observer Agent**：
 ```
-- subagent_type: general-purpose
+- subagent_type: agile-flow:product-observer
 - run_in_background: true
 - description: Observer Agent
-- prompt: |
-  export AI_DOCS_PATH="{AI_DOCS_PATH}"
-  cd {CLAUDE_PLUGIN_ROOT}/agents/product-observer
-  python3 agent.py
 ```
 
 记录 agentId 到 `.subagents.json`：
@@ -96,17 +92,7 @@ export CLAUDE_PLUGIN_ROOT="/data/project/claude-plugins/plugins/agile-flow"
 1. 使用 `Read` 工具读取 `ai-docs/run/.subagents.json`
 2. 对**每个 subagent**（requirement, design, develop, test, observer），使用 `TaskGet` 工具检查状态
 3. 如果某个 subagent 状态不是 `running`（如 completed/error/failed）：
-   - **Observer 重新启动方式**：
-     ```
-     - subagent_type: general-purpose
-     - run_in_background: true
-     - description: Observer Agent
-     - prompt: |
-       export AI_DOCS_PATH="{AI_DOCS_PATH}"
-       cd {CLAUDE_PLUGIN_ROOT}/agents/product-observer
-       python3 agent.py
-     ```
-   - **其他 4 个 subagent 重新启动方式**：使用对应的 subagent_type
+   - **使用对应的 subagent_type 重新启动**（requirement, design, develop, test, observer）
    - 更新 `.subagents.json` 中的 agentId
 4. **输出详细状态**（必须执行，让用户看到 agent 在运行）：
    ```
