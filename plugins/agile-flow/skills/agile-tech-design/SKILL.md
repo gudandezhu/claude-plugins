@@ -46,6 +46,65 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add <P0|P1|P2|P3> "描述"
 ```
 
+**推荐使用扩展格式**（提供完整上下文）：
+
+**方法1：JSON 文件模式**（推荐）
+```bash
+# 创建任务 JSON 文件
+cat > /tmp/task.json << 'EOF'
+{
+  "priority": "P0",
+  "title": "实现用户登录功能",
+  "description": "简短描述（1行）",
+  "context": {
+    "userStory": "作为用户，我希望能够使用邮箱和密码登录系统",
+    "acceptanceCriteria": [
+      "验证邮箱格式",
+      "密码加密（bcrypt）",
+      "返回 JWT token",
+      "处理登录失败情况"
+    ],
+    "techNotes": "使用现有认证中间件，参考 src/auth/ 目录",
+    "dependencies": ["TASK-002"],
+    "relatedFiles": [
+      "src/routes/auth.ts",
+      "src/middleware/auth.ts",
+      "src/models/user.ts"
+    ],
+    "references": [
+      "TECH.md#API设计原则",
+      "API.md#认证端点"
+    ]
+  },
+  "implementation": {
+    "approach": "TDD",
+    "testFile": "tests/unit/auth/login.test.ts",
+    "sourceFiles": ["src/routes/auth/login.ts"]
+  }
+}
+EOF
+
+# 添加任务
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add /tmp/task.json
+```
+
+**方法2：JSON 字符串模式**
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add '{
+  "priority": "P0",
+  "title": "实现用户登录功能",
+  "context": {
+    "userStory": "作为用户，我希望能够使用邮箱和密码登录系统",
+    "acceptanceCriteria": ["验证邮箱格式", "密码加密（bcrypt）"]
+  }
+}'
+```
+
+**方法3：简单模式**（向后兼容）
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js add P0 "实现用户登录功能"
+```
+
 ### 第四步：更新技术上下文
 
 **每次拆分任务后，更新 `ai-docs/TECH.md`**，记录技术架构和约定。
@@ -180,6 +239,82 @@ project-root/
 - TypeScript 代码使用 `/typescript`
 - Python 代码使用 `/python-development`
 - Shell 脚本使用 `/shell-scripting`
+
+---
+
+## 任务 Prompt 模板
+
+创建技术任务时，使用以下模板确保上下文完整：
+
+### 模板结构
+
+参考 `plugins/agile-flow/docs/TASK_TEMPLATE.md`
+
+### 任务创建原则
+
+1. **标题清晰**：使用动词+名词（如"实现用户登录"）
+2. **验收标准**：可测试、可验证
+3. **技术说明**：指定技术栈和参考实现
+4. **相关文件**：列出需要修改的文件路径
+5. **依赖关系**：明确前置任务
+
+### 扩展任务数据结构
+
+```json
+{
+  "id": "TASK-001",
+  "priority": "P0",
+  "status": "pending",
+  "title": "实现用户登录功能",
+  "description": "简短描述（1行）",
+  "context": {
+    "userStory": "作为用户，我希望能够使用邮箱和密码登录系统",
+    "acceptanceCriteria": [
+      "验证邮箱格式",
+      "密码加密（bcrypt）",
+      "返回 JWT token",
+      "处理登录失败情况"
+    ],
+    "techNotes": "使用现有认证中间件，参考 src/auth/ 目录",
+    "dependencies": ["TASK-002"],
+    "relatedFiles": [
+      "src/routes/auth.ts",
+      "src/middleware/auth.ts",
+      "src/models/user.ts"
+    ],
+    "references": [
+      "TECH.md#API设计原则",
+      "API.md#认证端点"
+    ]
+  },
+  "implementation": {
+    "approach": "TDD",
+    "testFile": "tests/unit/auth/login.test.ts",
+    "sourceFiles": ["src/routes/auth/login.ts"]
+  }
+}
+```
+
+### 字段说明
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | string | 是 | 自动生成（TASK-XXX） |
+| priority | string | 是 | P0/P1/P2/P3 |
+| status | string | 是 | pending/inProgress/testing/tested/completed/bug |
+| title | string | 推荐 | 简短标题（用于显示） |
+| description | string | 是 | 简短描述（向后兼容） |
+| context | object | 否 | 扩展上下文 |
+| context.userStory | string | 否 | 用户故事 |
+| context.acceptanceCriteria | array | 否 | 验收标准列表 |
+| context.techNotes | string | 否 | 技术说明 |
+| context.dependencies | array | 否 | 依赖的任务ID列表 |
+| context.relatedFiles | array | 否 | 相关文件路径列表 |
+| context.references | array | 否 | 参考文档（TECH.md, API.md） |
+| implementation | object | 否 | 实现指导 |
+| implementation.approach | string | 否 | 开发方法（TDD等） |
+| implementation.testFile | string | 否 | 测试文件路径 |
+| implementation.sourceFiles | array | 否 | 源文件路径列表 |
 
 ---
 

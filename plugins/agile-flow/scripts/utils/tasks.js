@@ -107,10 +107,14 @@ async function listTasks() {
 
 /**
  * 添加新任务
+ * 支持三种格式：
+ * 1. 简单格式: node tasks.js add P0 "描述"
+ * 2. JSON 文件: node tasks.js add /path/to/task.json
+ * 3. JSON 字符串: node tasks.js add '{"priority":"P0","title":"..."}'
  */
 async function addTask(priority, description) {
-    if (!priority || !description) {
-        console.error('Usage: node tasks.js add <P0|P1|P2|P3> <description>');
+    if (!priority) {
+        console.error('Usage: node tasks.js add <P0|P1|P2|P3> <description> | <json_file> | <json_string>');
         process.exit(1);
     }
 
@@ -125,14 +129,47 @@ async function addTask(priority, description) {
     const newNum = maxId + 1;
     const newId = `TASK-${String(newNum).padStart(3, '0')}`;
 
-    // 添加任务
-    data.tasks.push({
+    let taskData = {
         id: newId,
-        priority,
-        status: 'pending',
-        description
-    });
+        status: 'pending'
+    };
 
+    // 检测参数格式
+    // 1. 检查是否是文件路径
+    if (fs.existsSync(priority)) {
+        // JSON 文件模式
+        try {
+            const fileContent = await fsPromises.readFile(priority, 'utf-8');
+            const jsonTask = JSON.parse(fileContent);
+            taskData = { ...taskData, ...jsonTask, id: newId };
+        } catch (err) {
+            console.error(`Failed to read or parse JSON file: ${err.message}`);
+            process.exit(1);
+        }
+    }
+    // 2. 检查是否是 JSON 字符串
+    else if (priority.startsWith('{')) {
+        try {
+            const jsonTask = JSON.parse(priority);
+            taskData = { ...taskData, ...jsonTask, id: newId };
+        } catch (err) {
+            console.error(`Failed to parse JSON string: ${err.message}`);
+            process.exit(1);
+        }
+    }
+    // 3. 简单格式（向后兼容）
+    else {
+        taskData.priority = priority;
+        taskData.description = description;
+    }
+
+    // 确保 title 字段存在（用于 get-next 输出）
+    if (!taskData.title) {
+        taskData.title = taskData.description || 'Untitled';
+    }
+
+    // 添加任务
+    data.tasks.push(taskData);
     await writeTasks(data);
     console.log(newId);
 }
@@ -181,7 +218,9 @@ async function getNextTask() {
         return;
     }
 
-    console.log(`${nextTask.id}|${nextTask.priority}|${nextTask.description}`);
+    // 使用 title 字段（优先）或 description（向后兼容）
+    const displayTitle = nextTask.title || nextTask.description;
+    console.log(`${nextTask.id}|${nextTask.priority}|${displayTitle}`);
 }
 
 /**
@@ -197,8 +236,50 @@ async function getByStatus(status) {
     const tasks = data.tasks.filter(t => t.status === status);
 
     for (const task of tasks) {
-        console.log(`${task.id}|${task.priority}|${task.description}`);
+        console.log(`${task.id}|${task.priority}|${task.title || task.description}`);
     }
+}
+
+/**
+ * 获取任务详情（完整上下文）
+ * 输出格式：JSON
+ */
+async function getTaskDetail(taskId) {
+    if (!taskId) {
+        console.error('Usage: node tasks.js get-detail <task_id>');
+        process.exit(1);
+    }
+
+    const data = await readTasks();
+    const task = data.tasks.find(t => t.id === taskId);
+
+    if (!task) {
+        console.error(`Task not found: ${taskId}`);
+        process.exit(1);
+    }
+
+    // 输出完整 JSON（包含 context 和 implementation）
+    console.log(JSON.stringify(task, null, 2));
+}
+
+/**
+ * 获取任务状态（仅状态字符串）
+ */
+async function getTaskStatus(taskId) {
+    if (!taskId) {
+        console.error('Usage: node tasks.js get-status <task_id>');
+        process.exit(1);
+    }
+
+    const data = await readTasks();
+    const task = data.tasks.find(t => t.id === taskId);
+
+    if (!task) {
+        console.error(`Task not found: ${taskId}`);
+        process.exit(1);
+    }
+
+    console.log(task.status);
 }
 
 /**
@@ -223,9 +304,15 @@ async function main() {
         case 'get-by-status':
             await getByStatus(process.argv[3]);
             break;
+        case 'get-detail':
+            await getTaskDetail(process.argv[3]);
+            break;
+        case 'get-status':
+            await getTaskStatus(process.argv[3]);
+            break;
         default:
             console.error(`Unknown command: ${command}`);
-            console.error('Usage: node tasks.js <list|add|update|get-next|get-by-status> [args]');
+            console.error('Usage: node tasks.js <list|add|update|get-next|get-by-status|get-detail|get-status> [args]');
             process.exit(1);
     }
 }

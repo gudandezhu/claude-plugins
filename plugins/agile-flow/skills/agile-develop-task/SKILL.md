@@ -45,6 +45,47 @@ export AI_DOCS_PATH="$(pwd)/ai-docs"
 
 ---
 
+## 任务上下文处理
+
+### 读取任务详情（新增步骤，在 TDD 流程之前）
+
+```bash
+# 获取任务详情（JSON 格式）
+DETAIL=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-detail ${TASK_ID})
+echo "$DETAIL"
+```
+
+### 解析并使用上下文
+
+从任务详情中提取（如果存在）：
+- **userStory**：理解业务需求背景
+- **acceptanceCriteria**：设计测试用例
+- **techNotes**：选择实现方式
+- **relatedFiles**：定位需要修改的代码
+- **dependencies**：确认前置任务已完成（状态为 completed）
+- **references**：参考 TECH.md 和 API.md
+
+### 兼容性处理
+
+如果任务没有 `context` 字段（旧格式）：
+- 继续使用原有的 TDD 流程
+- 仅使用 `description` 作为任务说明
+
+### 依赖检查
+
+如果任务有依赖（dependencies 数组不为空），检查依赖任务状态：
+```bash
+for dep in ${dependencies[@]}; do
+  status=$(node ${CLAUDE_PLUGIN_ROOT}/scripts/utils/tasks.js get-status $dep)
+  if [ "$status" != "completed" ]; then
+    echo "⚠️ 依赖任务 $dep 未完成，跳过当前任务"
+    exit 0
+  fi
+done
+```
+
+---
+
 ## TDD 流程（6 步骤）
 
 ### 步骤 1：检查测试文件
