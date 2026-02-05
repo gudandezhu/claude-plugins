@@ -1,17 +1,26 @@
 # Agile Flow 插件
 
-> AI驱动的自动化敏捷开发插件：完全自动化的任务管理与流转
+> AI驱动的自动化敏捷开发插件：4个持续运行的subagent + Observer监控
 
 ---
 
-## 插件协同
+## 架构设计
 
-**自动化引擎**：`/agile-flow:agile-flow-engine` 驱动整个流程
+**引擎 + 4个持续运行的Subagent + Observer监控**
 
+| Subagent | 文件 | 职责 |
+|----------|------|------|
+| 需求分析 | `agents/requirement-agent.md` | 分析PRD，创建用户故事级任务 |
+| 技术设计 | `agents/design-agent.md` | 拆分用户故事为技术任务 |
+| TDD开发 | `agents/develop-agent.md` | 执行TDD流程（测试→红→绿→重构） |
+| E2E测试 | `agents/test-agent.md` | 使用Playwright进行功能验证 |
+| Observer | `agents/product-observer/agent.py` | 持续监控项目，智能提出改进建议 |
+
+**工作流程**：
 ```
+引擎 → 启动4个subagent → 持续监控状态 → 自动拉起停止的subagent
+         ↓
 需求池 → 需求分析 → 技术设计 → TDD开发 → E2E测试 → 验收 → 下一个任务
-   ↑                                                        ↓
-   └──────────────────────── 自动循环 ←───────────────────────┘
 ```
 
 
@@ -37,7 +46,8 @@ ai-docs/
 └── run/            # 运行时目录
     ├── *.pid       # 进程 ID 文件
     ├── *.port      # 端口文件
-    └── *.lock      # 锁文件
+    ├── *.lock      # 锁文件
+    └── .subagents.json  # Subagent 状态文件
 ```
 
 ---

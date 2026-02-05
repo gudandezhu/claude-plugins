@@ -1,7 +1,7 @@
 {
   "name": "agile-flow",
-  "version": "7.0.0",
-  "description": "AI驱动的自动化敏捷开发插件：完全自动化的任务管理与流转（总并发限制=3）",
+  "version": "8.0.0",
+  "description": "AI驱动的自动化敏捷开发插件：4个持续运行的subagent（需求+设计+开发+测试）+ Observer监控",
   "author": {
     "name": "agile-flow"
   },
