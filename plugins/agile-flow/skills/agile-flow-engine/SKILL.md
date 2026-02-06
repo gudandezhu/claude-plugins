@@ -14,10 +14,10 @@ version: 8.0.0
 
 1. **检查需求文档**：`ai-docs/PRD.md`
 
-2. **执行 3 个 Agent**（顺序调用 skill）：
-   - `agile-planner` - 分析需求，生成任务
-   - `agile-builder` - TDD 开发
-   - `agile-verifier` - 回归和集成测试
+2. **执行 3 个 Agent**（使用 Task 工具）：
+   - `subagent_type=agile-flow:planner` - 分析需求，生成任务
+   - `subagent_type=agile-flow:builder` - TDD 开发
+   - `subagent_type=agile-flow:verifier` - 回归和集成测试
 
 3. **显示总结**：
    ```
