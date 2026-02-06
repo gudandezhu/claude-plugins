@@ -22,6 +22,9 @@ mkdir -p ai-docs/data      # 数据文件目录
 mkdir -p ai-docs/logs      # 日志目录
 mkdir -p ai-docs/run       # 运行时文件目录
 
+# PRD.md 放在 ai-docs 根目录（planner agent 期望的路径）
+PRD_PATH="ai-docs/PRD.md"
+
 # 添加 ai-docs 到 .gitignore
 if [ -f ".gitignore" ]; then
     echo ".gitignore已存在"
@@ -39,7 +42,14 @@ fi
 # 文档模板创建函数
 create_doc_template() {
     local doc_name=$1
-    local doc_file="ai-docs/docs/$doc_name"
+    local doc_file
+
+    # PRD.md 放在 ai-docs 根目录，其他文档放在 docs/ 子目录
+    if [ "$doc_name" = "PRD.md" ]; then
+        doc_file="ai-docs/$doc_name"
+    else
+        doc_file="ai-docs/docs/$doc_name"
+    fi
 
     if [ -f "$doc_file" ]; then
         echo "  ✓ $doc_name 已存在，跳过"
@@ -100,8 +110,8 @@ echo ""
 echo -e "${GREEN}✅ 项目初始化完成${NC}"
 echo ""
 echo "💡 提示："
+echo "  - 需求文档: ai-docs/PRD.md"
 echo "  - 文档目录: ai-docs/docs/"
-echo "  - 需求文档: ai-docs/docs/PRD.md"
 echo "  - 数据文件: ai-docs/data/TASKS.json (不要手动编辑，使用工具脚本)"
 echo "  - 日志目录: ai-docs/logs/"
 echo "  - 运行时目录: ai-docs/run/"
