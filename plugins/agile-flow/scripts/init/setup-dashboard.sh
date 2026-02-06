@@ -236,17 +236,30 @@ EOF
 }
 
 check_web_server_running() {
+    # 检查所有 node server.js 进程，不依赖 PID 文件
+    local server_pids
+    server_pids=$(pgrep -f "node.*server.js" 2>/dev/null || true)
+
+    if [[ -n "$server_pids" ]]; then
+        # 检查是否至少有一个进程在运行
+        for pid in $server_pids; do
+            if is_process_running "$pid"; then
+                log_info "Web Dashboard 已在运行 (PID: $pid)"
+                return 0
+            fi
+        done
+    fi
+
+    # 清理无效的 PID 文件
     if [[ -f "$WEB_PID_FILE" ]]; then
         local existing_pid
         existing_pid=$(cat "$WEB_PID_FILE")
-        if is_process_running "$existing_pid"; then
-            log_info "Web Dashboard 已在运行 (PID: $existing_pid)"
-            return 0
-        else
+        if ! is_process_running "$existing_pid"; then
             log_warning "旧的 PID 文件存在，但进程已停止，清理中..."
             rm -f "$WEB_PID_FILE"
         fi
     fi
+
     return 1
 }
 
@@ -270,6 +283,37 @@ cleanup_web_port() {
     fi
 }
 
+# 清理所有 node server.js 进程（用于完全重置）
+cleanup_all_server_processes() {
+    log_info "清理所有 node server.js 进程..."
+    local server_pids
+    server_pids=$(pgrep -f "node.*server.js" 2>/dev/null || true)
+
+    if [[ -n "$server_pids" ]]; then
+        for pid in $server_pids; do
+            if is_process_running "$pid"; then
+                log_info "终止进程 $pid"
+                kill "$pid" 2>/dev/null || true
+            fi
+        done
+        sleep 2
+
+        # 强制杀死残留进程
+        server_pids=$(pgrep -f "node.*server.js" 2>/dev/null || true)
+        if [[ -n "$server_pids" ]]; then
+            for pid in $server_pids; do
+                if is_process_running "$pid"; then
+                    kill -9 "$pid" 2>/dev/null || true
+                fi
+            done
+            sleep 1
+        fi
+    fi
+
+    # 清理 PID 和端口文件
+    rm -f "$WEB_PID_FILE" "$WEB_PORT_FILE"
+}
+
 start_web_server() {
     ensure_directory "$LOGS_DIR"
     ensure_directory "$RUN_DIR"
@@ -277,35 +321,12 @@ start_web_server() {
     setup_web_server_files
     cd "$AI_DOCS_DIR"
 
+    # 首先清理所有 node server.js 进程（避免多端口问题）
+    cleanup_all_server_processes
+
     # 获取端口
     local server_port
     server_port=$(get_server_port)
-
-    # 清理该端口上的所有进程
-    if is_port_in_use "$server_port"; then
-        log_warning "端口 $server_port 被占用，清理中..."
-        local old_pids
-        old_pids=$(lsof -ti:"$server_port" 2>/dev/null)
-        if [[ -n "$old_pids" ]]; then
-            while IFS= read -r old_pid; do
-                if [[ -n "$old_pid" ]]; then
-                    log_info "终止进程 $old_pid (占用端口 $server_port)"
-                    kill "$old_pid" 2>/dev/null || true
-                fi
-            done <<< "$old_pids"
-            sleep 2
-            # 如果还在运行，强制杀死
-            old_pids=$(lsof -ti:"$server_port" 2>/dev/null)
-            if [[ -n "$old_pids" ]]; then
-                while IFS= read -r old_pid; do
-                    if [[ -n "$old_pid" ]]; then
-                        kill -9 "$old_pid" 2>/dev/null || true
-                    fi
-                done <<< "$old_pids"
-                sleep 1
-            fi
-        fi
-    fi
 
     log_action "正在启动 Web Dashboard (端口: $server_port)..."
     # 使用 PORT 环境变量传递端口，AI_DOCS_PATH 传递文档路径
