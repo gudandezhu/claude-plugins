@@ -16,7 +16,7 @@
 
 **工作流程**：
 ```
-用户编辑 PRD.md
+用户编辑 ai-docs/docs/PRD.md
     ↓
 /agile-start 启动流程
     ↓
@@ -37,8 +37,8 @@ Verifier Agent → E2E测试 → 生成报告
 
 ```
 ai-docs/
-├── PRD.md            # 产品需求文档
 ├── docs/             # 文档目录
+│   ├── PRD.md        # 产品需求文档
 │   ├── BUGS.md       # Bug 列表
 │   └── OPS.md        # 操作指南
 ├── data/             # 数据目录
