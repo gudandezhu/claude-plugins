@@ -1,6 +1,6 @@
 {
   "name": "agile-flow",
-  "version": "8.0.3",
+  "version": "8.0.4",
   "description": "AI驱动的自动化敏捷开发插件：3个顺序执行的agent（规划+构建+验证）",
   "author": {
     "name": "agile-flow"
