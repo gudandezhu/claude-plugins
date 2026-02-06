@@ -95,4 +95,14 @@ ai-docs/
 
 **版本号格式**：`主版本.次版本.修订版本`（如 8.0.0）
 
-**然后执行 git commit**
+**然后执行 git commit** & git push
+
+push后更新插件市场
+```
+claude plugin marketplace update pyf-claude-plugins
+```
+
+更新插件
+```
+claude plugin update agile-flow@pyf-claude-plugins
+```

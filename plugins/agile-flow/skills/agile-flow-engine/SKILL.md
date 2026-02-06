@@ -12,7 +12,7 @@ version: 8.0.0
 
 ## 执行步骤
 
-1. **检查需求文档**：`ai-docs/PRD.md`
+1. **检查需求文档**：`ai-docs/docs/PRD.md`
 
 2. **执行 3 个 Agent**（使用 Task 工具）：
    - `subagent_type=agile-flow:planner` - 分析需求，生成任务
