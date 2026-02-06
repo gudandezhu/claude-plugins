@@ -148,20 +148,36 @@ get_server_port() {
     if [[ -f "$WEB_PORT_FILE" ]]; then
         local saved_port
         saved_port=$(cat "$WEB_PORT_FILE")
-        # 验证保存的端口是否可用
-        if is_port_in_use "$saved_port"; then
-            # 端口被占用，可能是本服务在运行，检查 PID
-            if [[ -f "$WEB_PID_FILE" ]]; then
-                local pid
-                pid=$(cat "$WEB_PID_FILE")
-                if is_process_running "$pid"; then
-                    # 是本服务的端口，返回
+
+        # 检查 PID 文件是否存在
+        if [[ -f "$WEB_PID_FILE" ]]; then
+            local saved_pid
+            saved_pid=$(cat "$WEB_PID_FILE")
+
+            # 检查保存的进程是否在运行
+            if is_process_running "$saved_pid"; then
+                # 进程在运行，验证端口是否匹配
+                local pid_port
+                pid_port=$(lsof -ti:"$saved_port" 2>/dev/null)
+                if [[ "$pid_port" == "$saved_pid" ]]; then
+                    # PID 和端口匹配，返回保存的端口
                     echo "$saved_port"
                     return 0
+                else
+                    # PID 存在但不占用该端口，异常情况，重新分配
+                    log_warning "PID $saved_pid 存在但不占用端口 $saved_port，重新分配..."
                 fi
+            else
+                # PID 文件存在但进程已停止
+                log_warning "旧进程 $saved_pid 已停止"
+                rm -f "$WEB_PID_FILE"
             fi
-            # 端口被其他服务占用，重新分配
-            log_warning "端口 $saved_port 被占用，重新分配..."
+        fi
+
+        # 验证端口是否可用
+        if is_port_in_use "$saved_port"; then
+            # 端口被其他进程占用，重新分配
+            log_warning "端口 $saved_port 被其他进程占用，重新分配..."
         else
             # 端口可用，返回保存的端口
             echo "$saved_port"
@@ -265,13 +281,29 @@ start_web_server() {
     local server_port
     server_port=$(get_server_port)
 
-    # 清理旧进程
+    # 清理该端口上的所有进程
     if is_port_in_use "$server_port"; then
-        local old_pid
-        old_pid=$(lsof -ti:"$server_port" 2>/dev/null)
-        if [[ -n "$old_pid" ]]; then
-            kill "$old_pid" 2>/dev/null || true
-            sleep 1
+        log_warning "端口 $server_port 被占用，清理中..."
+        local old_pids
+        old_pids=$(lsof -ti:"$server_port" 2>/dev/null)
+        if [[ -n "$old_pids" ]]; then
+            while IFS= read -r old_pid; do
+                if [[ -n "$old_pid" ]]; then
+                    log_info "终止进程 $old_pid (占用端口 $server_port)"
+                    kill "$old_pid" 2>/dev/null || true
+                fi
+            done <<< "$old_pids"
+            sleep 2
+            # 如果还在运行，强制杀死
+            old_pids=$(lsof -ti:"$server_port" 2>/dev/null)
+            if [[ -n "$old_pids" ]]; then
+                while IFS= read -r old_pid; do
+                    if [[ -n "$old_pid" ]]; then
+                        kill -9 "$old_pid" 2>/dev/null || true
+                    fi
+                done <<< "$old_pids"
+                sleep 1
+            fi
         fi
     fi
 
@@ -284,7 +316,16 @@ start_web_server() {
     sleep 2
 
     if is_process_running "$server_pid"; then
-        log_success "Web Dashboard 已启动 (PID: $server_pid)"
+        # 验证进程确实监听了指定端口
+        local actual_port
+        actual_port=$(lsof -ti:"$server_port" 2>/dev/null)
+        if [[ -z "$actual_port" ]]; then
+            log_error "进程启动失败，未监听端口 $server_port"
+            cat "$WEB_LOG_FILE"
+            return 1
+        fi
+
+        log_success "Web Dashboard 已启动 (PID: $server_pid, 端口: $server_port)"
         log_info "项目目录: $PROJECT_ROOT"
         log_info "访问地址: http://localhost:${server_port}"
     else

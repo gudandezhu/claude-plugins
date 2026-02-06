@@ -88,6 +88,7 @@ async function parseTasks() {
             const taskObj = {
                 priority: task.priority || 'P2',
                 id: task.id || `TASK-${result.total + 1}`,
+                title: task.title || task.description || '',
                 description: task.description || ''
             };
 
@@ -147,12 +148,12 @@ app.get('/api/dashboard', async (req, res) => {
         // 转义所有输出内容，防止 XSS
         const sanitizedData = {
             ...data,
-            pending: data.pending.map(t => ({...t, description: escapeHtml(t.description)})),
-            inProgress: data.inProgress.map(t => ({...t, description: escapeHtml(t.description)})),
-            testing: data.testing.map(t => ({...t, description: escapeHtml(t.description)})),
-            tested: data.tested.map(t => ({...t, description: escapeHtml(t.description)})),
-            bug: data.bug.map(t => ({...t, description: escapeHtml(t.description)})),
-            completed: data.completed.map(t => ({...t, description: escapeHtml(t.description)}))
+            pending: data.pending.map(t => ({...t, title: escapeHtml(t.title), description: escapeHtml(t.description)})),
+            inProgress: data.inProgress.map(t => ({...t, title: escapeHtml(t.title), description: escapeHtml(t.description)})),
+            testing: data.testing.map(t => ({...t, title: escapeHtml(t.title), description: escapeHtml(t.description)})),
+            tested: data.tested.map(t => ({...t, title: escapeHtml(t.title), description: escapeHtml(t.description)})),
+            bug: data.bug.map(t => ({...t, title: escapeHtml(t.title), description: escapeHtml(t.description)})),
+            completed: data.completed.map(t => ({...t, title: escapeHtml(t.title), description: escapeHtml(t.description)}))
         };
 
         res.json(sanitizedData);
