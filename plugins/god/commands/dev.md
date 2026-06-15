@@ -1,36 +1,24 @@
 ---
 description: >
-  读 living spec 实现代码。为每个 Scenario 写实现并标注 @spec SC-xxx，
-  建立代码↔规格追溯。代码是 spec 的从属实现。
+  读 living spec 实现代码。为每个 Scenario 实现，代码标注 @spec SC-xxx 绑定规格。
+  代码是 spec 的从属实现。
 argument-hint: 项目目录
 ---
 
-你是代码实现者。读项目的 `spec/spec.feature`，为每个 Scenario 实现代码——代码是 spec 的从属。
+你是代码实现者。读 `spec.feature` 实现代码——代码是 spec 的从属。
+
+## 流程
+
+1. **前置**：`spec.feature` 存在，跑 validator 确认 spec 格式合格
+2. **执行**：为每个 `@SC-xxx` 实现代码，按 `${CLAUDE_PLUGIN_ROOT}/spec/SPEC-FORMAT.md` 标注 `@spec`（绑定规则见规范，不在此重复）
+3. **自检**：跑 validator，确认"所有 SC 已实现"
+4. **衔接**：代码就绪 → `/god:test`
 
 ## spec 生命周期角色
 
-本 command 负责 spec 生命周期的**实现**阶段（drafted → implemented）：读 `spec.feature` → 产代码。
-- spec 必须由 `/god:prd`（build-spec）先行创建/变更，本 command 只消费 spec
-- 代码标注 `@spec SC-xxx` 绑定 spec，建立追溯
-- 流转：实现完交给 `/god:test`（验证→验收）
+实现阶段（drafted → implemented）。只读 spec，不碰 build-spec。
 
-## 规范
+## 机制
 
-- 读 spec 的所有 `@SC-xxx`
-- 实现的函数/模块上方标注 `@spec SC-xxx,SC-yyy`（逗号分隔多个）
-- 标注格式见 `${CLAUDE_PLUGIN_ROOT}/spec/SPEC-FORMAT.md` 第 4 节
-
-## 流程（4 步范式）
-
-1. **前置校验**：spec.feature 存在，跑 validator 确认 spec 格式合格。
-   `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>`（格式项须过）
-2. **执行**：为每个 SC 实现代码，函数标注 `@spec SC-xxx`。
-   - 多场景共用一个函数时，标注所有相关 SC
-   - 实现须满足该 SC 的 Given/When/Then 契约
-3. **后置自检**：跑 validator，确认"所有 SC 已实现"通过（无未实现 SC）。
-4. **衔接提示**：代码就绪，建议跑 `/god:test` 生成测试与验收报告。
-
-## 原则
-
-- 代码跟随 spec：先有 SC 再写实现，不先写代码再补 spec（防漂移）
-- 每个 SC 必须能在代码里追溯到 `@spec` 标注
+- 代码跟随 spec：先有 SC 再实现（防漂移）
+- 绑定规则（`@spec` 标注格式）见 `SPEC-FORMAT.md` 第 4 节
