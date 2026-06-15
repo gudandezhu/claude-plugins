@@ -1,0 +1,14 @@
+{
+  "name": "fan-plugins",
+  "owner": {
+    "name": "fan"
+  },
+  "description": "个人 Claude Code 插件市场，托管 god 等插件",
+  "plugins": [
+    {
+      "name": "god",
+      "source": "./plugins/god",
+      "description": "God 模式插件 — 骨���，功能待填充"
+    }
+  ]
+}

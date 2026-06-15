@@ -1,0 +1,188 @@
+# .gitlab-ci.yml — 集中测试仓库 CI 配置模板
+# 由 init-workspace 自动复制到测试仓库根目录
+#
+# 三个 stage：
+#   validate  — 功能树校验 + 孤儿脚本检测 + 依赖版本一致性
+#   smoke     — PR 冒烟测试（@smoke 标签脚本）
+#   regression — 合并回归（全量 features/ + flows/）
+
+stages:
+  - validate
+  - smoke
+  - regression
+
+variables:
+  NODE_VERSION: "18"
+  PLAYWRIGHT_BROWSERS_PATH: "${CI_PROJECT_DIR}/.browsers"
+
+.node-setup: &node-setup
+  image: mcr.microsoft.com/playwright:v1.44.0-jammy
+  before_script:
+    - npm ci --prefer-offline
+    - npx playwright install --with-deps chromium
+
+# ============================================================
+# Stage 1: validate — 每次 push 都执行
+# ============================================================
+
+validate-feature-tree:
+  stage: validate
+  image: node:${NODE_VERSION}
+  script:
+    - node scripts/workspace/parse-tree.js --dir feature-tree/
+    - node scripts/workspace/validate-feature-tree.js --dir feature-tree/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+check-orphan-scripts:
+  stage: validate
+  image: node:${NODE_VERSION}
+  script:
+    - |
+      for PROJECT_DIR in projects/*/; do
+        if [ -d "$PROJECT_DIR/features" ] || [ -d "$PROJECT_DIR/flows" ]; then
+          echo "Checking $PROJECT_DIR..."
+          node scripts/workspace/workspace-check.js \
+            --project-dir "$PROJECT_DIR" \
+            --tree-index feature-tree/index.json
+        fi
+      done
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  allow_failure: true
+
+check-dependency-versions:
+  stage: validate
+  image: node:${NODE_VERSION}
+  script:
+    - |
+      # 检查测试仓库与 .test-deps 核心依赖版本一致性
+      # .test-deps 路径通过环境变量 TEST_DEPS_PATH 传入，默认为 CI 中的相对路径
+      node -e "
+      const fs=require('fs'),path=require('path');
+      const pkg=JSON.parse(fs.readFileSync('package.json','utf-8'));
+      const deps={...pkg.dependencies,...pkg.devDependencies};
+      const critical=['@playwright/test','vitest','axios'];
+      const testDepsPath=process.env.TEST_DEPS_PATH||'';
+      let refDeps=null;
+      if(testDepsPath){
+        const refPkgPath=path.join(testDepsPath,'package.json');
+        if(fs.existsSync(refPkgPath)){
+          const refPkg=JSON.parse(fs.readFileSync(refPkgPath,'utf-8'));
+          refDeps={...refPkg.dependencies,...refPkg.devDependencies};
+        }
+      }
+      const mismatches=[];
+      for(const name of critical){
+        const local=deps[name]||'(not installed)';
+        const ref=refDeps?refDeps[name]||'(not installed)':'(no ref)';
+        const match=!refDeps||local===ref;
+        console.log(name+': '+local+(refDeps?' vs '+ref+(match?' [OK]':' [MISMATCH]'):''));
+        if(refDeps&&!match) mismatches.push(name+': local='+local+' ref='+ref);
+      }
+      if(mismatches.length>0){
+        console.error('[FAIL] Dependency version mismatches detected:');
+        mismatches.forEach(m=>console.error('  - '+m));
+        console.error('Run npm ci in both locations to sync versions.');
+        process.exit(1);
+      }
+      console.log('[OK] Dependency versions '+(refDeps?'match':'listed (no .test-deps ref to compare)'));
+      "
+    - npx playwright --version
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - package.json
+        - package-lock.json
+
+# ============================================================
+# Stage 2: smoke — PR 冒烟测试（@smoke 标签）
+# ============================================================
+
+smoke-test:
+  <<: *node-setup
+  stage: smoke
+  script:
+    # 第一轮：API 流程冒烟（如果有 @smoke 标记的 API 流程测试）
+    - |
+      if find projects/*/flows/*/api/ -name "*.api.test.ts" 2>/dev/null | head -1 | grep -q .; then
+        npx vitest run projects/*/flows/*/api/ --reporter=json --outputFile=api-smoke-results.json || true
+      fi
+    # 第二轮：E2E 冒烟（@smoke 标签）
+    - npx playwright test --grep @smoke --workers=2 --retries=1 --reporter=json
+  artifacts:
+    when: always
+    paths:
+      - api-smoke-results.json
+      - test-results/
+    expire_in: 7 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  timeout: 15m
+
+# ============================================================
+# Stage 3: regression — 合并到 main 时全量回归
+# ============================================================
+
+regression-api-flows:
+  <<: *node-setup
+  stage: regression
+  script:
+    # 第一轮：所有 API 流程测试
+    - npx vitest run projects/*/flows/*/api/ --reporter=json --outputFile=api-regression-results.json
+  artifacts:
+    when: always
+    paths:
+      - api-regression-results.json
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  timeout: 15m
+
+regression-e2e:
+  <<: *node-setup
+  stage: regression
+  script:
+    # 第二轮：所有 E2E 测试（功能组 + 流程统一执行）
+    - npx playwright test
+        projects/*/tests/e2e/
+        --workers=4 --retries=1
+        --reporter=json
+  artifacts:
+    when: always
+    paths:
+      - test-results/
+      - projects/*/tests/e2e/
+      - projects/*/tests/api/
+      - playwright-report/
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  timeout: 60m
+
+# ============================================================
+# Merge proposal — main 分支合并时自动处理功能树提案
+# ============================================================
+
+merge-proposals:
+  stage: validate
+  image: node:${NODE_VERSION}
+  script:
+    - |
+      if [ -d "feature-tree-proposal" ] && [ "$(ls -A feature-tree-proposal/*.md 2>/dev/null)" ]; then
+        node scripts/workspace/merge-proposal.js \
+          --tree-dir feature-tree/ \
+          --proposal-dir feature-tree-proposal/
+        git config user.email "ci@testing.local"
+        git config user.name "CI Bot"
+        git add feature-tree/ feature-tree-proposal/
+        git commit -m "ci: merge feature tree proposals" || true
+        git push origin HEAD:main || true
+      else
+        echo "[OK] No proposals to merge"
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - feature-tree-proposal/*.md

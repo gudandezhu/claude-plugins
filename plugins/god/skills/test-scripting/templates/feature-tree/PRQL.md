@@ -1,0 +1,33 @@
+- PRQL 请购单列表页 /purchase-requisitions
+  - PRQL-FLTR 筛选与搜索
+    - PRQL-FLTR-KW 关键词搜索：用户输入关键词，模糊匹配请购单号/物料名称/请购人
+    - PRQL-FLTR-STAT 按状态筛选：用户选择请购单状态（草稿/待审批/已审批/已驳回/已关闭），列表即时过滤
+    - PRQL-FLTR-DATE 按日期筛选：用户选择日期范围，列表仅显示匹配的请购单
+    - PRQL-FLTR-DEPT 按部门筛选：用户选择请购部门，列表过滤对应部门的请购单
+    - PRQL-FLTR-RST 重置筛选条件：一键清除所有筛选条件，恢复默认列表
+  - PRQL-ACT 列表操作
+    - PRQL-ACT-ADD 新建请购单：用户点击新建按钮，跳转至请购单新建页 @smoke
+    - PRQL-ACT-VIEW 查看请购单详情：用户点击请购单行，跳转至详情页
+    - PRQL-ACT-EDIT 编辑请购单：用户对草稿状态的请购单点击编辑，跳转至编辑页
+    - PRQL-ACT-DEL 删除请购单：用户删除草稿状态的请购单，从列表中移除
+    - PRQL-ACT-COPY 复制请购单：用户复制已有请购单，生成一份新的草稿请购单
+  - PRQL-BTCH 批量操作
+    - PRQL-BTCH-SUB 批量提交：用户勾选多条草稿请购单，一键批量提交审批
+    - PRQL-BTCH-DEL 批量删除：用户勾选多条草稿请购单，一键批量删除
+  - PRQL-PAGE 分页
+    - PRQL-PAGE-NEXT 翻页：用户点击上一页/下一页切换列表分页
+    - PRQL-PAGE-SIZE 切换每页条数：用户选择每页显示条数（10/20/50）
+  - PRQL-FLOW 入口
+    - F-PRQNEW 新建并提交请购单流程 @smoke
+      - {##PRQL-ACT-ADD}：新建请购单
+      - {##PRQE-BASE-FILL}：填写基本信息
+      - {##PRQE-LINE-ADD}：添加物料明细行
+      - {##PRQE-SAVE-DFT}：保存草稿
+      - {##PRQE-ACT-SUB}：提交审批
+    - F-PRQAPV 请购单审批流程 @smoke
+      - {##PRQL-ACT-VIEW}：查看请购单详情
+      - {##PRQD-APVL-APV}：审批通过
+    - F-PRQREJ 请购单驳回后重新提交流程
+      - {##PRQL-ACT-EDIT}：编辑被驳回的请购单
+      - {##PRQE-LINE-EDIT}：修改物料明细行
+      - {##PRQE-ACT-SUB}：重新提交审批

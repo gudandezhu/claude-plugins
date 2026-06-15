@@ -1,0 +1,26 @@
+{
+  "framework": "vue",
+  "version": "3.x",
+  "uiLibrary": "element-plus",
+  "componentExtension": ".vue",
+  "routerConfigPattern": "**/router/index.{ts,js}",
+  "selectorMapping": {
+    "el-button": ".el-button",
+    "el-table": ".el-table",
+    "el-dialog": ".el-dialog",
+    "el-form": ".el-form",
+    "el-form-item": ".el-form-item",
+    "el-input": ".el-input input",
+    "el-select": ".el-select",
+    "el-switch": ".el-switch",
+    "el-pagination": ".el-pagination",
+    "el-tabs": ".el-tabs",
+    "el-tag": ".el-tag",
+    "el-tree": ".el-tree",
+    "el-upload": ".el-upload",
+    "el-date-picker": ".el-date-editor",
+    "el-checkbox": ".el-checkbox",
+    "el-radio": ".el-radio",
+    "el-dropdown": ".el-dropdown"
+  }
+}

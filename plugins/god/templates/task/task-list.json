@@ -1,0 +1,48 @@
+{
+  "iteration": "IT-XX",
+  "name": "迭代名称",
+  "objective": "本迭代要交付的核心价值",
+  "techDesignPath": "tech-design.md 相对路径，基于 process-docs 根目录",
+  "uiDesignPath": "UI 设计稿目录相对路径，基于 process-docs 根目录（如有，否则为 null）",
+  "createdAt": "YYYY-MM-DD",
+  "updatedAt": "YYYY-MM-DD",
+  "features": [
+    {
+      "name": "功能点名称（动词+对象，如：新增供应商）",
+      "techDesignRef": "tech-design.md#章节标题锚点（如：41-接口总览表）",
+      "prdRef": "prd.md#章节标题锚点（如：31-功能描述）",
+      "acRef": "ac.md#AC-XX",
+      "uiRef": "ui/模块名/页面名.png 或 null",
+      "relatedTasks": ["BE-01", "FE-01"]
+    }
+  ],
+  "summary": {
+    "infra": 0,
+    "backend": 0,
+    "frontend": 0,
+    "total": 0
+  },
+  "tasks": [
+    {
+      "seq": 1,
+      "id": "INFRA-01",
+      "name": "任务名称",
+      "role": "infra | backend | frontend",
+      "dependencies": [],
+      "assignee": "",
+      "phase": {
+        "dev": "pending",
+        "selfTest": "-"
+      },
+      "artifact": "",
+      "detailFile": "INFRA-01.md"
+    }
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "阶段名称",
+      "tasks": ["INFRA-01", "FE-01"]
+    }
+  ]
+}
