@@ -9,6 +9,11 @@ argument-hint: "[idea or feature description]"
 
 > **living-spec 定位**：本 skill 是 `/god:prd` command 加载的**探索 skill**。产出 proposal（需求决策），不产 spec；proposal 进入 `/god:prd` 固化为 `spec.feature`。也可独立用于纯需求探索。
 
+> **两种运行模式**：
+> - **被 `/god:prd` 加载**：执行到里程碑 3（方案闭环）即停，交回 prd 走 build-spec 产 spec。**不执行里程碑 4、不产 proposal、不 commit。**
+> - **独立探索**：执行完整 4 个里程碑，产出 `proposal.md` 并 commit。
+> 模式由调用方声明；独立运行默认完整模式。
+
 From vague idea to structured proposal, through relentless collaborative dialogue.
 
 **Core principle**: Help the user clarify what they truly need through structured dialogue. The goal is shared understanding — not filtering ideas, but making implicit assumptions explicit so the right path becomes obvious. Pseudo-requirements die naturally when the thinking is clear.
@@ -218,7 +223,7 @@ This catches discoverability gaps that kill adoption.
 **Toolbox**:
 - Closure walkthrough — check each step for completeness, identify missing links
 - Adversarial evaluation — challenge assumptions, find blind spots, explore failure scenarios
-- Need Gate — simpler alternative? real need? why now?
+- Need Gate — 见 `rules/challenge-protocol.md`（具体特性浮现时触发）
 
 **If major defects found**: go back to approach selection, don't proceed with a broken plan.
 
@@ -250,18 +255,9 @@ Do NOT commit automatically. Present to the user and wait for explicit approval.
 | Risks | 3+ specific risks with actionable mitigations | "We'll handle it" |
 | Success Criteria | Measurable, testable, covers all scope | "Works well" or "Better UX" |
 
-### Need Gate (embedded at every decision point)
+### Need Gate
 
-As scenarios reveal specific features or capabilities, apply this clarification check **before diving into how to implement each one**. The gate triggers when a concrete feature crystallizes from the discussion — not on the initial vague idea, but on each actionable feature point that emerges.
-
-**Three checks (in order)**:
-1. **Simpler alternative?** — Search for existing tools, commands, pipe compositions, or ecosystem utilities that already solve this. If found → propose the simpler path.
-2. **Is this the real need?** — Hypothesize the user's underlying goal (Y). Confirm with the user before challenging: "I understand your core need is [Y] — is that right?" Only after confirmation, assess whether X is the best path to Y.
-3. **Why now?** — "What happens if we defer this?" If the cost of delay is low → suggest deferring until a real need emerges.
-
-**If the user overrides the gate** (insists on proceeding despite a simpler alternative or deferral suggestion): accept and record `Challenge Override: user chose to proceed. Reason: <user's reason or "not stated">.` in the proposal. Do NOT keep challenging after an override.
-
-For the full protocol including search strategy, Y-confirmation flow, and timing criteria, see `rules/challenge-protocol.md`.
+当具体特性（feature）从讨论中 crystallize 时触发 Need Gate——三关检查（更简方案？真实需求？为何现在？）。**完整定义见 `rules/challenge-protocol.md`（单一事实源，本文件不重复）。**
 
 ### Challenge Protocol
 

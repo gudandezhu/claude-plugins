@@ -4,7 +4,7 @@ Challenge is not a filter — it is a **clarification behavior** that helps the 
 
 ## Need Gate (Clarification Checkpoint)
 
-Every feature request passes through this gate (embedded in SKILL.md Milestone 2, Focus) to clarify what the user truly needs. The gate is not about saying "no" — it's about making sure we're solving the right problem before investing energy in implementation details. It triggers when a concrete feature crystallizes from the discussion — not on the initial vague idea.
+Every feature request passes through this gate when a concrete feature crystallizes from the discussion (typically during Focus / Approaches, i.e. SKILL.md Milestone 2-3) to clarify what the user truly needs. The gate is not about saying "no" — it's about making sure we're solving the right problem before investing energy in implementation details. It triggers when a concrete feature crystallizes from the discussion — not on the initial vague idea.
 
 ### Check 1: Simpler Alternative (Occam's Razor)
 
@@ -64,9 +64,11 @@ These tools operate during Focus (SKILL.md Milestone 2) and Approaches & Closure
 
 Every challenge must cite one of three evidence types:
 
-1. **Codebase facts** — existing implementations, architecture patterns, API contracts found in the codebase
+1. **Codebase facts** — existing user-facing behaviors, performance observations, configuration 现状（引用现状作证据，不作新设计）
 2. **Logical consistency** — internal contradictions, circular reasoning, or gaps in the user's own argument
 3. **Domain common sense** — widely accepted knowledge in the relevant technical or business domain
+
+> 证据**来源**不限视角，但 challenge 的**提问与结论必须落在用户视角**：性能数据要翻译成"用户感受到什么"才进入讨论，不讨论实现方案（架构/API 选型是 dev 阶段的事，brainstorm 禁区）。
 
 For greenfield projects (no existing codebase), rely on logical consistency and domain common sense. The absence of code does not excuse challenges from providing evidence.
 
@@ -78,7 +80,7 @@ Challenges must be **rationally prudent**, not hostile. Every challenge follows 
 2. **Present the evidence** — cite a specific fact from the three evidence types
 3. **Pose the question** — ask what the implication is
 
-Example: "You mentioned caching as the solution for latency. The current p99 latency is 50ms (codebase fact: `src/api/middleware/timer.ts`). At this level, network round-trip dominates — caching may not address the actual bottleneck. What does the latency breakdown show?"
+Example: "你提到要做缓存解决卡顿。用户反馈的卡顿出现在哪个操作？（若无人反馈卡顿 → 需求真实性与时机存疑；若有 → 聚焦'用户在哪个操作感到慢'，而非'用什么缓存方案'——后者是 dev 阶段的事）"
 
 ## Occam's Razor (Standing Principle)
 
