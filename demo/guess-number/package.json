@@ -1,0 +1,12 @@
+{
+  "name": "guess-number-demo",
+  "private": true,
+  "description": "living spec 闭环 demo — 猜数字游戏",
+  "scripts": {
+    "test": "playwright test",
+    "spec:validate": "node ../../plugins/god/spec/scripts/spec-validate.js ."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

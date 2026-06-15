@@ -1,0 +1,15 @@
+# 依赖
+node_modules/
+
+# 测试运行产物
+test-results.json
+test-results/
+playwright-report/
+blob-report/
+
+# 系统 / IDE
+.DS_Store
+.idea/
+
+# 日志
+*.log

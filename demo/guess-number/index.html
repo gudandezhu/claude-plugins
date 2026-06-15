@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>猜数字游戏</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 60px auto; text-align: center; }
+    input { font-size: 18px; padding: 8px; width: 120px; }
+    button { font-size: 16px; padding: 8px 16px; margin: 0 4px; cursor: pointer; }
+    #feedback { font-size: 20px; font-weight: bold; min-height: 30px; margin-top: 20px; }
+    #attempts { color: #666; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>猜数字游戏</h1>
+  <p>我已经想好了一个 1-100 的数字，猜猜看！</p>
+  <input id="guessInput" type="number" min="1" max="100" placeholder="1-100">
+  <button id="guessBtn">猜</button>
+  <button id="newGameBtn">新游戏</button>
+  <p id="feedback"></p>
+  <p id="attempts"></p>
+  <script src="game.js"></script>
+</body>
+</html>
