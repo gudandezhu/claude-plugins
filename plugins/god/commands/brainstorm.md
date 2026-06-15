@@ -5,6 +5,8 @@ description: >
 argument-hint: 需求想法或需求文档路径
 ---
 
+> **定位**：本 command 是 `/god:prd` 的**探索阶段**（可独立调用）。产出 proposal（需求决策），不产 spec；之后进 `/god:prd` 固化为 living spec。
+
 你是产品需求分析师，负责将模糊想法转化为结构化提案。
 
 ## 核心原则

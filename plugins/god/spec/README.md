@@ -8,34 +8,36 @@ god 插件的 living-spec 子系统：以 BDD 活规格为真相源，spec/代�
 |---|---|
 | `SPEC-FORMAT.md` | spec 固定格式规范（Gherkin + `@SC-xxx` + `@spec-version` + 绑定标注）|
 | `scripts/spec-validate.js` | 验证手段（9 项校验，zero-drift 检测，仅依赖 Node 内置）|
-| `skills/build-spec` | spec 创建/变更唯一入口（**被 prd command 调用，不游离**）|
-| `commands/prd` `dev` `test` | spec 生命周期各阶段的 command 入口 |
+| `skills/build-spec` | spec 创建/变更唯一入口（**被 prd 调用，不游离**）|
+| `commands/prd` `dev` `test` | spec 生命周期各阶段的 command 入口（brainstorm 是 prd 探索阶段的轻量入口）|
 
 ## spec 生命周期（在 command 流转中）
 
 ```
-  /god:prd            /god:dev            /god:test
-    │                   │                   │
- 创建/变更 spec       读spec→实现代码       读spec→生成测试→验收报告
- (调 build-spec)     (标注 @spec SC-xxx)   (测试命名 SC-xxx:)
-    ↓                   ↓                   ↓
- drafted ─────────→ implemented ────────→ verified ──→ accepted
-    ↑                                                          │
-    └──────── 变更(build-spec) 回到 drafted, 重走 dev/test ────┘
+ /god:brainstorm       /god:prd                /god:dev          /god:test
+  (探索·可选)          探索+创建/变更           实现              验证→验收
+  模糊→proposal  ──→   proposal/需求→spec      读spec→代码        读spec→测试→报告
+                       (调 build-spec)
+                          ↓                       ↓                 ↓
+                       drafted ─────────────→ implemented ──────→ verified → accepted
+                          ↑                                                          │
+                          └──────── 变更回 prd 重走 dev/test ─────────────────────────┘
 ```
 
 - **`spec.feature` 是贯穿所有 command 的真相源**
-- 每个 command 推动 spec 到生命周期的下一阶段
-- `build-spec` 只被 `/god:prd` 调用（spec 写入的唯一能力，不作为独立路径存在）
-- 变更从 `/god:prd` 发起（防漂移：从顶到底强制传播）
+- **prd 是需求唯一入口**，内置探索（brainstorm 能力）+ 固化（build-spec）两阶段
+- brainstorm 是 prd 探索阶段的独立轻量入口（只产 proposal，需进 prd 固化）
+- `build-spec` 只被 prd 调用（spec 写入唯一能力，不游离）
+- 变更从 prd 发起（防漂移：从顶到底强制传播）
 
 ## command 职责（生命周期角色）
 
 | command | 生命周期角色 | 输入 | 输出 |
 |---|---|---|---|
-| `/god:prd` | **创建/变更**（→ drafted）| 需求 / proposal | `spec.feature` |
-| `/god:dev` | **实现**（→ implemented）| `spec.feature` | 代码（`@spec SC-xxx`）|
-| `/god:test` | **验证→验收**（→ accepted）| spec + 代码 | 测试（`SC-xxx:`）+ 验收报告 |
+| `/god:brainstorm` | 探索（可选，prd 内置）| 模糊想法 | proposal（需求决策）|
+| `/god:prd` | 探索+创建/变更（→ drafted）| 想法 / proposal | `spec.feature` |
+| `/god:dev` | 实现（→ implemented）| `spec.feature` | 代码（`@spec SC-xxx`）|
+| `/god:test` | 验证→验收（→ accepted）| spec + 代码 | 测试（`SC-xxx:`）+ 验收报告 |
 
 ## 强制规则
 
