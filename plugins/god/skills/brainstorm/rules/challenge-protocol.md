@@ -55,7 +55,7 @@ These tools operate during Focus (SKILL.md Milestone 2) and Approaches & Closure
 
 | Tool | When to Use | Trigger Condition | Termination Condition |
 |------|-------------|-------------------|----------------------|
-| **5 Whys** | Milestone 1 (Snapshot) / Milestone 2 (Focus) — drill into root cause | User states a surface-level symptom or vague pain point | Root cause identified (causal chain reaches a fundamental constraint), OR 3 consecutive "why" answers are consistent |
+| **5 Whys** | Milestone 2 (Focus) — drill into root cause（M1 仅在 triage 遇根因模糊时临时用）| User states a surface-level symptom or vague pain point | Root cause identified (causal chain reaches a fundamental user-level constraint), OR 连续 2 次回答指向同一根因/触及用户无法再细分的根本约束 |
 | **XY Problem Detection** | Milestone 1 (Snapshot) / Milestone 2 (Focus) — ongoing use after Need Gate | User's stated goal and actual need seem misaligned during discussion | User confirms the actual underlying problem, OR user provides clear rationale for why the specific solution is needed |
 | **Assumption Flip** | Milestone 2 (Focus) / Milestone 3 (Approaches & Closure) — validate critical assumptions | User presents a scenario that depends on an unverified assumption | Assumption is confirmed by evidence, OR assumption is overturned and scenario is adjusted, OR user provides sufficient domain expertise as evidence |
 | **Stress Test** | Milestone 2 (Focus) / Milestone 3 (Approaches & Closure) — expose hidden risks in scenarios | User seems satisfied with a scenario without considering edge cases | All identified edge cases are addressed, OR user explicitly accepts residual risk with documented rationale |

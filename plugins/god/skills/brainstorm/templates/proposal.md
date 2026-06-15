@@ -33,6 +33,10 @@ Keep it honest — if the approach is straightforward adoption of a standard, sa
 - Happy path scenarios
 - Edge cases and boundary conditions
 - Error scenarios and failure modes
+
+每个场景给一个轻量行为契约草稿（为 /god:prd → build-spec 铺路，不强制 GWT）：
+- 场景: <用户视角描述>
+  - 触发: <用户做了什么> → 可见结果: <用户看到什么>
 -->
 
 ### Non-Functional Requirements
