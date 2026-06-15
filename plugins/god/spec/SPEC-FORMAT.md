@@ -54,6 +54,8 @@ Feature: 功能名称
 | `@spec-version X.Y.Z` | 是 | spec 整体版本（语义化）| Feature 上方，每文件唯一 |
 | `@SC-xxx` | 是 | Scenario 唯一 ID | 每个 Scenario 上方，全文件唯一 |
 | `@happy`/`@edge`/`@error` | 否 | 场景分类（便于筛选）| Scenario tag |
+| `@intent` | 否 | 标记"意图反述" Scenario：强制 AI 把需求反述给人类确认（锚点写 C6）| Scenario tag |
+| `@sad-path` | 否 | 标记失败模式 Scenario：要求测试必须覆盖，零容忍跳过 | Scenario tag |
 
 ### 3.2 Scenario ID 规则
 
@@ -69,6 +71,29 @@ Feature: 功能名称
   - MINOR：新增 Scenario（新需求）
   - MAJOR：改动已有 Scenario 的行为契约（破坏性）
 - 每次改 spec 必须升版本（validator 强制）
+
+### 3.4 两个语义 tag（AI 防跑偏）
+
+复用 Gherkin tag 机制，零新增解析器。规则：
+
+**`@intent` — 意图反述（防需求漂移）**
+
+对"需求敏感、容易理解错"的 Scenario 加此 tag。约束：
+- **Given 必须是用户原话摘抄**（一字不改的引用，含日期或出处标记），便于机械校验
+- **Then 必须含"确认理解"关键词**（`确认理解` / `acknowledge`），表示该 SC 的存在意义就是反述
+- 配套 `spec/sources.md` 的 **C6 锚点**：`- **C6 Intent 反述** (YYYY-MM-DD HH:MM / SC-xxx[,SC-yyy] / 用户原话:<短摘>)`，证明"AI 反述过 + 用户确认过"
+- 锚点缺失 / Given 缺"原话" / Then 缺"确认理解" → validator FAIL，dev 阶段被门禁拦截
+
+**`@sad-path` — 失败模式（防测试漏覆盖）**
+
+对"系统出错 / 异常 / 边界失败"类 Scenario 加此 tag。约束：
+- 与普通 SC 一样要 `@spec SC-xxx` 代码标注 + `SC-xxx:` 测试
+- **额外**：tag 单独标注后，validate 阶段会显式提示"该 SC 是 sad-path，必有失败用例"，让测试缺失一眼可见
+- 错误信息前缀加 `[sad-path]`，与普通 SC 错误区分
+- 零额外成本——只多了个 tag 字符 + 一行 validator 提示
+
+两者均不改变 Gherkin 执行语义，**只是给 AI agent 看的语义标识**。
+语义正交：可与 `@happy`/`@edge`/`@error` 共存（如 `@SC-005 @sad-path @edge`），互不冲突。
 
 ---
 
@@ -159,6 +184,18 @@ Feature: 猜数字游戏
     Given 目标数字是 50
     When 玩家猜测 80
     Then 显示 "太大了"
+
+  @SC-004 @intent
+  Scenario: 反述"猜数字游戏"核心意图
+    Given 用户原话(2026-06-15):"我想要一个 1-100 的猜数字,玩 30 分钟内能猜中"
+    When AI 反述意图:"你要的是:随机目标 + 每次猜给大小提示 + 30 分钟内能赢"
+    Then 用户确认理解:继续实现
+
+  @SC-005 @sad-path
+  Scenario: 输入非数字
+    Given 目标数字是 50
+    When 玩家猜测 "abc"
+    Then 显示 "请输入 1-100 的数字"
 ```
 
 代码 `game.js`：
@@ -195,5 +232,10 @@ test('SC-003: 猜大了', async ({ page }) => { /* ... */ });
 | 7 | 每个 SC 在源码有 `@spec SC-xxx` 标注 | 未实现（漂移）|
 | 8 | 每个 SC 在测试有 `SC-xxx:` 用例 | 未验证（漂移）|
 | 9 | 代码无 `@spec` 标注了 spec 不存在的 SC | 孤儿代码（漂移）|
+| 10 | `spec/sources.md` 需求清单 ↔ spec.feature SC 双向引用一致 | 需求漏嵌 / 凭空多写 |
+| 11 | `spec/sources.md` 含 C5 Spec 评审锚点（通过/未跑，格式见 `skills/spec-review/SKILL.md` 阶段 4） | spec-review 被绕过 |
+| 12 | 带 `@intent` 的 SC 在 `spec/sources.md` 有对应 C6 锚点 | 意图反述被绕过 |
+| 13 | `@intent` SC 的 Given 含"原话"、Then 含"确认理解" | 反述形式化走过场 |
+| 14 | 带 `@sad-path` 的 SC 在源码 + 测试均有绑定（同普通 SC，仅错误前缀区分）| 失败模式无覆盖 |
 
 通过 = 三者绑定一致 = zero-drift。
