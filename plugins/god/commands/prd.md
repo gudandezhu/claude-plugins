@@ -27,7 +27,7 @@ argument-hint: 需求想法 / proposal 路径 / 项目目录
 ## spec 生命周期角色
 
 - 覆盖探索 + 创建/变更（→ drafted）
-- `/god:brainstorm` 是探索阶段的独立轻量入口（产 proposal，需进 prd 固化）
+- 探索方法论由 `brainstorm` skill 承载（产出 proposal，由本 command 加载）
 - spec 写入唯一入口 = build-spec
 - 流转：prd → dev → test；变更回 prd 重走
 

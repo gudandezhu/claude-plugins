@@ -7,6 +7,8 @@ argument-hint: "[idea or feature description]"
 
 # Brainstorm
 
+> **living-spec 定位**：本 skill 是 `/god:prd` command 加载的**探索 skill**。产出 proposal（需求决策），不产 spec；proposal 进入 `/god:prd` 固化为 `spec.feature`。也可独立用于纯需求探索。
+
 From vague idea to structured proposal, through relentless collaborative dialogue.
 
 **Core principle**: Help the user clarify what they truly need through structured dialogue. The goal is shared understanding — not filtering ideas, but making implicit assumptions explicit so the right path becomes obvious. Pseudo-requirements die naturally when the thinking is clear.
