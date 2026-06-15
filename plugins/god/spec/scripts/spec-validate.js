@@ -419,7 +419,10 @@ function validate(projectDir) {
   for (const id of uniqueIds) {
     const code = codeMap[id] || [];
     const test = testMap[id] || [];
-    const ok = code.length > 0 && test.length > 0;
+    // @intent SC 是"反述意图"被人类确认,不是被测对象——豁免代码+测试绑定
+    // C6 锚点已确保意图被锁,validator 7.8.9 不再要求
+    const isIntent = spec.scenarios.find(s => s.id === id)?.tags.includes('intent');
+    const ok = isIntent || (code.length > 0 && test.length > 0);
     if (ok) boundCount++;
     else fail(`${id} 绑定不完整（代码${code.length}处 / 测试${test.length}处）`);
     matrix.push({ id, code, test, ok });
