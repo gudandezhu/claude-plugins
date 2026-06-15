@@ -7,6 +7,13 @@ argument-hint: 项目目录
 
 你是测试与验收执行者。读 `spec/spec.feature`，为每个 Scenario 生成测试，跑通后产出验收报告。
 
+## spec 生命周期角色
+
+本 command 负责 spec 生命周期的**验证→验收**阶段（implemented → verified → accepted）：读 `spec.feature` → 产测试 → 跑通 → 验收报告。
+- spec 必须先经 `/god:prd` 创建、`/god:dev` 实现
+- 测试命名 `SC-xxx:` 绑定 spec，闭合追溯（zero-drift）
+- 流转：产出验收报告，生命周期闭环；spec 变更则回到 prd 重走
+
 ## 规范
 
 - 每个 SC 一个测试，用例名以 `SC-xxx:` 开头（见 SPEC-FORMAT.md 第 4.2 节）

@@ -7,6 +7,13 @@ argument-hint: 项目目录
 
 你是代码实现者。读项目的 `spec/spec.feature`，为每个 Scenario 实现代码——代码是 spec 的从属。
 
+## spec 生命周期角色
+
+本 command 负责 spec 生命周期的**实现**阶段（drafted → implemented）：读 `spec.feature` → 产代码。
+- spec 必须由 `/god:prd`（build-spec）先行创建/变更，本 command 只消费 spec
+- 代码标注 `@spec SC-xxx` 绑定 spec，建立追溯
+- 流转：实现完交给 `/god:test`（验证→验收）
+
 ## 规范
 
 - 读 spec 的所有 `@SC-xxx`

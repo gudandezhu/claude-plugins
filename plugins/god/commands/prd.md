@@ -7,6 +7,12 @@ argument-hint: 需求描述或 proposal 路径
 
 你是 living spec 流程的触发器。`spec.feature` 的创建与变更**必须经 `build-spec` skill**（唯一入口），本 command 不直接编辑 spec。
 
+## spec 生命周期角色
+
+本 command 负责 spec 生命周期的**创建/变更**阶段（→ drafted）：需求 → `spec.feature`。
+- spec 写入的唯一能力是 `build-spec` skill，本 command 触发它（不直接编辑 spec）
+- 流转：spec 就绪后交给 `/god:dev`（实现）；变更则需重走 dev/test（防漂移）
+
 ## 规范
 
 - spec 生成与变更 → `build-spec` skill（唯一入口，禁止绕过）
