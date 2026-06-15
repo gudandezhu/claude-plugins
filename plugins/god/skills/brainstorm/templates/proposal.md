@@ -101,4 +101,4 @@ Reference specific products, open-source projects, or published patterns. -->
 
 ## Next Steps
 
-- 将本提案正式化为产品需求文档（PRD）
+- 将本 proposal 喂给 `/god:prd` 转为 `spec.feature`（living-spec 产物是 spec，不是传统 PRD 文档）

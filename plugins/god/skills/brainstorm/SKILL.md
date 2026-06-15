@@ -164,7 +164,7 @@ This catches discoverability gaps that kill adoption.
 **Fast path trigger**: When AI judges the input is clear and needs are simple enough to skip deep analysis → generate proposal skeleton directly, single confirmation.
 
 **Core Principles** (apply throughout all milestones):
-- **Shared understanding is the termination condition** — keep going until both sides genuinely agree
+- **Shared understanding is the termination condition** — 终止信号（任一满足即可停追问）：��用户对当前方案无新增疑问，且连续 2 次回复为确认/补充细节而非质疑前提；②关键假设均已由 codebase 事实或用户明确陈述覆盖（逐条标注来源）；③用户主动说"可以了/往下走/固化吧"
 - **Think from user's chair** — every question must be answerable by someone who USES the product
 - **Recommend before asking** — provide your recommended answer as the first option
 - **Codebase-first answering** — if a question about existing features could be answered by searching the codebase, search first
@@ -235,9 +235,10 @@ This catches discoverability gaps that kill adoption.
 
 **Completion criteria**:
 - Proposal generated using `templates/proposal.md`
+- **Quality Standards 表逐行通过（Red Flag 全未命中）**，否则返工对应章节
 - Core path = current scope; iteration pool = future cycles (each with requirement description + deferral reason)
 - User confirmed satisfied
-- Git add + commit + push done
+- (独立模式) Git add + commit + push done
 - If iteration pool has remaining items, user has been informed of next steps
 
 <HARD-RULE>
