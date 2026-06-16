@@ -1,4 +1,5 @@
 ---
+status: stable
 name: test-case-design
 user-invocable: false
 description: |

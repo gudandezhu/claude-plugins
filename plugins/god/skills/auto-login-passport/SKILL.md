@@ -1,4 +1,5 @@
 ---
+status: stable
 name: auto-login-passport
 user-invocable: false
 description: |

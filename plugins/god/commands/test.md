@@ -1,4 +1,5 @@
 ---
+status: stable
 description: >
   读 living spec 生成 playwright 测试并跑通，产出验收报告。测试命名 SC-xxx 绑定规格，
   闭合 zero-drift。

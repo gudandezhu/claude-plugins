@@ -1,4 +1,5 @@
 ---
+status: stable
 description: "调研引擎入口。用法:  <主题> — 启动调研报告生成，支持广度调研和窄范围深度调研"
 allowed_args: "*"
 ---

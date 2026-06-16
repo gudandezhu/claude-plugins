@@ -1,4 +1,5 @@
 ---
+status: stable
 name: java-unit-test
 user-invocable: false
 description: 编写 Java 单元测试,支持多种场景(普通类、Service 层、Controller 层、响应式编程)。当用户需要为 Java 类编写单元测试、生成测试代码、或提到 JUnit、Mockito、单元测试覆盖率时使用此技能。自动识别测试目标类型并生成符合规范的测试类。

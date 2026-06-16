@@ -1,4 +1,5 @@
 ---
+status: stable
 name: arch-design
 user-invocable: false
 description: >

@@ -1,4 +1,5 @@
 ---
+status: stable
 name: brainstorm
 user-invocable: false
 description: Use when a user has a vague idea or feature request that needs to be clarified into unambiguous, testable requirements before being written as a spec. Triage requirements into core path and iteration pool before deep-diving. Pure dialogue — no documents produced, no commits.

@@ -1,4 +1,5 @@
 ---
+status: stable
 name: prototype-iterate
 description: 原型多轮迭代优化 - 对已有Pencil原型执行5轮迭代验证和修复
 user-invocable: false

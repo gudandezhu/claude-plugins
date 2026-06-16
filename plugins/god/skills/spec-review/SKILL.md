@@ -1,4 +1,5 @@
 ---
+status: stable
 name: spec-review
 user-invocable: false
 description: |

@@ -1,4 +1,5 @@
 ---
+status: stable
 name: frontend-selftest-guide
 user-invocable: false
 description: >

@@ -1,4 +1,5 @@
 ---
+status: stable
 name: user-perspective-analyzer
 user-invocable: false
 description: |

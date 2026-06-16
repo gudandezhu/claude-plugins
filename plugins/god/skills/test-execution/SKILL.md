@@ -1,4 +1,5 @@
 ---
+status: stable
 name: test-execution
 user-invocable: false
 description: |

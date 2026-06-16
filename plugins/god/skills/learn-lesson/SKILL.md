@@ -1,4 +1,5 @@
 ---
+status: stable
 name: learn-lesson
 user-invocable: true
 description: Use when you have solved an error or discovered a useful pattern. Extracts reusable knowledge from the current session.

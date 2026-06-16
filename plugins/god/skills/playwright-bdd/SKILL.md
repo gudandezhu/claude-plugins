@@ -1,4 +1,5 @@
 ---
+status: stable
 name: playwright-bdd
 description: 'Enforces Behavior Driven Development. Use when: implementing new features, making significant code changes, adding functionality, refactoring behavior. Requires writing a Gherkin feature file first, getting user approval, then implementing.'
 ---

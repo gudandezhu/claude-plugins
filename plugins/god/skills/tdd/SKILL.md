@@ -1,4 +1,5 @@
 ---
+status: stable
 name: tdd
 user-invocable: false
 description: >

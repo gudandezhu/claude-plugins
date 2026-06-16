@@ -1,4 +1,5 @@
 ---
+status: stable
 name: api-creator
 user-invocable: false
 description: |

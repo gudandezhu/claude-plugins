@@ -1,4 +1,5 @@
 ---
+status: stable
 name: eval-loop
 user-invocable: false
 description: |

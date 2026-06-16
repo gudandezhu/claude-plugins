@@ -1,4 +1,5 @@
 ---
+status: stable
 name: api-selftest-guide
 user-invocable: false
 description: >

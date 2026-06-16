@@ -1,4 +1,5 @@
 ---
+status: stable
 name: tech-selection
 user-invocable: false
 description: >

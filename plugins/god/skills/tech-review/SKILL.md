@@ -1,4 +1,5 @@
 ---
+status: stable
 name: tech-review
 user-invocable: false
 description: >

@@ -1,4 +1,5 @@
 ---
+status: stable
 name: systematic-debugging
 user-invocable: false
 description: >

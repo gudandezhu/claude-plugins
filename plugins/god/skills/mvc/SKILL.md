@@ -1,4 +1,5 @@
 ---
+status: stable
 name: mvc
 user-invocable: false
 description: This skill should be used when developing Spring Boot web applications following MVC architecture best practices. Triggers when users mention 'web layer', 'controller', 'API endpoint', 'REST API', 'VO/DTO/PO/BO models', 'request validation', 'HTTP methods', or need guidance on Web/API controllers, domain model separation, and data flow between layers. Provides standards for Web/API controllers, domain model patterns, dependency injection, and configuration management.

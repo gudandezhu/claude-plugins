@@ -1,4 +1,5 @@
 ---
+status: stable
 name: breakdown-tasks
 user-invocable: false
 description: |

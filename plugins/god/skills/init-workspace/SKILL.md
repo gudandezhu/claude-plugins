@@ -1,4 +1,5 @@
 ---
+status: stable
 name: init-workspace
 description: |
   初始化工作空间

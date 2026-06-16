@@ -1,4 +1,5 @@
 ---
+status: stable
 name: extract-ac
 user-invocable: false
 description: |

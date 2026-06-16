@@ -1,4 +1,5 @@
 ---
+status: stable
 name: build-spec
 description: |
   living spec 的创建与变更（唯一入口）。把 brainstorm 阶段梳理出的需求清单

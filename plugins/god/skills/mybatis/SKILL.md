@@ -1,4 +1,5 @@
 ---
+status: stable
 name: mybatis
 user-invocable: false
 description: Guide for developing data access layer with MyBatis/MyBatis Plus best practices. Use when needs to implement database operations. 

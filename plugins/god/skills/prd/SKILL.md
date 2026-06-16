@@ -1,4 +1,5 @@
 ---
+status: stable
 name: prd
 user-invocable: false
 description: >

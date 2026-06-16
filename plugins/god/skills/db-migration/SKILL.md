@@ -1,4 +1,5 @@
 ---
+status: stable
 name: db-migration
 user-invocable: false
 description: >

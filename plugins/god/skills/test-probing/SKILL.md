@@ -1,4 +1,5 @@
 ---
+status: stable
 name: test-probing
 user-invocable: false
 description: |

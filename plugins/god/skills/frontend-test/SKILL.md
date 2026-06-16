@@ -1,4 +1,5 @@
 ---
+status: stable
 name: frontend-test
 user-invocable: false
 description: >

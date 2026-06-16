@@ -1,4 +1,5 @@
 ---
+status: stable
 description: >
   读 living spec 实现代码。为每个 Scenario 实现，代码标注 @spec SC-xxx 绑定规格。
   v0.4.0 起接入 G1+G2+G3+G8 工具链（spec-cli advance + spec-validate + summary）。

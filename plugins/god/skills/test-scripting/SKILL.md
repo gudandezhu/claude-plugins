@@ -1,4 +1,5 @@
 ---
+status: stable
 name: test-scripting
 user-invocable: false
 description: |

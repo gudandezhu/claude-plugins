@@ -1,4 +1,5 @@
 ---
+status: stable
 description: >
   需求的唯一入口。梳理（加载 brainstorm skill）+ 固化（加载 build-spec skill）。
   AI 先自助调研（CLAUDE.md / docs / 知识库 / 已有 spec）再与用户交互，

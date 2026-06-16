@@ -1,4 +1,5 @@
 ---
+status: stable
 name: test-gate
 user-invocable: false
 description: |

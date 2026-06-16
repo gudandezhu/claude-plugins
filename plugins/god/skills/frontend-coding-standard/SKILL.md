@@ -1,4 +1,5 @@
 ---
+status: stable
 name: frontend-coding-standard
 user-invocable: false
 description: 前端编程规范。当用户进行前端开发、代码审查、命名文件/变量/组件时使用。确保代码符合企业规范。

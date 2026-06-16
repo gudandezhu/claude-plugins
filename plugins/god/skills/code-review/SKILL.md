@@ -1,4 +1,5 @@
 ---
+status: stable
 name: code-review
 user-invocable: false
 description: >

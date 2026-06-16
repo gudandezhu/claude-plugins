@@ -1,4 +1,5 @@
 ---
+status: stable
 name: pencil
 user-invocable: false
 description: >
