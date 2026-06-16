@@ -7,7 +7,7 @@ god 插件的 living-spec 子系统：以 BDD 活规格为真相源，spec/代�
 | 组件 | 作用 |
 |---|---|
 | `SPEC-FORMAT.md` | spec 固定格式规范（Gherkin + `@SC-xxx` + `@spec-version` + 绑定标注）|
-| `scripts/spec-validate.js` | 验证手段（9 项校验，zero-drift 检测，仅依赖 Node 内置）|
+| `scripts/spec-validate.js` | 验证手段（14 项校验，zero-drift 检测，仅依赖 Node 内置）|
 | `skills/brainstorm` | 探索方法论 skill（**被 prd 加载**，模糊→proposal）|
 | `skills/build-spec` | spec 创建/变更唯一入口（**被 prd 调用，不游离**）|
 | `commands/prd` `dev` `test` | spec 生命周期各阶段的 command 入口 |
