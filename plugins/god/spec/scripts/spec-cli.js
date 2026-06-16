@@ -79,8 +79,9 @@ function checkGate(specDir, targetPhase) {
   }
   if (targetPhase === 'reviewed') {
     // 校验 C5 锚点（spec-validate.js #11）
+    // 格式：`- **C5 Spec 评审** (...)` 或 `C5:` 简写
     const sources = fs.readFileSync(path.join(specDir, 'sources.md'), 'utf8');
-    if (!/C5\s*[:：]/.test(sources)) {
+    if (!/C5\s*Spec\s*评审/.test(sources) && !/C5\s*[:：]/.test(sources)) {
       errors.push('缺 C5 锚点（spec-validate.js #11）');
     }
   }
