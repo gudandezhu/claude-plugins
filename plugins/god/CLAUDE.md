@@ -84,56 +84,48 @@ god/
 ├── CLAUDE.md                       ← 本文件，宪法
 ├── README.md                       ← 使用入口
 ├── docs/                           ← 设计/规范/约定（**新模块先看这**）
-│   ├── architecture.md             L1/L2/L3/L4 职责详情
+│   ├── architecture.md             L1/L2/L3/L4 职责边界 + 跨层规则
 │   ├── spec-directory.md           spec/ 目录结构与产物
-│   ├── conventions.md              开发规范（命名/版本/提交流程）
+│   ├── conventions.md              开发规范（命名/版本/提交流程；文件位置/大小的唯一权威）
 │   ├── human-ai-contract.md        人机协作契约（6 个必介入点）
 │   ├── failure-modes.md            失败模式 + 恢复手册
-│   └── roadmap.md                  改造优先级（必做/应做/可缓做）
+│   ├── roadmap.md                  改造优先级（剩余缺口，见 §5）
+│   ├── CHANGELOG.md                版本变更详细历史（CLAUDE.md §10 摘要指此）
+│   ├── perspectives/               v0.4.0 起 3 视角全景演练（业务/开发/设计 4 类闭环）
+│   │   ├── 01-ops-runbook.md
+│   │   ├── 02-dev-perspective.md
+│   │   └── 03-architect-perspective.md
+│   ├── rfcs/                       RFC 提案（4 位补零编号 NNNN-xxx.md）
+│   │   ├── 0001-spec-cli-state-machine.md
+│   │   ├── 0002-spec-summary.md
+│   │   ├── 0003-hooks-integration.md
+│   │   └── 0005-opc-cost-tiered.md
+│   ├── adrs/                       ADR 决议（同编号格式；RFC 合并后改名为 ADR-NNNN）
+│   │   ├── 0000-spec-lifecycle-6-vs-4-states.md
+│   │   ├── 0002-spec-summary.md
+│   │   ├── 0003-spec-cli-state-machine.md
+│   │   └── 0004-hooks-integration.md
+│   └── incidents/                  事后复盘沉淀（v0.2.0 建）
 ├── spec/                           活规格子系统自身的设计
 │   ├── SPEC-FORMAT.md              Gherkin 格式 + SC 绑定规则
-│   ├── scripts/
+│   ├── scripts/                    spec 子系统自身的 L3 工具
 │   │   ├── spec-validate.js        机械校验（14 项）
-│   │   ├── spec-cli.js             (规划) SC 状态机
-│   │   ├── spec-render.js          (规划) 渲染 review.md
-│   │   └── spec-archive.js         (规划) 版本快照
+│   │   ├── spec-cli.js             SC 状态机 6 态 + meta.json 读写（v0.4.0 落）
+│   │   ├── spec-summary.js         summary.md 渲染（v0.4.0 落，11 单元测试）
+│   │   ├── spec-render.js          ⏳ 规划中（P1 G7）
+│   │   ├── spec-archive.js         ⏳ 规划中（P1 G4）
+│   │   └── install-hooks.js        G3 hook 一键安装（v0.4.0 落）
 │   └── TESTING.md                  spec 系统自身回归手册
-├── commands/                       L1
-│   ├── prd.md                      需求 → spec
-│   ├── dev.md                      spec → 代码
-│   └── test.md                     spec → 测试 → 验收
-├── skills/                         L2
-│   ├── brainstorm/                 模糊→清晰
-│   ├── build-spec/                 sources.md → spec.feature
-│   ├── spec-review/                语义评审
-│   ├── dev-gen/                    (规划) spec → 代码骨架
-│   ├── test-gen/                   (规划) spec → 测试桩
-│   ├── spec-render/                (规划) spec → review.md
-│   ├── spec-summary/               (规划) spec → 产品说明
-│   └── ...                         其余 44 个 skill 按需
-├── scripts/                        L3（dev/build/test 等领域工具；原 scripts/hooks/ 7 个孤岛脚本已删，待 G3 重建）
+├── commands/                       L1（prd / dev / test）
+├── skills/                         L2（38 个 skill，见各 SKILL.md）
+├── scripts/                        L3（dev/build/test 等领域工具；v0.4.0 起 `hooks/` 是顶层目录）
 ├── workflows/                      L3 workflow（评审/校验/并行）
-├── docs/                           v0.2.0 起的设计/规范/约定（**新模块先看这**）
-│   ├── architecture.md             L1/L2/L3/L4 职责详情
-│   ├── conventions.md              开发规范（命名/版本/提交流程）
-│   ├── human-ai-contract.md        人机协作契约（6 个必介入点）
-│   ├── failure-modes.md            失败模式 + 恢复手册
-│   ├── roadmap.md                  改造优先级（必做/应做/可缓做）
-│   ├── incidents/                  事后复盘沉淀（v0.2.0 建）
-│   └── spec-directory.md           spec/ 目录结构与产物
-├── docs/rfcs/                      RFC 提案（4 位补零编号 NNNN-xxx.md；v0.4.0 起启用）
-│   ├── 0001-spec-cli-state-machine.md
-│   └── 0002-spec-summary.md
-├── docs/adrs/                      ADR 决议（同编号格式；RFC 合并后改名为 ADR-NNNN）
-│   ├── 0000-spec-lifecycle-6-vs-4-states.md  基础架构（6 vs 4 状态）
-│   ├── 0002-spec-summary.md
-│   └── 0003-spec-cli-state-machine.md        G1+G2 捆绑落地
-├── hooks/                          L4 顶层 hook 配置目录（roadmap G3 接入 .claude/settings.json 后启用）
-├── templates/                      L4 产物模板（task/ + hooks/ v0.2.0 建）
-└── docs/perspectives/              v0.4.0 起 3 视角全景演练（业务/开发/设计 4 类闭环）
-    ├── 01-ops-runbook.md           OPC 视角跑 5 天 feature 闭环
-    ├── 02-dev-perspective.md       god 贡献者视角：RFC→PR→拒稿→合并
-    └── 03-architect-perspective.md 架构视角：评审 G8 + 写 ADR/拒绝 PR
+├── hooks/                          L4 hook 模板入口（v0.4.0 G3 落地，install-hooks.js 装到项目侧 .claude/settings.json）
+├── templates/                      L4 产物模板
+│   ├── task/                       任务模板（task-list.json 等）
+│   ├── hooks/                      G3 hook 脚本模板（pre-commit / session-end / post-commit-no-verify）
+│   └── spec-summary/               G8 summary 模板（v0.1.0）
+└── demo/                           真实项目样例（lead-scoring 等）
 ```
 
 ---
@@ -148,28 +140,23 @@ god/
 | 2 | **人看得懂**是 spec 的第一约束，AI 看得懂是第二 | 评审卡住 = 系统失败 |
 | 3 | 改 spec 是单一入口 | 漂移 = 资产腐烂 |
 
-### 4.2 5 大防漂移机制（详情见 [spec/SPEC-FORMAT.md §4](spec/SPEC-FORMAT.md)）
+### 4.2 5 大防漂移机制
 
-| 防什么 | 机制 | 在哪 |
-|---|---|---|
-| 绕过 build-spec 改 spec | spec-cli.js 强校验 | 规划中 |
-| 代码 `@spec` 标了 spec 没的 SC | spec-validate.js #9 | 已实现 |
-| spec 加 SC 漏写 REQ | spec-cli add --req 强校验 | 规划中 |
-| spec 改了代码没改 | spec-drift hook | 规划中 |
-| OPC 评审缺失（机制名沿用 PM）| C5 锚点 | 已实现 |
+**v0.4.0 全部落地**。详细机制 + 落点 → [docs/architecture.md §8](docs/architecture.md#8-与三条铁律的对应) + [spec/SPEC-FORMAT.md §4](spec/SPEC-FORMAT.md#4-三者绑定规则防漂移)。
 
 ---
 
-## 5. 系统级缺口（roadmap 一句话版）
+## 5. 系统级缺口（v0.4.0 已闭环）
 
-god 当前 vs 完整 god 还差 10 块。**完整 roadmap、优先级、依赖关系** → 见 [`docs/roadmap.md`](docs/roadmap.md)
+**P0 4 块已全部落地**（G1 状态机 / G2 meta / G3 hooks / G8 summary）。**剩余 6 块** 详情见 [`docs/roadmap.md`](docs/roadmap.md)：
 
-按性质归并：
-- **规范层**：spec-cli 状态机、spec.meta.json
-- **呈现层**：spec-render、spec-summary
-- **驱动层**：dev-gen、test-gen、archive
-- **防护层**：hooks、4 视角评审、domain.md
-- **战略/体验/工程/流程/运营/稳定/合规/元层**：见 roadmap
+- **P1 驱动层（4 块）**：spec-archive、dev-gen、test-gen、spec-render —— 缺则 god 自我驱动能力 < 50%
+- **P2 防护层（2 块）**：4 视角评审、domain.md —— 锦上添花，等 ≥ 3 个真实项目验证
+
+**已落地的 P0**（commit 锚点）：
+- G1+G2：commit `fc31904`（spec-cli.js + meta.json schema）
+- G8：commit `2644f35`（spec-summary.js + 11 单元测试 + 模板 v0.1.0）
+- G3：commit `229ab76`（templates/hooks/ 3 模板 + install-hooks.js）
 
 ---
 
@@ -218,12 +205,8 @@ god 当前 vs 完整 god 还差 10 块。**完整 roadmap、优先级、依赖�
 
 ## 10. 文档版本
 
-- **v0.4.0** (2026-06-16)：**3 视角全景演练 + G8 真实实现**。
-  - 文档：`docs/perspectives/` 3 份（01-ops 933 行 / 02-dev 742 行 / 03-architect 796 行），含业务/开发/设计/产品 4 类闭环。
-  - 规约：`docs/conventions.md §1.8` ADR/RFC 4 位补零编号 + 核心数据改必走 RFC。
-  - RFC-0001 spec-cli 状态机 + ADR-0001 6 vs 4 状态决议。
-  - **G8 真实落地**（D2 P0）：`spec/scripts/spec-summary.js` + 11/11 单元测试 + 模板 v0.1.0 + `commands/prd.md §2.5` 自动跑 gen；RFC-0002 转 ADR-0002。
-  - 提供 v0.4.0+ 演进 4 个未做项：G1+G2 捆绑实现（RFC-0001 待开）、G3 hooks 集成、OPC 预算分级归因。
-- **v0.3.0** (2026-06-16)：**OPC 定位**。§1.1 4 产品目标 + 1 系统目标 + 6 文档全部从"PM/AI/程序员协作"切到"OPC × AI 外骨骼"。新增 §1.3 OPC 注意力预算（< 30 分钟 / feature）。G8 spec-summary 由 P1 升级为 P0（目标 1 唯一验收手段）。
-- **v0.2.0** (2026-06-16)：补齐 6 子文档（architecture/conventions/human-ai-contract/failure-modes/roadmap/spec-directory），建 `docs/incidents/` 与 `templates/hooks/` 脚手架。索引图"待建"标识全部清除。
+- **v0.4.1** (2026-06-16)：状态同步。`roadmap.md` / `CLAUDE.md §5` / `spec-directory.md §2` 对齐 v0.4.0 真实落地。详细 changelog → [`docs/CHANGELOG.md`](docs/CHANGELOG.md)。
+- **v0.4.0** (2026-06-16)：3 视角全景演练 + G8 真实实现（见 `docs/CHANGELOG.md`）。
+- **v0.3.0** (2026-06-16)：OPC 定位（见 `docs/CHANGELOG.md`）。
+- **v0.2.0** (2026-06-16)：补齐 6 子文档。
 - **v0.1.0** (2026-06-16)：初版索引地图。

@@ -43,10 +43,11 @@ spec/
 | `spec.feature` | 行为规格（Gherkin Feature + Scenario + `@SC-xxx`）| `build-spec` skill（唯一入口） | `spec-review`、`/god:dev`、`/god:test`、`spec-validate.js` | [[SPEC-FORMAT.md]] |
 | `review/<date>.md` | spec-review 独立报告（4 维度评分 + 扣分明细）| `spec-review` skill | 用户、后续 archive | [[skills/spec-review/SKILL.md]] |
 | `TESTING.md` | spec 子系统自身的回归测试手册（L1-L6） | god 维护者（人工） | god 维护者（改 spec 系统前必跑） | [[TESTING.md]] |
-| `scripts/spec-validate.js` | 机械校验 14 项（已实现） | god 维护者（人工） | `/god:prd` 阶段 3a、`/god:dev` 阶段门禁、CI | [[SPEC-FORMAT.md#7 校验规则]] |
-| `scripts/spec-cli.js` | （规划）SC 状态机 / add --req 强校验（含 SC ID 分配） | god 维护者（人工） | `build-spec`、`/god:dev` | [[CLAUDE.md#5 系统级缺口]] |
-| `scripts/spec-render.js` | （规划）渲染 review.md | god 维护者（人工） | `spec-review` | 同上 |
-| `scripts/spec-archive.js` | （规划）版本快照 | god 维护者（人工） | `build-spec` 变更流程结束时 | 同上 |
+| `scripts/spec-validate.js` | 机械校验 14 项 | god 维护者（人工） | `/god:prd` 阶段 3a、`/god:dev` 阶段门禁、CI | [[SPEC-FORMAT.md#7 校验规则]] |
+| `scripts/spec-cli.js` | SC 状态机 6 态 + meta.json 读写（v0.4.0 落） | god 维护者（人工） | `build-spec`、`/god:dev`、`/god:test` S1 | [[roadmap.md#§3.2 G1 已落]] |
+| `scripts/spec-summary.js` | 渲染 summary.md（v0.4.0 落，11 单元测试） | god 维护者（人工） | `/god:prd` 阶段 2 末尾 | [[roadmap.md#§3.2 G8 已落]] |
+| `scripts/spec-render.js` | ⏳ 规划中（P1 G7） | — | — | [[roadmap.md#§3.4 G7]] |
+| `scripts/spec-archive.js` | ⏳ 规划中（P1 G4） | — | — | [[roadmap.md#§3.1 G4]] |
 
 ---
 
@@ -156,13 +157,13 @@ spec/
 
 [[CLAUDE.md#4.2 5 大防漂移机制]] 的逐项落实：
 
-| 防什么 | 机制 | 落地文件 / 工具 | 状态 |
+| 防什么 | 机制 | 落地文件 / 工具 | 状态（v0.4.0）|
 |---|---|---|---|
-| 绕过 build-spec 改 spec | `spec-cli.js` 强校验 | `spec/scripts/spec-cli.js` | 规划中（roadmap G1 P0）|
-| 代码 `@spec` 标了 spec 没的 SC | `spec-validate.js` #9 | `spec/scripts/spec-validate.js` 的 `validate()` 主流程 | 已实现 |
-| spec 加 SC 漏写 REQ | `spec-cli add --req` 强校验 | `spec/scripts/spec-cli.js`（规划）| 规划中（roadmap G1 P0）|
-| spec 改了代码没改 | `spec-drift` hook | `scripts/hooks/spec-drift-detector.js`（已删，待 G3 重建）+ `hooks/spec-drift.json`（待接入 .claude/settings.json）| 规划中（roadmap G3 P0，检测器与触发均待重建）|
-| OPC 评审缺失（机制名沿用"PM 评审缺失"）| C5 锚点（`sources.md` 强制写入）| `skills/spec-review/SKILL.md#评审产物归档` + `spec-validate.js` #11 | 已实现 |
+| 绕过 build-spec 改 spec | `spec-cli.js` 强校验 | `spec/scripts/spec-cli.js` | ✅ 已落（commit `fc31904`）|
+| 代码 `@spec` 标了 spec 没的 SC | `spec-validate.js` #9 | `spec/scripts/spec-validate.js` 的 `validate()` 主流程 | ✅ 已实现 |
+| spec 加 SC 漏写 REQ | `spec-cli add --req` 强校验 | `spec/scripts/spec-cli.js` | ✅ 已落（commit `fc31904`）|
+| spec 改了代码没改 | pre-commit hook 跑 spec-validate | `templates/hooks/pre-commit.sh` + `spec/scripts/install-hooks.js`（装到项目侧）| ✅ 已落（commit `229ab76` G3）|
+| OPC 评审缺失（机制名沿用"PM 评审缺失"）| C5 锚点（`sources.md` 强制写入）| `skills/spec-review/SKILL.md#评审产物归档` + `spec-validate.js` #11 | ✅ 已实现 |
 
 **额外已实现的绑定校验**（来自 [[SPEC-FORMAT.md#7 校验规则]]）：
 

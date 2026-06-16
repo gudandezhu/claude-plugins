@@ -216,6 +216,8 @@ test('SC-002: 猜小了', async ({ page }) => { /* ... */ });
 test('SC-003: 猜大了', async ({ page }) => { /* ... */ });
 ```
 
+> 真实项目样例（非教学最小集）→ [`../../demo/lead-scoring/spec.feature`](../../demo/lead-scoring/spec.feature)。
+
 ---
 
 ## 7. 校验规则（validator 检查项）

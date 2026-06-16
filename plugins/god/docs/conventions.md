@@ -343,7 +343,6 @@ scripts/
 ├── db-design/            # DB schema 校验
 ├── dev/                  # 开发期工具
 ├── forensic/             # 取证 / 反查
-├── hooks/                # hook 工具
 ├── metrics/              # 指标采集
 ├── test/                 # 测试域核心
 ├── test-design/          # 测试设计
@@ -351,7 +350,9 @@ scripts/
 └── workspace/            # 工作区
 ```
 
-新增 = 先 14 子目录里挑；都不是 = 走 RFC。
+> **v0.4.0 修订**：原 `scripts/hooks/` 子目录已废（7 个孤岛脚本未挂载 settings.json，删除）。v0.4.0 G3 把 `hooks/` 提到**顶层目录**（见 [[CLAUDE.md §3 索引图]]），脚本模板在 `templates/hooks/`，安装入口 `spec/scripts/install-hooks.js`。
+>
+> 实际 = 12 子目录（少 `hooks/`）。新增 = 先 12 子目录里挑；都不是 = 走 RFC。
 
 ### 5.4 workflows/ 直平
 
@@ -360,7 +361,7 @@ workflows/
 ├── <verb>-<object>.js    # 一文件一 workflow
 ```
 
-例：`architect-review.js` / `case-gen-parallel.js` / `eval-loop-review.js` / `parallel-review.js` / `quality-fix-loop.js` / `self-check-gate.js` / `user-perspective-analysis.js`
+例：`case-gen-parallel.js` / `eval-loop-review.js` / `parallel-review.js` / `quality-fix-loop.js` / `user-perspective-analysis.js`
 
 **workflow = 多步编排（常含 subagent 派发）**，单步工具归 `scripts/`，别混淆。
 
@@ -373,9 +374,11 @@ spec/
 ├── README.md             # 子系统概览
 └── scripts/
     ├── spec-validate.js  # 机械校验（14 项）
-    ├── spec-cli.js       # (规划) SC 状态机
-    ├── spec-render.js    # (规划) 渲染 review.md
-    └── spec-archive.js   # (规划) 版本快照
+    ├── spec-cli.js       # SC 状态机 6 态 + meta.json 读写（v0.4.0 落）
+    ├── spec-summary.js   # summary.md 渲染（v0.4.0 落）
+    ├── install-hooks.js  # G3 hook 一键安装（v0.4.0 落）
+    ├── spec-render.js    # ⏳ 规划中（P1 G7）
+    └── spec-archive.js   # ⏳ 规划中（P1 G4）
 ```
 
 **scripts/ 全部命名 `spec-*.js`**（子系统名前缀），便于一眼区分于 `scripts/` 域脚本。
