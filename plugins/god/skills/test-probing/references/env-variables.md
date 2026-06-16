@@ -16,7 +16,7 @@
 |---------|------|---------|
 | E2E 全部白屏（100% assertion_failed） | storage-state.json 中 cookie 的 `secure: true` 但前端是 HTTP | 将 cookie 的 `secure` 改为 `false` |
 | E2E 全部白屏（Vue 路由守卫拦截） | localStorage 中认证标志为 `false`（如 `isLogin`、`*CAS*LOGIN*` 等项目特定 key） | 修正 storage-state.json 中 localStorage 的认证标志值；或按 `auto-login-passport` 优先级重新获取登录态 |
-| E2E 全部白屏（storageState 加载后 document.cookie 为空） | 用 agent-browser 保存的 storageState 格式与 Playwright 不兼容，cookie 无法注入 | 按 `auto-login-passport` 优先级获取登录态，禁止用 agent-browser 保存 |
+| E2E 全部白屏（storageState 加载后 document.cookie 为空） | storageState 不是经 Playwright `context.storageState()` 输出，cookie 注入失败 | 按 `auto-login-passport` 优先级获取登录态，必须经 Playwright `context.storageState()` 输出 |
 | E2E 全部白屏（新 Playwright context 加载 storageState 后 session 失效） | 应用使用服务端 session cookie（expires=-1），跨浏览器实例服务端拒绝；无 lsId 持久 token 无法重建 session | 按 `auto-login-passport` 优先级重新获取登录态，CAS 场景登录时勾选"自动登录"以生成 lsId cookie |
 | E2E URL 含中文导致导航失败 | dom-probe.md 路由行含括号注释被整行拼入 URL | 使用 dom-probe.md 的「完整 URL 路径」字段，不含注释 |
 | Playwright 启动超时（spawnSync ETIMEDOUT） | Playwright Chromium 未安装，尝试下载超时 | 使用本地 Chrome（`channel: 'chrome'`），内网默认行为 |

@@ -26,7 +26,6 @@ references/ 目录下的文件按 scope 条件加载，禁止一次性读取全�
 |---------------|---------|
 | api-probing.md | scope 含后端时加载 |
 | dom-probing.md | scope 含前端时加载 |
-| agent-browser-usage.md | scope 含前端时加载（DOM 探测所需命令） |
 | env-variables.md | 手动执行环境变量注入时 |
 
 ---
@@ -55,7 +54,7 @@ scope 含前端时，DOM 探测入口必须先确认认证状态已就绪：
 **禁止直接询问账号密码——必须先搜索 storage-state.json 或展示选择面板。**
 
 按 `references/dom-probing.md` 执行完整的 DOM 探测流程，包括源码辅助提取、登录处理、逐页探测、交互后探测和 dom-probe.md 产出。
-DOM 探测使用 agent-browser，详见 `references/agent-browser-usage.md`。
+DOM 探测基于 Playwright runtime snapshot，详见 `references/dom-probing.md`。
 
 # 探测报告复用检查（编排层调用，重新生成时）
 
@@ -137,11 +136,10 @@ node "$CLAUDE_PLUGIN_ROOT/skills/test-probing/scripts/verify-probe.js" --testing
 
 用户选择"补充探测"后，**必须先验证浏览器会话仍然有效**：
 
-1. 执行 `agent-browser snapshot -i`
-2. 可交互元素 > 5 且无登录表单 → 会话有效，直接补充探测
-3. 显示登录表单、页面空白、或元素极少 → **会话已过期**：
+1. 用 Playwright 打开同一会话访问任意已登录页面，验证可交互元素 > 5 且无登录表单 → 会话有效，直接补充探测
+2. 显示登录表单、页面空白、或元素极少 → **会话已过期**：
    - 按 `auto-login-passport` 优先级重新获取登录态（自定义脚本 > auto-login.js > 手动面板）
-   - 获取成功后 `agent-browser state load $WORK_DIR/testing/auth/storage-state.json` → 重新 snapshot 验证
+   - 获取成功后用 Playwright `context.storageState()` 重新加载 storageState 验证
    - 仍然失效 → 重新执行登录流程（dom-probing.md 步骤一）
 
 **禁止在会话失效时继续操作页面**——后续所有 snapshot 和交互都会返回登录页内容，污染探测结果。
@@ -290,6 +288,6 @@ curl -s <backend.baseUrl><apiPrefix>/任意已知接口 | head -c 20
 ## 禁止事项
 
 - 禁止自动判断用户手动登录是否完成——必须展示确认面板等待用户主动确认，用户可能在处理验证码、二次认证或 SSO 跳转
-- 禁止在页面空白时用 `agent-browser eval` 手动探测 DOM 结构——SPA 空白几乎 100% 是未登录，直接进入登录流程
+- 禁止在页面空白时手动探测 DOM 结构试图理解原因——SPA 空白几乎 100% 是未登录，直接进入登录流程
 - 禁止跳过交互后探测（步骤 2b）——弹窗/抽屉内的选择器是 E2E 脚本最容易出错的地方
-- 禁止用 agent-browser 执行测试——它没有断言能力，测试执行由 Playwright 负责
+- 禁止用探查工具执行测试——所有测试执行由 Playwright 负责

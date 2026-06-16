@@ -59,26 +59,28 @@ description: >
 
 ## 测试执行
 
-1. 加载 skill `agent-browser`
-2. 使用服务地址导航到目标页面
+1. 加载 skill `using-zcode` 与 Playwright 自动化能力（`page.goto` / `page.locator` / `page.on('console')` 等）
+2. 使用服务地址导航到目标页面（`page.goto(baseUrl + path, { waitUntil: 'domcontentloaded' })`）
 3. 认证处理：
-   - 项目 CLAUDE.md 有登录脚本 → 执行脚本注入浏览器 cookie（如 `node scripts/saas-erp-login.mjs --local`），agent-browser 直接连接已注入 cookie 的浏览器
+   - 项目 CLAUDE.md 有登录脚本 → 执行脚本注入浏览器 cookie（如 `node scripts/saas-erp-login.mjs --local`），Playwright 用 `context.addCookies()` 接管
    - 无项目脚本 → 使用 `auto-login-passport` 获取的 storageState
    - 无认证需求时默认不带
-4. **启动 HAR 录制**：`agent-browser network har start`（整个测试流程保持录制）
+4. **启动 HAR 录制**：通过 Playwright `page.route` 拦截所有请求并写入 HAR 文件
 5. **Mock 模式确认**：
    - 确认 mock 拦截器生效（Network 面板请求被拦截或返回 mock 数据）
    - Mock 不可用时降级为真实后端，报告中标注
 6. **iframe 检测与测试**：
-   - 页面加载后执行 `agent-browser snapshot -i`，检查输出中是否包含 iframe 元素
-   - 检测到 iframe → 加载 skill `iframe-explorer`，按其流程探测 iframe 内容并验证：
+   - 页面加载后用 `page.frames()` 检查是否有 iframe
+   - 检测到 iframe → 用 `page.frame({url})` 进入 frame context 探测并验证：
      - iframe 正常加载，无空白/错误
      - iframe 内核心元素可见（导航、内容区）
      - iframe 内交互功能正常（链接可点击、表单可填写）
    - iframe 验证结果纳入测试报告
 7. **页面加载健康检查**（导航到每个新页面后执行）：
-   ```bash
-   agent-browser errors && agent-browser console && agent-browser network requests
+   ```js
+   page.on('pageerror', ...)  // JS 错误
+   page.on('console', msg => msg.type() === 'error' && ...)  // 控制台报错
+   page.on('response', r => r.status() >= 400 && ...)  // 请求失败(4xx/5xx)
    ```
    - JS 错误 / 控制台红色报错 / 请求失败(4xx/5xx) → 记录到问题清单，P0/P1 判断后决定是否继续
    - 无错误 → 继续
@@ -86,28 +88,18 @@ description: >
    a. **页面渲染**：无白屏、无控制台错误、元素可见（每个页面必做）
    b. **CRUD 操作**：增删改查 + Network 面板确认请求（涉及 CRUD 时必做）
    c. **表单校验**：必填、格式规则、边界值（涉及表单时必做）
-   d. **错误处理**：用 agent-browser network route 拦截 API 返回 500 → 验证错误 Toast → 验证表单数据保留
+   d. **错误处理**：用 `page.route` 拦截 API 返回 500 → 验证错误 Toast → 验证表单数据保留
    e. **状态切换**：Loading / 空数据 / 正常（每个页面至少验证 Loading + 正常）
    f. **边界值**：最大输入长度、特殊字符、并发点击（按交互类型选做）
-
-### 自动浏览器监控
-
-**`browser-monitor` hook 已在代码层自动运行**：每次 `agent-browser` 交互命令（click/fill/type/submit/navigate 等）执行后，hook 自动检查 JS 错误和失败请求。结果通过 `[browser-monitor]` 标签输出在命令结果中。
-
-**你不需要手动运行监控命令**。但需要关注 hook 输出：
-- 看到 `[browser-monitor] N 个 JS 错误` → 分析错误内容，判断是否与当前操作相关，相关则记录为 bug
-- 看到 `[browser-monitor] N 个失败请求` → 分析请求 URL 和响应，判断是功能 bug 还是 Mock 未覆盖
-- **禁止在 hook 已报告异常时盲目重试操作** — 先分析 hook 报告的错误信息
 
 ### 异常诊断优先级
 
 当交互结果与预期不符时，按以下顺序排查：
-1. 查看最近的 `[browser-monitor]` hook 输出 — 是否有 JS 错误或失败请求
-2. `agent-browser errors` — 手动复查是否有遗漏错误
-3. `agent-browser console` — 检查 warning/error 级别日志
-4. `agent-browser network requests --filter api` — 检查 API 请求详情
-5. `agent-browser snapshot -i` — DOM 状态是否正确（元素是否存在、可见、disabled）
-6. 以上均无异常 → 再考虑重试操作或检查代码逻辑
+1. Playwright `page.on('pageerror')` 收集的 JS 错误 — 手动复查是否有遗漏
+2. Playwright `page.on('console')` 收集的 warning/error 级别日志
+3. Playwright `page.on('response')` 收集的 API 响应详情（按 URL 过滤）
+4. Playwright `page.locator()` 探查 DOM 状态是否正确（元素是否存在、可见、disabled）
+5. 以上均无异常 → 再考虑重试操作或检查代码逻辑
 
 ### 验证要求
 
@@ -149,7 +141,7 @@ P0/P1 问题修复时，**加载 skill `systematic-debugging`**，按其四阶�
 
 ## 停止服务
 
-1. 停止 HAR 录制：`agent-browser network har stop $WORK_DIR/reports/{任务ID}/{任务ID}-network.har`
+1. 停止 HAR 录制：将 `page.route` 拦截器写出的 HAR 文件保存到 `$WORK_DIR/reports/{任务ID}/{任务ID}-network.har`
 2. 停止开发服务器
 
 ## 产物目录结构

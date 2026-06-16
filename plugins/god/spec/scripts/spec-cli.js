@@ -33,6 +33,35 @@ const { execSync } = require('child_process');
 // ---------- 常量 ----------
 
 const VALID_PHASES = ['idea', 'drafted', 'reviewed', 'implemented', 'verified', 'accepted'];
+
+// ---------- spec/ 子目录布局（v0.5.0+ G13 落地）
+//
+// spec/                  ← 项目根的 spec 目录（OPC 直接看）
+// ├── sources.md         ← 母本（不变）
+// ├── spec.feature       ← 真相源（不变）
+// ├── summary.md         ← OPC 验收 1 页纸（顶层，OPC 看的主产物）
+// ├── state/             ← 机器数据（meta + trace 收这里）
+// │   ├── meta.json
+// │   └── .trace
+// ├── review/            ← 评审产物独立目录
+// │   └── review-YYYY-MM-DD.md
+// ├── domain/            ← 领域知识
+// │   └── domain.md
+// └── archive/           ← 历史快照
+//     └── spec-1.0.0/...
+//
+const PATHS = {
+  sources: 'sources.md',
+  feature: 'spec.feature',
+  summary: 'summary.md',
+  stateDir: 'state',
+  meta: 'state/meta.json',
+  trace: 'state/.trace',
+  reviewDir: 'review',
+  domainDir: 'domain',
+  domainFile: 'domain/domain.md',
+  archiveDir: 'archive',
+};
 const PHASE_ORDER = {
   idea: 0, drafted: 1, reviewed: 2, implemented: 3, verified: 4, accepted: 5,
 };
@@ -61,6 +90,25 @@ function findSpecDir(projectDir) {
     return projectDir;
   }
   return null;
+}
+
+// 兼容旧路径: stateDir 不存在时回退到 spec 顶层
+function metaPath(specDir) {
+  if (fs.existsSync(path.join(specDir, PATHS.meta))) {
+    return path.join(specDir, PATHS.meta);
+  }
+  // 旧路径: spec/meta.json（读路径时回退,init 时不用）
+  return path.join(specDir, 'meta.json');
+}
+// init 时强制新路径,不回退（让 G13 结构固化）
+function metaPathForWrite(specDir) {
+  return path.join(specDir, PATHS.meta);
+}
+function tracePath(specDir) {
+  if (fs.existsSync(path.join(specDir, PATHS.trace))) {
+    return path.join(specDir, PATHS.trace);
+  }
+  return path.join(specDir, '.trace');
 }
 
 // ---------- Gate 校验 ----------
@@ -107,8 +155,7 @@ function checkGate(specDir, targetPhase) {
 }
 
 function appendTrace(specDir, line) {
-  const tracePath = path.join(specDir, '.trace');
-  fs.appendFileSync(tracePath, `${nowIso()} ${line}\n`, 'utf8');
+  fs.appendFileSync(tracePath(specDir), `${nowIso()} ${line}\n`, 'utf8');
 }
 
 // ---------- 子命令 ----------
@@ -120,7 +167,7 @@ function cmdStatus(projectDir) {
     console.error('✗ 找不到 spec 目录');
     process.exit(1);
   }
-  const meta = readJson(path.join(specDir, 'meta.json'));
+  const meta = readJson(metaPath(specDir));
   if (!meta) {
     console.log('phase: idea (meta.json 不存在)');
     console.log('提示：首次进入 drafted 时跑 `spec-cli init --spec-id <id> --phase drafted`');
@@ -146,8 +193,8 @@ function cmdAdvance(projectDir, opts) {
     console.error('✗ 找不到 spec 目录');
     process.exit(1);
   }
-  const metaPath = path.join(specDir, 'meta.json');
-  let meta = readJson(metaPath);
+  const metaFile = metaPath(specDir);
+  let meta = readJson(metaFile);
   if (!meta) {
     console.error('✗ meta.json 不存在，先跑 `spec-cli init`');
     process.exit(1);
@@ -177,12 +224,12 @@ function cmdAdvance(projectDir, opts) {
   meta.updatedAt = nowIso();
   meta.gates = meta.gates || {};
   meta.gates[nextPhase] = nowIso();
-  writeJson(metaPath, meta);
+  writeJson(metaFile, meta);
   const flag = opts.force ? ' [FORCE]' : '';
   appendTrace(specDir, `${prevPhase} → ${nextPhase}${flag}`);
   console.log(`✓ ${prevPhase} → ${nextPhase}`);
-  console.log(`  meta.json.updatedAt = ${meta.updatedAt}`);
-  console.log(`  spec/.trace 追加 1 行`);
+  console.log(`  state/meta.json.updatedAt = ${meta.updatedAt}`);
+  console.log(`  state/.trace 追加 1 行`);
 }
 
 function cmdRollback(projectDir, opts) {
@@ -204,8 +251,8 @@ function cmdRollback(projectDir, opts) {
     console.error('✗ 找不到 spec 目录');
     process.exit(1);
   }
-  const metaPath = path.join(specDir, 'meta.json');
-  const meta = readJson(metaPath);
+  const metaFile = metaPath(specDir);
+  const meta = readJson(metaFile);
   if (!meta) {
     console.error('✗ meta.json 不存在');
     process.exit(1);
@@ -225,7 +272,7 @@ function cmdRollback(projectDir, opts) {
       }
     }
   }
-  writeJson(metaPath, meta);
+  writeJson(metaFile, meta);
   appendTrace(specDir, `ROLLBACK ${prevPhase} → ${opts.to} | reason: ${opts.reason}`);
   console.log(`✓ ROLLBACK ${prevPhase} → ${opts.to}`);
   console.log(`  reason: ${opts.reason}`);
@@ -238,7 +285,7 @@ function cmdCheck(projectDir) {
     console.error('✗ 找不到 spec 目录');
     process.exit(1);
   }
-  const meta = readJson(path.join(specDir, 'meta.json'));
+  const meta = readJson(metaPath(specDir));
   if (!meta) {
     console.error('✗ meta.json 不存在');
     process.exit(1);
@@ -272,8 +319,11 @@ function cmdInit(projectDir, opts) {
     console.error('✗ 找不到 spec 目录');
     process.exit(1);
   }
-  const metaPath = path.join(specDir, 'meta.json');
-  if (fs.existsSync(metaPath)) {
+  // init 时强制写新路径,先确保 state/ 存在
+  const stateDir = path.join(specDir, PATHS.stateDir);
+  if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true });
+  const metaFile = metaPathForWrite(specDir);
+  if (fs.existsSync(metaFile)) {
     console.error('✗ meta.json 已存在，无需 init');
     process.exit(1);
   }
@@ -293,7 +343,7 @@ function cmdInit(projectDir, opts) {
     scopes: [opts.specId],
     gates: { [opts.phase]: nowIso() },
   };
-  writeJson(metaPath, meta);
+  writeJson(metaFile, meta);
   appendTrace(specDir, `INIT specId=${opts.specId} phase=${opts.phase}`);
   console.log(`✓ meta.json 已创建（phase = ${opts.phase}）`);
 }

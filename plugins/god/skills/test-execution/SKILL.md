@@ -64,7 +64,7 @@ test-summary.json 中每个 failure 带有 errorType 字段，按类型处理：
 | `network_error` | 网络错误 | `check-environment` | 环境问题，提示用户检查服务，禁止修改脚本 |
 | `network_error` | Cannot navigate to invalid URL | `check-environment` | FRONTEND_URL 未设置，检查 test-config.json 的 frontend.baseUrl |
 | `browser_crash` | 浏览器崩溃 | `retry` | 自动重试，连续 2 次崩溃提示检查 Chrome 版本 |
-| `unknown` | 未知错误 | `diagnose-with-browser` | 启动 agent-browser 诊断 |
+| `unknown` | 未知错误 | `diagnose-with-browser` | 启动 Playwright 诊断 |
 | `framework_error` | 路径解析失败、依赖缺失、脚本语法错误、目录结构不匹配 | `stop-and-report` | 记录缺陷(type: "framework")，中止步骤，提示独立修复 |
 | `config_missing` | auth 未配置但 scope 含 E2E、baseUrl 指向错误 | `stop-and-report` | 提示用户修正 test-config.json |
 
@@ -73,8 +73,8 @@ test-summary.json 中每个 failure 带有 errorType 字段，按类型处理：
 `fix-api-path` 包含 404 场景时 → 检查环境变量 `API_PREFIX` 是否注入，修正测试脚本中的路径拼接，**禁止在 vitest.config.ts 的 `define` 中硬编码地址**。
 
 errorType 明确时（selector_not_found/selector_ambiguous/element_blocked），
-直接根据错误信息修复，不需要启动 agent-browser——
-agent-browser 诊断耗时长，只在 errorType 为 unknown 时才值得使用。
+直接根据错误信息修复，不需要启动 Playwright 诊断——
+Playwright 诊断耗时长，只在 errorType 为 unknown 时才值得使用。
 
 Element Plus 特定的修复策略详见 `references/element-plus-fix-patterns.md`。
 
@@ -87,7 +87,7 @@ Element Plus 特定的修复策略详见 `references/element-plus-fix-patterns.m
 - 未匹配 → 按正常 suggestedAction 流程处理（不影响现有逻辑）
 
 使用场景：
-1. errorType 为 `unknown` 时：先查经验库再决定是否启动 agent-browser 诊断
+1. errorType 为 `unknown` 时：先查经验库再决定是否启动 Playwright 诊断
 2. 同一 errorType 连续出现多次时：查经验库看是否有系统性修复方案
 3. `fix-selector` 或 `fix-api-path` 第 1 次修复失败后：查经验库看是否有更精准的修复策略
 
@@ -153,8 +153,8 @@ Element Plus 特定的修复策略详见 `references/element-plus-fix-patterns.m
 
 | 重试次数 | 前置条件 | 诊断方式 | 修复策略 |
 |---------|---------|---------|---------|
-| 第 1 次失败 | classify-error → `fix-selector` 或 `fix-api-path` | 分析错误信息 + 读取 dom-probe.md / api-probe.md | 根据已有探测数据修正，不启动 agent-browser |
-| 第 2 次失败 | classify-error → `fix-selector` | 用 agent-browser 重新探测失败元素所在页面区域 | 根据新探测结果修正选择器，**持久化写回脚本文件**，更新 dom-probe.md 对应章节 |
+| 第 1 次失败 | classify-error → `fix-selector` 或 `fix-api-path` | 分析错误信息 + 读取 dom-probe.md / api-probe.md | 根据已有探测数据修正，不启动 Playwright |
+| 第 2 次失败 | classify-error → `fix-selector` | 用 Playwright 重新探测失败元素所在页面区域 | 根据新探测结果修正选择器，**持久化写回脚本文件**，更新 dom-probe.md 对应章节 |
 | 第 3 次失败 | 任何 suggestedAction | 不再自动修复 | 标记"需人工验证" |
 
 **上下文清理（每次修复后必做）**：
@@ -168,16 +168,16 @@ Element Plus 特定的修复策略详见 `references/element-plus-fix-patterns.m
 禁止保留的内容（会污染上下文、浪费 token）：
 - 完整的测试输出日志（只保留错误摘要）
 - 多次修复的完整 diff 历史（只保留最近一次）
-- agent-browser 的完整 DOM snapshot（只保留修复相关的部分）
+- Playwright 的完整 DOM snapshot（只保留修复相关的部分）
 
-**agent-browser snapshot 保留规则**：
-- 第 2 次修复使用 agent-browser 重新探测后，只保留与失败元素相关的 DOM 片段（最多 50 行）
+**Playwright snapshot 保留规则**：
+- 第 2 次修复使用 Playwright 重新探测后，只保留与失败元素相关的 DOM 片段（最多 50 行）
 - 完整的 `page.content()` 或 `innerHTML` 输出禁止保留——提取选择器相关信息后立即丢弃
 - 新探测到的选择器信息应更新到 dom-probe.md，不要在上下文中保留原始 snapshot
 
 ## 选择器持久化写回规则
 
-当第 2 次 fix-selector 失败后使用 agent-browser 重新探测并成功修复时：
+当第 2 次 fix-selector 失败后使用 Playwright 重新探测并成功修复时：
 
 1. **写回条件**：重试通过后，必须将新选择器写回脚本文件
 2. **写回范围**：只修改失败的选择器行，不修改其他代码
@@ -193,13 +193,13 @@ Element Plus 特定的修复策略详见 `references/element-plus-fix-patterns.m
 - 修复方式是环境配置变更（check-environment 类型）
 - 新选择器导致测试逻辑变更（不仅仅是定位器替换）
 
-**agent-browser 在 run-test 中的合法用途（仅以下两种）**：
+**Playwright 在 run-test 中的合法用途（仅以下两种）**：
 1. 登录态验证（test-probing 技能）：加载 storageState 后访问页面，判断是否过期
 2. 第 2 次 fix-selector 失败后重新探测 DOM：dom-probe.md 可能过时，需要获取最新页面结构
 
-禁止在第 1 次失败时就启动 agent-browser——先用已有的 dom-probe.md 数据修复。
-禁止对 errorType 明确的失败（selector_not_found/element_blocked/assertion_failed）启动 agent-browser 诊断——
-agent-browser 诊断耗时长（启动浏览器+加载页面+获取 snapshot），只在 errorType 为 `unknown` 或第 2 次 fix-selector 失败时才值得使用。
+禁止在第 1 次失败时就启动 Playwright——先用已有的 dom-probe.md 数据修复。
+禁止对 errorType 明确的失败（selector_not_found/element_blocked/assertion_failed）启动 Playwright 诊断——
+Playwright 诊断耗时长（启动浏览器+加载页面+获取 snapshot），只在 errorType 为 `unknown` 或第 2 次 fix-selector 失败时才值得使用。
 
 **classify-error → `report-defect` 时，立即停止重试循环**，不进入下一轮。
 不要因为"想确认是不是真的缺陷"而启动额外诊断（截图分析、HAR 抓包、手动 API 调用等）——
@@ -217,7 +217,7 @@ agent-browser 诊断耗时长（启动浏览器+加载页面+获取 snapshot）�
 | `fix-selector` | 配置错误（storageState 路径不匹配） | 修正配置，可重试 |
 | `report-defect` | 断言失败（业务逻辑错误） | ⛔ 记录缺陷，停止重试 |
 | `check-environment` | 网络错误 | ⛔ 提示用户，停止重试 |
-| `diagnose-with-browser` | 未知错误 | 启动 agent-browser 诊断后重新分类 |
+| `diagnose-with-browser` | 未知错误 | 启动 Playwright 诊断后重新分类 |
 
 ### 修复禁令
 

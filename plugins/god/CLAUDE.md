@@ -108,12 +108,18 @@ god/
 │   └── incidents/                  事后复盘沉淀（v0.2.0 建）
 ├── spec/                           活规格子系统自身的设计
 │   ├── SPEC-FORMAT.md              Gherkin 格式 + SC 绑定规则
-│   ├── scripts/                    spec 子系统自身的 L3 工具
-│   │   ├── spec-validate.js        机械校验（14 项）
+│   ├── scripts/                    spec 子系统自身的 L3 工具（11 脚本 / 150 测全过）
+│   │   ├── spec-validate.js        机械校验（14 项 + 3 sad-path）
 │   │   ├── spec-cli.js             SC 状态机 6 态 + meta.json 读写（v0.4.0 落）
 │   │   ├── spec-summary.js         summary.md 渲染（v0.4.0 落，11 单元测试）
-│   │   ├── spec-render.js          ⏳ 规划中（P1 G7）
-│   │   ├── spec-archive.js         ⏳ 规划中（P1 G4）
+│   │   ├── spec-render.js          review/<date>.md 渲染（v0.5.0 落 G7）
+│   │   ├── spec-archive.js         快照 / 回滚 / 列出（v0.5.0 落 G4）
+│   │   ├── dev-gen.js              spec → 代码骨架（v0.5.0 落 G5）
+│   │   ├── test-gen.js             spec → 测试桩（v0.5.0 落 G6）
+│   │   ├── init-spec-dir.js        建好 spec/ 子目录结构（v0.5.1 落 G13.1，5 测）
+│   │   ├── spec-lint.js            spec/ 结构守门，拦 AI 误建（v0.5.1 落 G13.1，8 测）
+│   │   ├── god-trends.js           跨 feature 趋势分析（v0.5.0 落 D5）
+│   │   ├── measure-opc-cost.js     OPC 介入成本 5 维归因（v0.5.0 落 D5）
 │   │   └── install-hooks.js        G3 hook 一键安装（v0.4.0 落）
 │   └── TESTING.md                  spec 系统自身回归手册
 ├── commands/                       L1（prd / dev / test）
@@ -146,17 +152,26 @@ god/
 
 ---
 
-## 5. 系统级缺口（v0.4.0 已闭环）
+## 5. 系统级缺口（v0.5.1 已闭环）
 
-**P0 4 块已全部落地**（G1 状态机 / G2 meta / G3 hooks / G8 summary）。**剩余 6 块** 详情见 [`docs/roadmap.md`](docs/roadmap.md)：
+**P0 4 块 + P1 4 块 + P1 增强 2 块 + G10/G11/G13/G13.1/D5 全部落地**。**剩余 2 块**（P2）详情见 [`docs/roadmap.md`](docs/roadmap.md)：
 
-- **P1 驱动层（4 块）**：spec-archive、dev-gen、test-gen、spec-render —— 缺则 god 自我驱动能力 < 50%
-- **P2 防护层（2 块）**：4 视角评审、domain.md —— 锦上添花，等 ≥ 3 个真实项目验证
+- **P2 锦上添花（2 块）**：G9 4 视角评审 —— 等 ≥ 3 个真实项目验证后启动
 
-**已落地的 P0**（commit 锚点）：
+**已落地的 P0 + P1**（commit 锚点）：
 - G1+G2：commit `fc31904`（spec-cli.js + meta.json schema）
 - G8：commit `2644f35`（spec-summary.js + 11 单元测试 + 模板 v0.1.0）
 - G3：commit `229ab76`（templates/hooks/ 3 模板 + install-hooks.js）
+- G4：commit `5baf747`（spec-archive.js + 18 单元测试，提 P0 已采纳）
+- G5：commit `8b16b3d`（dev-gen.js + 20 单元测试）
+- G6：commit `c039441`（test-gen.js + 19 单元测试）
+- G7：commit `ddb406b`（spec-render.js + RFC-0010）
+- **G10**：templates/domain.md v0.1.0（domain.md 模板）
+- **G11**：incidents→ADR 知识沉淀（templates/incident.md + docs/incidents/0001 + docs/adrs/0011）
+- **G13**：spec/ 子目录分层（state/review/domain），8 脚本双路径兼容
+- **G13.1**：结构固化（init-spec-dir.js 5 测 + spec-lint.js 8 测，拦 AI 误建文件）
+- **D5**：measure-opc-cost.js + god-trends.js（自我监控）
+- **总测试**：11 单元测试 150/150 全过
 
 ---
 

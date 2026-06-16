@@ -227,16 +227,20 @@ assert.doesNotThrow(() => {
 assert.doesNotThrow(() => {
   const out = execSync(`node ${CLI} ${DEMO} --force 2>&1`, { encoding: 'utf8' });
   assert.ok(out.includes('spec-render 完成'));
-  assert.ok(fs.existsSync(path.join(DEMO, 'spec', 'review.md')));
-}, 'CLI: --force 写入 review.md');
+  // v0.5.0+ G13: review.md 移到 review/ 子目录 + 日期
+  const reviewDir = path.join(DEMO, 'spec', 'review');
+  assert.ok(fs.existsSync(reviewDir), 'review/ 目录应存在');
+  const today = new Date().toISOString().slice(0, 10);
+  assert.ok(fs.existsSync(path.join(reviewDir, `review-${today}.md`)), 'review-<date>.md 应存在');
+}, 'CLI: --force 写入 review/<date>.md');
 
 const exists = runCli(DEMO);
 assert.strictEqual(exists.ok, false);
 assert.ok(exists.output.includes('已存在'), `已存在: ${exists.output}`);
 console.log('  ✓ CLI: 默认拒绝覆盖');
 
-// 清理 demo 里的 review.md（不入仓）
-const reviewPath = path.join(DEMO, 'spec', 'review.md');
-if (fs.existsSync(reviewPath)) fs.unlinkSync(reviewPath);
+// 清理 demo 里的 review/（不入仓）
+const reviewDir = path.join(DEMO, 'spec', 'review');
+if (fs.existsSync(reviewDir)) fs.rmSync(reviewDir, { recursive: true, force: true });
 
 console.log('\n✅ 全部通过');

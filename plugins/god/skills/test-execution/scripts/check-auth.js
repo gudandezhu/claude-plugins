@@ -117,7 +117,6 @@ function checkAuth(storagePath, ssoUrl = "") {
   }
 
   // CAS 场景：检查 SSO 域 cookie（TGT）是否存在
-  // agent-browser state save 只保存当前域 cookie，CAS 域 TGT 不会被捕获
   // 缺少 TGT 时 Playwright 加载 storageState 后仍会被重定向到 CAS 登录页
   if (ssoUrl) {
     let ssoDomain = ssoUrl;
@@ -130,7 +129,7 @@ function checkAuth(storagePath, ssoUrl = "") {
     if (!hasSsoCookie) {
       return {
         status: "cas_tgt_missing",
-        details: `storageState 中未找到 CAS/SSO 域（${ssoDomain}）的 cookie（TGT）。请运行 auth-login.js 重新获取登录态（必须用 Playwright context.storageState()，不能用 agent-browser state save）`,
+        details: `storageState 中未找到 CAS/SSO 域（${ssoDomain}）的 cookie（TGT）。请运行 auth-login.js 重新获取登录态（必须经 Playwright context.storageState() 输出）`,
       };
     }
   }

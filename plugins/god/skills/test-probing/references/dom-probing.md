@@ -5,17 +5,17 @@
 **禁止将步骤 2a-pre 的交互清单作为 dom-probe.md 的最终输出。**
 交互清单是探测前的规划文档，不是探测结果。
 
-**dom-probe.md 中的所有选择器必须来自 agent-browser snapshot 的运行时数据，不得从 PRD、UI 原型或 Element Plus 通用知识推断。**
+**dom-probe.md 中的所有选择器必须来自 Playwright runtime snapshot 的运行时数据，不得从 PRD、UI 原型或 Element Plus 通用知识推断。**
 
 判断 dom-probe.md 是否真实探测的标志：
 - 头部探测时间戳必须是非整点时间（如 `03:31:47.382Z`），整点时间（如 `03:30:00.000Z`）说明是 LLM 伪造的
 - 选择器必须包含从 snapshot 中观察到的实际 DOM 结构（如自定义组件的真实 class 名），不能全是通用的 `.el-table`、`.el-button` 等
 
-**禁止跳过 agent-browser 步骤直接生成 dom-probe.md**——即使 PRD 和 UI 原型已经很详细，运行时 DOM 结构仍可能与设计文档不一致（自定义组件封装、异步渲染、条件渲染等）。
+**禁止跳过运行时 Playwright snapshot 步骤直接生成 dom-probe.md**——即使 PRD 和 UI 原型已经很详细，运行时 DOM 结构仍可能与设计文档不一致（自定义组件封装、异步渲染、条件渲染等）。
 
 **禁止省略"交互后探测"步骤**——未交互的 DOM 状态缺少动态元素（弹窗、下拉、展开面板、抽屉）。每个页面的每个交互按钮都必须触发并捕获交互后 DOM。省略交互后探测会导致生成的脚本引用不可见的弹窗/表单中的选择器。
 
-**禁止将推断的选择器标记为 `verified`**——从 PRD/UI 原型/代码推断的选择器只能标记为 `inferred`。只有经过 agent-browser snapshot 实际捕获的选择器才能标记为 `verified`。`inferred` 选择器在脚本生成时会降级处理（优先使用 `verified` 选择器）。
+**禁止将推断的选择器标记为 `verified`**——从 PRD/UI 原型/代码推断的选择器只能标记为 `inferred`。只有经过 Playwright runtime snapshot 实际捕获的选择器才能标记为 `verified`。`inferred` 选择器在脚本生成时会降级处理（优先使用 `verified` 选择器）。
 
 ## 禁读源码
 
@@ -25,8 +25,8 @@
 
 ## 工具限制
 
-DOM 探测使用 agent-browser 的 `snapshot -i` 命令获取结构化可交互元素列表。
-不要用 agent-browser 执行测试——它没有断言能力，执行结果不可复现。
+DOM 探测使用 Playwright runtime snapshot（`page.locator()` + `page.accessibility.snapshot()`）获取结构化可交互元素列表。
+不要用探查工具执行测试——它们没有断言能力，执行结果不可复现。
 测试执行由 Playwright 负责，详见 test-execution 技能。
 
 ## 步骤零：源码辅助提取（可选，projects.frontend 不为 null 时）
@@ -66,9 +66,7 @@ node "$CLAUDE_PLUGIN_ROOT/skills/test-probing/scripts/adapters/vue/dom-infer.js"
 > - 选择面板格式固定（4 个选项），禁止 Agent 自行修改选项内容或增减选项
 
 ```bash
-agent-browser open <frontend.baseUrl>
-agent-browser wait --load load
-agent-browser snapshot -i
+# 用 Playwright ad-hoc 探测脚本：playwright open <frontend.baseUrl> → 等待 load → snapshot
 ```（满足任意一条即触发登录流程）：
 - URL 包含 login、signin、auth 等关键词
 - snapshot 显示登录表单（用户名/密码输入框）
@@ -76,7 +74,7 @@ agent-browser snapshot -i
   Vue/React 应用挂载了但路由守卫阻止了页面渲染，`#app` 内容为空或只有注释节点
 - 页面标题包含"登录"但 URL 未变（SPA 内部重定向）
 
-不要在页面空白时用 `agent-browser eval` 手动探测 DOM 结构试图理解原因——
+不要在页面空白时用 `page.evaluate()` 手动探测 DOM 结构试图理解原因——
 SPA 页面空白 + 应用已挂载（body 有内容但 #app 为空）几乎 100% 是未登录导致的。
 直接进入登录流程比调试 DOM 快得多。
 
@@ -91,17 +89,12 @@ SPA 页面空白 + 应用已挂载（body 有内容但 #app 为空）几乎 100%
 6. 获取成功后执行「登录态后处理」（secure cookie 修正 + localStorage 检查）
 
 DOM 探测中的单域手动登录特殊处理：
-- 单域场景可用 agent-browser headed 模式手动登录
-- 用户完成登录后 `agent-browser state save` 保存
+- 单域场景用 Playwright headed 模式手动登录
+- 用户完成登录后调用 `context.storageState()` 保存
 - **禁止自行判断登录是否完成——必须展示确认面板让用户主动确认**
 - 登录态后处理同上
 
-Playwright 登录完成后，如需继续用 agent-browser 做交互式探测：
-```bash
-agent-browser --state "$WORK_DIR/testing/auth/storage-state.json" open <frontend.baseUrl>
-agent-browser wait --load load
-agent-browser snapshot -i
-```
+Playwright 登录完成后，继续用 Playwright ad-hoc 探测脚本访问目标页面：
 
 **如何判断是否为 CAS/SSO**：
 - `test-config.json` 中配置了 `auth.ssoUrl`
@@ -126,7 +119,7 @@ agent-browser snapshot -i
 登录成功后（或加载登录态后页面正常显示），在进入逐页探测前，先快速探测侧边栏/顶部菜单布局：
 
 ```bash
-agent-browser snapshot -i    # 获取首页菜单结构
+# playwright snapshot -i    # 获取首页菜单结构
 ```
 
 记录以下信息到 dom-probe.md 的「菜单布局」章节：
@@ -163,9 +156,7 @@ agent-browser snapshot -i    # 获取首页菜单结构
 串行探测（默认）：
 
 ```bash
-agent-browser open <目标页面URL>
-agent-browser wait --load load
-agent-browser snapshot -i
+# playwright open <目标页面URL> → 等待 load → snapshot
 ```
 
 每个页面记录：
@@ -183,12 +174,12 @@ agent-browser snapshot -i
 
 #### iframe 页面探测
 
-snapshot 中检测到 `iframe` 元素时，加载 skill `iframe-explorer`，按其流程探测 iframe 内容：
+snapshot 中检测到 `iframe` 元素时，按以下流程探测 iframe 内容：
 
-1. 执行 `agent-browser snapshot -i`，确认 iframe 内容已内联到 accessibility tree
-2. 使用 iframe-explorer 的 `eval` 脚本获取 iframe 详细属性（src、跨域状态、尺寸）
-3. 同域 iframe → `frame @<ref>` 进入上下文探测内部 DOM
-4. 跨域 iframe → 直接导航到 iframe src 探测
+1. 执行 Playwright `page.frame()` / `page.frames()` 拿到所有 frame，遍历获取 src
+2. 同域 iframe → `page.frame({url})` 进入 frame context 探测内部 DOM
+3. 跨域 iframe → 直接导航到 iframe src URL 探测
+4. 记录 iframe src、跨域状态、尺寸等到 dom-probe.md
 
 iframe 探测结果记录到 dom-probe.md 的对应页面章节：
 
@@ -204,7 +195,7 @@ iframe 探测结果记录到 dom-probe.md 的对应页面章节：
 ⚠️ **此步骤输出的是探测规划，不是 dom-probe.md 的内容。禁止将此步骤的输出直接写入 dom-probe.md。**
 
 在运行时探测前，基于 PRD 功能表和 ui-prototype-analysis.json（如存在）生成探测规划清单。
-探测规划驱动后续 agent-browser 探测，确保不遗漏非标准交互（如条件渲染、联动、批量操作）。
+探测规划驱动后续 Playwright runtime 探测，确保不遗漏非标准交互（如条件渲染、联动、批量操作）。
 
 **生成方式**：
 
@@ -221,7 +212,7 @@ iframe 探测结果记录到 dom-probe.md 的对应页面章节：
 3. 输出探测规划到 `.cache/probe-plan.md`（**不是 dom-probe.md**）：
 
 ```markdown
-## 探测规划（仅用于指导 agent-browser 探测，不是探测结果）
+## 探测规划（仅用于指导 Playwright runtime 探测，不是探测结果）
 
 | 序号 | 操作类型 | 触发元素（待探测确认） | 预期结果 | 来源 |
 |------|---------|-------------------|---------|------|
@@ -321,9 +312,9 @@ page.on('response', response => {
 ```
 
 获取方式：
-1. 交互前：`agent-browser snapshot` 获取元素当前 class
+1. 交互前：Playwright `page.accessibility.snapshot()` 获取元素当前 class
 2. 执行交互操作（点击按钮/切换 tab 等）
-3. 交互后：`agent-browser snapshot` 获取同一元素变化后的 class
+3. 交互后：Playwright `page.accessibility.snapshot()` 获取同一元素变化后的 class
 4. 对比两次 snapshot 中该元素的 class 差异，记录到表格
 
 **至少覆盖以下交互类型的状态变化**（如果页面上存在这些组件）：
@@ -505,11 +496,11 @@ node "$CLAUDE_PLUGIN_ROOT/skills/test-probing/scripts/verify-probe.js" --testing
 
 回到步骤二补充探测前，**必须先验证当前浏览器会话是否仍然有效**：
 
-1. 执行 `agent-browser snapshot -i`
+1. Playwright `page.accessibility.snapshot()` 重新读取当前页面
 2. 如果 snapshot 返回可交互元素（>5 个且不包含登录表单）→ 会话有效，继续补充探测
 3. 如果 snapshot 显示登录表单、页面空白、或元素极少 → 会话已过期
    - 加载 `auto-login-passport` skill 按「优先级判定」重新获取登录态
-   - 获取成功后重新加载：`agent-browser state load $WORK_DIR/testing/auth/storage-state.json` → 重新验证
+   - 获取成功后 Playwright `context.storageState()` 重新加载 storageState → 重新验证
 
 **禁止在会话失效时继续操作页面**——所有后续 snapshot 和交互都会失败或返回登录页内容。
 

@@ -155,7 +155,10 @@ function main() {
     process.exit(1);
   }
 
-  const traceContent = readFileSafe(path.join(specDir, '.trace'));
+  // v0.5.0+ G13: trace 在 state/ 下;兼容旧路径
+  const tracePathNew = path.join(specDir, 'state', '.trace');
+  const tracePathOld = path.join(specDir, '.trace');
+  const traceContent = readFileSafe(fs.existsSync(tracePathNew) ? tracePathNew : tracePathOld);
   const trace = parseTrace(traceContent);
   const cost = computeCost(trace);
 

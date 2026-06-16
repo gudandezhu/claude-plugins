@@ -74,10 +74,17 @@ prd 的全部目的是**把模糊想法梳理成无歧义、可验证的需求**
 
 #### 3a 机械校验（v0.4.0 起硬挂）
 
-**v0.4.0 强化**：本阶段 3a 必跑，**不通过则 prd 阶段 3 不进 3b**（exit 1 强制回退）：
+**v0.4.0 强化**：本阶段 3a 必跑，**不通过则 prd 阶段 3 不进 3b**（exit 1 强制回退）。
+
+**v0.5.0+ G13 强化**：阶段 0 必跑 `init-spec-dir` 建好 spec/ 子目录结构（一次性固化路径），阶段 3a 必跑 `spec-lint` 拦截 AI 误建文件（守门）：
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>
+# 阶段 0（一次性,新项目或结构调整时）
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/init-spec-dir.js <项目目录>
+
+# 阶段 3a 机械校验（每次固化前必跑）
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-lint.js <项目目录>  # G13 结构守门
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>  # 14 项内容校验
 ```
 
 **校验项全过**：

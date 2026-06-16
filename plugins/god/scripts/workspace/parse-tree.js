@@ -3,8 +3,6 @@
 /**
  * parse-tree.js — 统一功能树/菜单树解析器
  *
- * 合并自: parse-feature-tree.js + parse-menu-tree-ascii.js + extract-tree-context.js
- *
  * 用法 (三合一，根据参数自动选择模式):
  *   node parse-tree.js --dir <feature-tree-dir>                    → 功能树 → index.json
  *   node parse-tree.js --file <menu-tree.md> [--output out.json]   → 菜单树 JSON
@@ -164,7 +162,7 @@ function modeFeatureTree(dir) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Mode 2: parse-menu-tree-ascii (原 parse-menu-tree-ascii.js)
+// Mode 2: 菜单树 ASCII 解析
 // ═══════════════════════════════════════════════════════════════
 
 function parseFailObject(str) {

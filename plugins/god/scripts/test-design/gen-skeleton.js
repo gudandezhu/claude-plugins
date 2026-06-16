@@ -936,7 +936,7 @@ function generateApiPathsConst(domApiPaths) {
     if (!domApiPaths || domApiPaths.length === 0) {
         return [
             '// ⚠️ dom-probe.md 缺少 "#### API 路径记录" 表格，API_PATHS 为空',
-            '// 请重新执行 agent-browser 探测，记录每次交互触发的实际 API 请求',
+            '// 请重新执行 DOM 探测，记录每次交互触发的实际 API 请求',
             '// 禁止从 api-probe.md 手动填写路径——Swagger 目录路径 ≠ 前端实际调用路径',
             'const API_PATHS: Record<string, string> = {};',
         ].join('\n');
@@ -1321,7 +1321,7 @@ function generateWaitForResponseHelper(patterns, domApiPaths) {
     // 回退：使用 api-probe.md 路径（标注警告）
     if (patterns.apiPaths.add) {
         lines.push('// ⚠️ 以下路径来自 api-probe.md（Swagger 目录），可能与前端实际调用路径不符');
-        lines.push('// 建议重新执行 agent-browser 探测，补充 dom-probe.md 的 API 路径记录表');
+        lines.push('// 建议重新执行 DOM 探测，补充 dom-probe.md 的 API 路径记录表');
         lines.push(`const waitForAdd = (page: any) => page.waitForResponse(r =>`);
         lines.push(`  r.url().includes(\`\${API_PREFIX}${patterns.apiPaths.add}\`) && r.status() >= 200 && r.status() < 300);`);
     }

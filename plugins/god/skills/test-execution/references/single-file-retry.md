@@ -38,7 +38,7 @@ node "$CLAUDE_PLUGIN_ROOT/skills/test-execution/scripts/classify-error.js" --fil
 - `report-defect` → ⛔ 立即停止重试循环，记录缺陷，不要启动任何诊断（截图分析、HAR 抓包、手动 API 调用都禁止）
 - `fix-selector` → 🔧 修正选择器，可以再次重试
 - `check-environment` → ⛔ 停止重试，提示用户
-- `diagnose-with-browser` → 🔍 启动 agent-browser 诊断
+- `diagnose-with-browser` → 🔍 启动 Playwright 诊断
 
 **禁止跳过 classify-error 直接分析错误**——这是 LLM 绕过 suggestedAction 机制的根因。
 LLM 看到 `expect(received).not.toBe(expected)` 可能会启动一轮冗长的诊断（截图分析、HAR 抓包、手动 API 调用），

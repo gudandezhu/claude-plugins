@@ -206,19 +206,19 @@ module.exports = function checkSemantic(testingDir, scope, sharedUtils, options)
         if (tsMatch) {
             const ts = tsMatch[1];
             if (/T\d{2}:00:00\.000Z/.test(ts) || /T\d{2}:30:00\.000Z/.test(ts)) {
-                issues.push(`[FAIL] dom-probe.md 探测时间戳为整点（${ts}），疑似 LLM 伪造而非 agent-browser 真实探测`);
+                issues.push(`[FAIL] dom-probe.md 探测时间戳为整点（${ts}），疑似 LLM 伪造而非运行时真实探测`);
             }
         }
-        const hasSnapshotEvidence = /snapshot|agent-browser|可交互元素|role=|aria-/i.test(content);
+        const hasSnapshotEvidence = /snapshot|可交互元素|role=|aria-/i.test(content);
         const isPrdDriven = /交互清单（PRD \+ UI 原型驱动）/.test(content);
         if (isPrdDriven && !hasSnapshotEvidence) {
-            issues.push('[FAIL] dom-probe.md 仅包含"交互清单（PRD + UI 原型驱动）"内容，缺少 agent-browser snapshot 运行时数据，疑似未执行真实探测');
+            issues.push('[FAIL] dom-probe.md 仅包含"交互清单（PRD + UI 原型驱动）"内容，缺少运行时 snapshot 探测数据，疑似未执行真实探测');
         }
         const selectors = [...content.matchAll(/\|\s*(\.[\w-]+(?:\s*[\w:[\]"'=.*>+~]+)*)\s*\|/g)].map(m => m[1].trim());
         if (selectors.length > 3) {
             const allGeneric = selectors.every(s => /^\.el-/.test(s));
             if (allGeneric) {
-                issues.push('[WARN] dom-probe.md 中所有选择器均为标准 .el- 前缀，未发现自定义组件选择器。如页面使用了自定义组件（如 SuperTable），请重新执行 agent-browser 探测');
+                issues.push('[WARN] dom-probe.md 中所有选择器均为标准 .el- 前缀，未发现自定义组件选择器。如页面使用了自定义组件（如 SuperTable），请重新执行 DOM 探测');
             }
         }
         const passed = issues.filter(i => i.startsWith('[FAIL]')).length === 0;
@@ -301,7 +301,7 @@ module.exports = function checkSemantic(testingDir, scope, sharedUtils, options)
         if (!fs.existsSync(probePath)) return issues;
         const content = fs.readFileSync(probePath, 'utf-8');
         if (!/####\s*API\s*路径记录/i.test(content)) {
-            issues.push('dom-probe.md 缺少 "#### API 路径记录" 表格——script-writer 写 waitForResponse 路径的唯一权威来源，缺失时会错误使用 api-probe.md 路径导致超时；请重新执行 agent-browser 探测并记录每次交互触发的实际 API 请求');
+            issues.push('dom-probe.md 缺少 "#### API 路径记录" 表格——script-writer 写 waitForResponse 路径的唯一权威来源，缺失时会错误使用 api-probe.md 路径导致超时；请重新执行 DOM 探测并记录每次交互触发的实际 API 请求');
         }
         return issues;
     }

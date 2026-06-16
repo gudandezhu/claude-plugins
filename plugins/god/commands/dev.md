@@ -13,9 +13,12 @@ argument-hint: 项目目录
 
 ### 阶段 0：环境与状态机自检（必跑，v0.4.0 起）
 
-跑 3 个并行检查，任一失败 → 回 `/god:prd`：
+跑 4 个并行检查，任一失败 → 回 `/god:prd`：
 
 ```bash
+# 0. spec-lint.js 守门（v0.5.0+ G13）—— 拦 AI 误建文件（meta.json/.trace/review.md/domain.md 在顶层等）
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-lint.js <项目目录>
+
 # 1. spec-validate.js 确认 spec 格式合格（prd 阶段 3a 已挂，本步骤冗余保险）
 node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>
 

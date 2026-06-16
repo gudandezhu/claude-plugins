@@ -70,7 +70,24 @@ console.log('dev-gen.test.js');
 // ---------- 1. parseFeatureScenarios ----------
 
 test('parseFeatureScenarios: 解析 2 SC', () => {
-  const sc = dg.parseFeatureScenarios(fs.readFileSync('demo/lead-scoring/spec/spec.feature', 'utf8'));
+  // fixture 内联,避免被 god 自带 demo 演进影响（lead-scoring 演进到 4 SC）
+  const fixture = `@spec-version 1.0.0
+Feature: Test
+  description
+
+  @SC-001 @happy
+  Scenario: 健康 lead 显示高分
+    Given a
+    When b
+    Then c
+
+  @SC-002 @sad-path
+  Scenario: 30 天未联系 lead 降权
+    Given d
+    When e
+    Then f
+`;
+  const sc = dg.parseFeatureScenarios(fixture);
   assertEq(sc.length, 2, 'scenario count');
   assertEq(sc[0].id, 'SC-001');
   assertEq(sc[0].name, '健康 lead 显示高分');

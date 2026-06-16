@@ -1,6 +1,6 @@
 # Mock 测试模式
 
-前端自测的核心测试模式。基于 `dev:mock` 模式和 agent-browser 网络拦截能力。
+前端自测的核心测试模式。基于 `dev:mock` 模式和 Playwright `page.route` 网络拦截能力。
 
 ## 1. Mock 模式检测
 
@@ -60,11 +60,13 @@ Mock 模式不可用时的降级策略：
 
 **场景**：API 返回错误时的前端处理
 
-使用 agent-browser 网络拦截模拟错误：
+使用 Playwright `page.route` 拦截网络模拟错误：
 
-```
-# 拦截指定 API，返回 500 错误
-agent-browser network route "**/api/v1/suppliers" --response '{"code":-1,"msg":"服务器错误"}' --status 500
+```js
+// 拦截指定 API，返回 500 错误
+await page.route('**/api/v1/suppliers', route => {
+  route.fulfill({ status: 500, body: '{"code":-1,"msg":"服务器错误"}' });
+});
 ```
 
 验证步骤：

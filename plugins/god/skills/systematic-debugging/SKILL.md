@@ -126,7 +126,7 @@ description: >
 
 ```bash
 # 检查控制台错误
-# 使用 agent-browser 技能打开页面，查看 console 输出
+# 使用 Playwright `page.on('console')` / `page.on('pageerror')` 监听控制台与 JS 错误
 
 # 检查网络请求
 # 查看 API 调用的请求和响应

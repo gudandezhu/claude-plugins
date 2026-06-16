@@ -1,0 +1,22 @@
+{
+  "name": "god-bdd",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "prebdd:test": "node -e \"const v=process.versions.node.split('.'); const major=+v[0]; if (major !== 22) { console.error('\\u274c 需要 Node 22 LTS，当前 Node '+process.versions.node+'。运行: nvm use'); process.exit(1); }\"",
+    "bddgen": "bddgen",
+    "test": "playwright test --reporter=json",
+    "bdd:test": "bddgen && playwright test --reporter=json",
+    "bdd:report": "node tests/bdd/generate-acceptance-report.js",
+    "bdd:all": "(bddgen && playwright test --reporter=json) 2>&1 | tee tests/bdd/.results/run.log; node tests/bdd/generate-acceptance-report.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "playwright": "^1.61.0",
+    "playwright-bdd": "^9.1.0"
+  }
+}

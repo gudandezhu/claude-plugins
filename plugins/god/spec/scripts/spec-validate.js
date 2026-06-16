@@ -53,12 +53,15 @@ function parseSpec(content) {
     const fm = line.match(/^Feature:\s*(.*)/);
     if (fm) { result.feature = fm[1].trim(); pendingTags = []; continue; }
     const sm = line.match(/^Scenario:\s*(.*)/);
-    if (sm) {
+    const som = line.match(/^Scenario\s+Outline:\s*(.*)/);
+    const scenarioMatch = sm || som;
+    if (scenarioMatch) {
       const id = pendingTags.find(t => SC_SINGLE.test(t));
       current = {
-        id, title: sm[1].trim(), tags: pendingTags.slice(),
+        id, title: scenarioMatch[1].trim(), tags: pendingTags.slice(),
         hasGiven: false, hasWhen: false, hasThen: false,
         steps: [],
+        isOutline: !!som,
       };
       result.scenarios.push(current);
       pendingTags = [];

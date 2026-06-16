@@ -172,7 +172,7 @@ function main() {
       } else if (f.suggestedAction === "fix-api-path") {
         console.log(`    [FIX] 可以修正字段路径，禁止修改断言期望值`);
       } else {
-        console.log(`    [INSPECT] 需要 agent-browser 诊断`);
+        console.log(`    [INSPECT] 需要 Playwright 诊断`);
       }
     }
     console.log("");

@@ -107,5 +107,5 @@ testing/
 
 ## 工具分工
 
-agent-browser 负责"看"（探测 DOM、诊断失败），Playwright 负责"跑"（执行脚本）。
-两者的详细使用规范分别在 test-probing 和 test-execution 技能中。
+DOM 探测工具负责"看"（探测页面结构、诊断失败），Playwright 负责"跑"（执行脚本）。
+DOM 探测工具的详细使用规范在 test-probing 技能中。

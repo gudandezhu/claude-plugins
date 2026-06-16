@@ -81,7 +81,7 @@ else → 展示手动登录面板
 - snapshot 中出现指向其他域的登录表单 iframe
 - 不确定时默认按 CAS 处理——最坏情况只是多弹一个浏览器窗口
 
-⛔ **禁止在 CAS 场景使用 `agent-browser state save` 保存登录态**——只保存当前域 cookie，TGT 丢失，Playwright 执行 E2E 时全量重定向到登录页。
+⛔ **禁止在 CAS 场景手动保存只覆盖单域的 storageState**——SSO TGT 丢失，Playwright 执行 E2E 时全量重定向到登录页。
 
 ## 登录态验证（auth 不为 null 且 scope 含前端时）
 
@@ -107,7 +107,7 @@ node "$CLAUDE_PLUGIN_ROOT/scripts/auth/check-auth.js" \
 |--------|------|------|
 | `valid` / `session_only` | 登录态有效 | 继续步骤 2 |
 | `not_found` / `parse_error` | 文件不存在或损坏 | 先查团队缓存，无则按优先级获取 |
-| `cas_tgt_missing` | CAS 域 TGT 缺失（agent-browser 保存导致） | 按优先级重新获取 |
+| `cas_tgt_missing` | CAS 域 TGT 缺失（保存登录态时未覆盖 SSO 域） | 按优先级重新获取 |
 | `auth_flag_false` / `auth_flag_missing` | localStorage 标志异常 | 尝试注入修复，失败则按优先级重新获取 |
 | `no_lsid_session_only` / `expired_cookie` | 登录态已失效 | 按优先级重新获取 |
 
@@ -121,7 +121,7 @@ node "$CLAUDE_PLUGIN_ROOT/scripts/auth/resolve-auth.js" \
 
 ### 步骤 2：浏览器级别验证
 
-用 agent-browser 加载 storageState 后访问一个需要认证的页面。
+用 Playwright 加载 storageState 后访问一个需要认证的页面。
 
 判断登录态失效的条件（满足任意一条）：
 - URL 重定向到登录页
@@ -219,7 +219,7 @@ node "$CLAUDE_PLUGIN_ROOT/scripts/auth/auto-login.js" \
 
 1. **secure cookie 修正**：baseUrl 是 HTTP 时，将 cookie `secure` 改为 `false`（Playwright 不在 HTTP 发送 secure cookie）
 2. **localStorage 认证标志检查**：确认 isLogin/token/userInfo 等值为有效登录状态
-3. **验证修正结果**：agent-browser 加载 storageState 访问页面，确认不白屏
+3. **验证修正结果**：Playwright 加载 storageState 访问页面，确认不白屏
 
 ## 手动登录面板（自动方案全部失败时）
 
@@ -238,7 +238,7 @@ node "$CLAUDE_PLUGIN_ROOT/scripts/auth/auto-login.js" \
 - 脚本弹出有头浏览器，等待用户完成登录（请勾选"自动登录"）
 - 脚本自动等待 lsId cookie、保存 storageState、注入配置的 localStorage 标志、修正 secure cookie
 - 脚本输出摘要后自动关闭，无需用户手动确认
-- ⚠️ 禁止用 agent-browser 直接保存 storageState——格式与 Playwright 不兼容，cookie 注入会失败
+- ⚠️ 禁止手工拼接 storageState——必须经 Playwright `context.storageState()` 输出，cookie 注入才会成功
 
 ### CAS/SSO 手动登录（Playwright headed）
 
@@ -259,7 +259,7 @@ node "$CLAUDE_PLUGIN_ROOT/scripts/auth/probe-with-playwright.js" \
 
 前端自测（frontend-test skill）需要登录态时：
 1. 加载本 skill 按优先级获取 storage-state.json
-2. 用 agent-browser 加载 storageState 后访问目标页面
+2. 用 Playwright 加载 storageState 后访问目标页面
 3. 无需 AskUserQuestion 获取凭据——优先级系统已处理
 
 ## 依赖安装

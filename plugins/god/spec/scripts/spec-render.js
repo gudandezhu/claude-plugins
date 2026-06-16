@@ -318,7 +318,10 @@ function main() {
 
   const today = new Date().toISOString().slice(0, 10);
   const md = generateReview(parsed, reqs, codeMap, testMap, today);
-  const outPath = path.join(specDir, 'review.md');
+  // v0.5.0+ G13 落地: review.md 移到 review/ 子目录,带日期避免覆盖
+  const reviewDir = path.join(specDir, 'review');
+  if (!fs.existsSync(reviewDir)) fs.mkdirSync(reviewDir, { recursive: true });
+  const outPath = path.join(reviewDir, `review-${today}.md`);
 
   if (opts.dryRun) {
     console.log(`[dry-run] 将写：${outPath}\n`);

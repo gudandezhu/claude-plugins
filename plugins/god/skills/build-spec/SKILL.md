@@ -50,6 +50,7 @@ spec/
 - **目标价值**: <来自 C1>
 - **成功指标**: <来自 C1>
 - **核心用户角色**: <角色 1、2、3>
+- **用户视角文档**: <`spec/sources/user-perspectives/_summary.md` 路径 + 每类角色文档清单；M3 C2 通过后由 user-perspective-analyzer 产出>
 
 ## Check 结论（追溯锚点）
 
@@ -90,6 +91,18 @@ brainstorm 阶段每个里程碑 M1/M2/M3 完成时**强制更新对应快照**�
 - **Adversarial 结论**: <挑战的假设 / 发现的盲点 / 修复>
 - **C2 / C4 Gate**: <通过日期 / 用户原话>
 
+## 用户视角参考（来自 user-perspective-analyzer 产出）
+
+> **必读**——本段是 REQ 命名的语义基础。每条 REQ 的"描述（用户视角）"列必须与下方角色视角对齐。
+
+- **汇总**: `spec/sources/user-perspectives/_summary.md`（角色清单 + 关键发现 + 跨角色冲突 + 隐性需求）
+- **角色文档**: <列出 `spec/sources/user-perspectives/{role}.md` 每条路径>
+
+**用法**：
+1. 跨角色冲突点 → 必须在 build-spec 阶段消解（拆 REQ 或显式 Out of Scope）；不可静默带过
+2. 隐性需求 → 转化为 REQ（happy / edge / error 三类）
+3. SC 命名参考 → "Given 角色 A 在场景 X" 的语义锚点
+
 ## 需求清单
 
 | REQ-ID | 描述（用户视角） | 类别 | MoSCoW | 来源 | 归属 |
@@ -105,23 +118,28 @@ brainstorm 阶段每个里程碑 M1/M2/M3 完成时**强制更新对应快照**�
 
 ## 创建 spec 流程
 
-1. **读 brainstorm Handoff 产物 `spec/sources.md` 草稿**（含 REQ + MoSCoW + 元信息 + 未决项区 + M1-M3 Snapshot + Check 结论）
-2. **完善 sources.md**（必须先于 spec.feature,作为翻译 checklist）:
+1. **读 brainstorm Handoff 产物 `spec/sources.md` 草稿**（含 REQ + MoSCoW + 元信息 + 未决项区 + M1-M3 Snapshot + Check 结论 + 用户视角文档路径）
+2. **读 `spec/sources/user-perspectives/` 下的用户视角文档**（必做）：
+   - 先读 `_summary.md` 拿跨角色冲突点 + 隐性需求清单
+   - 再按 REQ 涉及的场景读对应角色文档
+   - 跨角色冲突点必须在 spec 阶段消解或显式 Out of Scope
+3. **完善 sources.md**（必须先于 spec.feature,作为翻译 checklist）:
    - happy / edge / error 场景 → REQ
    - 显式 Out of Scope 需求 → REQ(oos)
    - 每条标注来源 + MoSCoW
-3. **逐条翻译**:
+4. **逐条翻译**:
    - `happy`/`edge`/`error` REQ → 1 个或多个 Scenario;在 sources.md 填 `→ SC-xxx`
    - `oos` REQ → 填 `Out of Scope`（**不写 Scenario,但显式记录**）
-4. **编写 spec.feature**:
+5. **编写 spec.feature**:
    - Feature 上方 `@spec-version 1.0.0`
    - Feature 描述（作为…我想…以便…）+ 目标价值 + 成功指标对齐 C1
    - 每个 Scenario 上方 `@SC-xxx @<category>`;Given/When/Then 完整且**可观察、可验证**
+   - SC 中涉及角色的，Given 锚定用户视角文档中的角色名（一致性可机检）
    - 对"需求敏感、容易理解错"的 Scenario 主动加 `@intent` tag(语义见 SPEC-FORMAT.md §3.4)
    - 对"系统会失败/出错"类 Scenario 主动加 `@sad-path` tag
    - `@intent` 与 `@happy`/`@edge`/`@error` 正交,可共存(如 `@SC-005 @sad-path @edge`)
-5. **反向校验**:spec.feature 的每个 Scenario 在 sources.md 都能找到对应 REQ
-6. **自检**:跑 validator 全过
+6. **反向校验**:spec.feature 的每个 Scenario 在 sources.md 都能找到对应 REQ
+7. **自检**:跑 validator 全过
 
 ## 变更 spec 流程（防漂移：从 sources.md 发起）
 

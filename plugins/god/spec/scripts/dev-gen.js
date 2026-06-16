@@ -136,7 +136,10 @@ function main() {
     console.error('✗ 找不到 spec.feature');
     process.exit(1);
   }
-  const metaContent = readFileSafe(path.join(specDir, 'meta.json'));
+  // v0.5.0+ G13: meta 在 state/ 下;兼容旧路径
+  const metaPathNew = path.join(specDir, 'state', 'meta.json');
+  const metaPathOld = path.join(specDir, 'meta.json');
+  const metaContent = readFileSafe(fs.existsSync(metaPathNew) ? metaPathNew : metaPathOld);
   const meta = metaContent ? JSON.parse(metaContent) : null;
   const featureSlug = getFeatureSlug(specDir, meta);
   const useTs = isTypeScriptProject(projectDir);

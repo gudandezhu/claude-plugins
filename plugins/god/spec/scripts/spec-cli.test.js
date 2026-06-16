@@ -88,7 +88,8 @@ test('init: 必填合法 --phase', () => {
 test('init: 正常路径', () => {
   const r = run(`init ${f1} --spec-id test1 --phase drafted`, f1);
   assert(r.ok, `init 失败: ${r.stderr}`);
-  const meta = JSON.parse(fs.readFileSync(path.join(f1, 'spec', 'meta.json'), 'utf8'));
+  // v0.5.0+ G13: meta 写到 state/meta.json（不是 spec/meta.json）
+  const meta = JSON.parse(fs.readFileSync(path.join(f1, 'spec', 'state', 'meta.json'), 'utf8'));
   assertEq(meta.specId, 'test1', 'specId');
   assertEq(meta.phase, 'drafted', 'phase');
   assert(meta.version === '1.0.0', 'version 从 spec.feature 提取');
@@ -139,10 +140,18 @@ test('advance: drafted → reviewed 需 C5 锚点', () => {
 test('advance: drafted → reviewed 有 C5 锚点则过', () => {
   const r = run(`advance ${f1}`);
   assert(r.ok, `advance 失败: ${r.stderr}`);
-  const meta = JSON.parse(fs.readFileSync(path.join(f1, 'spec', 'meta.json'), 'utf8'));
+  // v0.5.0+ G13: 读 state/meta.json（向后兼容旧 demo 时回退到 spec/meta.json）
+  const metaPath = fs.existsSync(path.join(f1, 'spec', 'state', 'meta.json'))
+    ? path.join(f1, 'spec', 'state', 'meta.json')
+    : path.join(f1, 'spec', 'meta.json');
+  const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
   assertEq(meta.phase, 'reviewed', 'phase 应为 reviewed');
   assert(meta.gates.reviewed, 'gates.reviewed 有值');
-  const trace = fs.readFileSync(path.join(f1, 'spec', '.trace'), 'utf8');
+  // trace 同理
+  const tracePath = fs.existsSync(path.join(f1, 'spec', 'state', '.trace'))
+    ? path.join(f1, 'spec', 'state', '.trace')
+    : path.join(f1, 'spec', '.trace');
+  const trace = fs.readFileSync(tracePath, 'utf8');
   assert(/drafted → reviewed/.test(trace), '.trace 应有转移记录');
 });
 
@@ -198,10 +207,17 @@ test('rollback: 必须回退（不能向前）', () => {
 test('rollback: 正常回退 + 清掉被回退阶段 gate', () => {
   const r = run(`rollback ${f1} --to drafted --reason "撤回评审"`, f1);
   assert(r.ok, `rollback 失败: ${r.stderr}`);
-  const meta = JSON.parse(fs.readFileSync(path.join(f1, 'spec', 'meta.json'), 'utf8'));
+  // v0.5.0+ G13: 同 advance,读 state/meta.json 优先
+  const metaPath = fs.existsSync(path.join(f1, 'spec', 'state', 'meta.json'))
+    ? path.join(f1, 'spec', 'state', 'meta.json')
+    : path.join(f1, 'spec', 'meta.json');
+  const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
   assertEq(meta.phase, 'drafted', 'phase 应为 drafted');
   assert(!meta.gates.reviewed, 'gates.reviewed 应清掉');
-  const trace = fs.readFileSync(path.join(f1, 'spec', '.trace'), 'utf8');
+  const tracePath = fs.existsSync(path.join(f1, 'spec', 'state', '.trace'))
+    ? path.join(f1, 'spec', 'state', '.trace')
+    : path.join(f1, 'spec', '.trace');
+  const trace = fs.readFileSync(tracePath, 'utf8');
   assert(/ROLLBACK/.test(trace), 'trace 应标 ROLLBACK');
   assert(/撤回评审/.test(trace), 'trace 应含 reason');
 });

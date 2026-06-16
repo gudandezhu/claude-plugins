@@ -34,7 +34,7 @@ TEAM_GROUP_REPO_TEMPLATES=(
 PROJECTS_DIR="projects"
 
 # 全局 npm 工具
-GLOBAL_NPM_TOOLS=("agent-browser" "tree-cli")
+GLOBAL_NPM_TOOLS=("tree-cli")
 
 # ============================================================
 # 颜色与日志

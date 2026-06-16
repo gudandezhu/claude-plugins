@@ -9,7 +9,7 @@
  * 
  * 核心优势：
  *   - Playwright context.storageState() 会保存所有访问过的域的 cookie
- *   - 相比 agent-browser state save（只保存当前域），CAS TGT 不会丢失
+ *   - CAS 跨域场景下 SSO TGT 不会丢失
  */
 
 const { chromium } = require('playwright');

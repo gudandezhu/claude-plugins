@@ -13,41 +13,88 @@
 ```
 spec/
 ├── sources.md              # 需求清单（brainstorm 产出 + C1-C6 锚点）— 母本
-└── spec.feature            # 行为规格（build-spec 从 sources.md 翻译）— 真相源
+├── spec.feature            # 行为规格（build-spec 从 sources.md 翻译）— 真相源
+└── summary.md              # OPC 验收 1 页纸（顶层，OPC 看的主产物）
 ```
 
-扩展可选（评审归档 / 历史快照产生）：
+完整结构（v0.5.0+ G13 落地）：
 
 ```
 spec/
-├── sources.md
-├── spec.feature
-├── archive/
-│   └── spec-1.0.0/         # 历史版本快照（spec-archive.js 产出）
-│       ├── sources.md
-│       └── spec.feature
-└── review/                 # spec-review 落档（如评审报告需独立留档）
-    └── review-<date>.md    # 评审产物（含 4 维度评分明细）
+├── sources.md              # 母本（brainstorm + C1-C6 锚点）
+├── spec.feature            # 真相源（Gherkin + @SC-xxx）
+├── summary.md              # OPC 验收 1 页纸（G8 自动生成）
+├── state/                  # 状态机数据（机器读，不入 git）
+│   ├── meta.json           # phase / version / gates / owner
+│   └── .trace              # 状态机历史（god-trends 数据源）
+├── review/                 # 评审产物（spec-render 产出）
+│   └── review-YYYY-MM-DD.md  # 含 D1-D4 自评草稿 + 4 维度评分
+├── domain/                 # 领域知识（plan §4.1 B 落地）
+│   └── domain.md           # 术语表 / 角色 / 业务流程 / 反模式
+└── .archive/               # 历史快照（spec-archive 产出，git 隐藏目录）
+    └── <timestamp>_v<version>.tar.gz
+    └── .archive-index      # 索引行
 ```
 
-**注**：当前 god 实现里 C5/C6 锚点直接写回 `sources.md` 的 `## Check 结论` 区（见 [[skills/spec-review/SKILL.md#评审产物归档]]）。`review/` 目录是预留扩展位，**默认不存在**，仅当用户显式要求"评审报告独立留档"时才创建。
+**目录分组原则**（v0.5.0+）：
+
+| 顶层（OPC 直接看）| 子目录（机器/评审/历史）|
+|---|---|
+| `sources.md` 母本 | `state/` 状态机数据 |
+| `spec.feature` 真相源 | `review/` 评审产物 |
+| `summary.md` OPC 验收 | `domain/` 领域知识 |
+|  | `.archive/` 历史快照 |
+
+**结构固化**（G13 落地，**所有路径都靠脚本固化，不让 AI 自由放**）：
+
+| 产物 | 固化方式 | 触发命令 |
+|---|---|---|
+| `state/meta.json` | spec-cli init / advance 自动 | `spec-cli advance <项目>` |
+| `state/.trace` | spec-cli advance / rollback 自动 | 同上 |
+| `summary.md` | spec-summary gen 自动 | `spec-summary gen <项目>` |
+| `review/review-<date>.md` | spec-render 自动（带日期不覆盖）| `spec-render <项目>` |
+| `domain/domain.md` | init-spec-dir 建 placeholder，AI 填内容 | `init-spec-dir <项目>` |
+| `sources/user-perspectives/_summary.md` | init-spec-dir 建 placeholder | `init-spec-dir <项目>` |
+| `domain/`, `review/`, `state/`, `sources/` 子目录 | init-spec-dir 自动 + .gitkeep | `init-spec-dir <项目>` |
+| 全部子目录结构 | spec-lint 守门 | `spec-lint <项目>`（prd 3a / dev 0 跑）|
+
+**注**：
+- 顶层 3 个文件 OPC 评审/签字时直接看（**prd 全程不许引导 OPC 打开 spec.feature 之外**）
+- `state/` / `review/` / `domain/` / `.archive/` 是分组目录，按"谁读"分类：
+  - 机器读：state（meta + trace）
+  - 评审者读：review
+  - 调研者读：domain
+  - 历史追溯读：archive
+- god 老版本曾把 meta.json / .trace / review.md / domain.md 平铺到 spec/ 顶层（v0.4.0 形态），现统一收进子目录
+- 兼容：脚本读路径时同时尝试 `state/meta.json` 和 `meta.json`（向后兼容 god 老 demo）
 
 ---
 
 ## 2. 文件类型表
 
-| 文件名模式 | 用途 | 生产者 | 消费者 | 关联规范 |
+| 文件名模式 | 位置 | 用途 | 生产者 | 消费者 |
 |---|---|---|---|---|
-| `SPEC-FORMAT.md` | Gherkin 格式 + SC 绑定规则 + 校验项定义 | god 维护者（人工） | 所有 skill / command | — |
-| `sources.md` | 需求清单（REQ + MoSCoW + M1-M3 Snapshot + C1-C6 锚点） | `brainstorm` skill | `build-spec`、`spec-review`、`spec-validate.js`（双向绑定校验） | [[skills/build-spec/SKILL.md#sourcesmd-格式]] |
-| `spec.feature` | 行为规格（Gherkin Feature + Scenario + `@SC-xxx`）| `build-spec` skill（唯一入口） | `spec-review`、`/god:dev`、`/god:test`、`spec-validate.js` | [[SPEC-FORMAT.md]] |
-| `review/<date>.md` | spec-review 独立报告（4 维度评分 + 扣分明细）| `spec-review` skill | 用户、后续 archive | [[skills/spec-review/SKILL.md]] |
-| `TESTING.md` | spec 子系统自身的回归测试手册（L1-L6） | god 维护者（人工） | god 维护者（改 spec 系统前必跑） | [[TESTING.md]] |
-| `scripts/spec-validate.js` | 机械校验 14 项 | god 维护者（人工） | `/god:prd` 阶段 3a、`/god:dev` 阶段门禁、CI | [[SPEC-FORMAT.md#7 校验规则]] |
-| `scripts/spec-cli.js` | SC 状态机 6 态 + meta.json 读写（v0.4.0 落） | god 维护者（人工） | `build-spec`、`/god:dev`、`/god:test` S1 | [[roadmap.md#§3.2 G1 已落]] |
-| `scripts/spec-summary.js` | 渲染 summary.md（v0.4.0 落，11 单元测试） | god 维护者（人工） | `/god:prd` 阶段 2 末尾 | [[roadmap.md#§3.2 G8 已落]] |
-| `scripts/spec-render.js` | ⏳ 规划中（P1 G7） | — | — | [[roadmap.md#§3.4 G7]] |
-| `scripts/spec-archive.js` | ⏳ 规划中（P1 G4） | — | — | [[roadmap.md#§3.1 G4]] |
+| `SPEC-FORMAT.md` | god 根 | Gherkin 格式 + SC 绑定规则 + 校验项定义 | god 维护者（人工） | 所有 skill / command |
+| `sources.md` | spec/ 顶层 | 需求清单（REQ + MoSCoW + M1-M3 Snapshot + C1-C6 锚点）| `brainstorm` skill | `build-spec`、`spec-review`、`spec-validate.js` |
+| `spec.feature` | spec/ 顶层 | 行为规格（Gherkin Feature + Scenario + `@SC-xxx`）| `build-spec` skill | `spec-review`、`/god:dev`、`/god:test`、`spec-validate.js` |
+| `summary.md` | spec/ 顶层 | OPC 验收 1 页纸（G8 自动生成）| `spec-summary.js` | OPC（不打开 spec.feature 看） |
+| `state/meta.json` | spec/state/ | 状态机元数据（phase / version / gates / owner）| `spec-cli.js` | `spec-cli` / `dev-gen` / `test-gen` |
+| `state/.trace` | spec/state/ | 状态机历史（god-trends 数据源）| `spec-cli.js` | `god-trends.js` / `measure-opc-cost.js` |
+| `review/review-<date>.md` | spec/review/ | 评审 checklist（D1-D4 自评草稿）| `spec-render.js` | `spec-review` 评审者 |
+| `domain/domain.md` | spec/domain/ | 领域知识（术语表 / 角色 / 流程 / 反模式）| OPC（prd 阶段 0）| `brainstorm` / `build-spec` / `spec-review` |
+| `.archive/<ts>_v<ver>.tar.gz` | spec/.archive/ | 历史快照（git 隐藏）| `spec-archive.js` | `spec-archive restore` |
+| `scripts/spec-validate.js` | god spec/scripts/ | 机械校验 14+ 项 | god 维护者 | `/god:prd` 阶段 3a、`/god:dev` 门禁 |
+| `scripts/spec-cli.js` | god spec/scripts/ | SC 状态机 6 态 | god 维护者 | `build-spec` / `/god:dev` / `/god:test` S1 |
+| `scripts/spec-summary.js` | god spec/scripts/ | 渲染 summary.md | god 维护者 | `/god:prd` 阶段 2.5 |
+| `scripts/spec-render.js` | god spec/scripts/ | 渲染 review/<date>.md | god 维护者 | `/god:prd` 阶段 3b |
+| `scripts/spec-archive.js` | god spec/scripts/ | 快照 / 回滚 / 列出 | god 维护者 | spec 变更前自动调 |
+| `scripts/spec-lint.js` | god spec/scripts/ | spec/ 结构守门 | god 维护者 | `/god:prd` 阶段 3a + `/god:dev` 阶段 0 |
+| `scripts/init-spec-dir.js` | god spec/scripts/ | 建好 spec/ 子目录 | god 维护者 | `/god:prd` 阶段 0 一次性 |
+| `scripts/dev-gen.js` | god spec/scripts/ | spec → 代码骨架 | god 维护者 | `/god:dev` 阶段 1 |
+| `scripts/test-gen.js` | god spec/scripts/ | spec → 测试桩 | god 维护者 | `/god:test` 阶段 2 |
+| `scripts/god-trends.js` | god spec/scripts/ | 跨 feature 趋势 | god 维护者 | 自我监控 |
+| `scripts/measure-opc-cost.js` | god spec/scripts/ | OPC 介入成本归因 | god 维护者 | `/god:test` S1 出口 |
+| `scripts/install-hooks.js` | god spec/scripts/ | 一键装 hooks | god 维护者 | 项目初始化时 |
 
 ---
 
@@ -184,18 +231,24 @@ spec/
 
 | 上游 → spec/ | 产物 / 消费 |
 |---|---|
+| `/god:prd` 阶段 0（domain.md 加载） | 读 `spec/domain/domain.md` 提供术语统一 |
 | `/god:prd` 阶段 1（brainstorm） | 产出 `spec/sources.md` 草稿 |
+| `/god:prd` 阶段 2（build-spec） | 产出 `spec/spec.feature` v1.0.0 |
+| `/god:prd` 阶段 2.5（spec-summary） | 写 `spec/summary.md`（顶层，OPC 主看）|
 | `/god:prd` 阶段 3a（build-spec 自检） | 跑 `spec-validate.js` 校验 #1-6、#10-13 |
-| `spec-review` skill | 消费 `spec/sources.md` + `spec/spec.feature`；产出 C5 锚点写回 `sources.md` |
-| `/god:dev` | 消费 `spec/spec.feature`；产出代码标注 `@spec SC-xxx` |
-| `/god:test` | 消费 `spec/spec.feature` + 代码；产出测试命名 `SC-xxx:` |
-| `/god:test` 验收签字 | 写入 `spec/review/`（如启用）|
+| `/god:prd` 阶段 3b（spec-render） | 写 `spec/review/review-<date>.md`（评审 checklist）|
+| `spec-review` skill | 读 `sources.md` + `spec.feature` + `review/<date>.md`；写 C5 锚点回 `sources.md` |
+| `/god:dev` | 读 `spec.feature`；写代码标注 `@spec SC-xxx`；写 `state/meta.json` 推进 |
+| `/god:test` | 读 `spec.feature` + 代码；写测试 `SC-xxx:`；写 `state/.trace` |
+| `/god:test` S1 出口 | 跑 `measure-opc-cost.js` + `spec-cli check`；用户签字 |
 
 | spec/ → 下游 | 产物 / 消费 |
 |---|---|
-| `spec-archive.js`（规划）| 历史版本快照 → `spec/archive/spec-<version>/` |
-| `spec-render.js`（规划）| 渲染 review.md 给非作者审阅 |
-| `spec-summary.js`（规划）| 渲染产品说明给 OPC（CLAUDE.md §1.1 目标 1）|
+| `spec-archive.js` | 历史快照 → `spec/.archive/<ts>_v<ver>.tar.gz` + `.archive-index` |
+| `spec-render.js` | 评审 checklist → `spec/review/review-<date>.md` |
+| `spec-summary.js` | OPC 验收摘要 → `spec/summary.md` |
+| `god-trends.js` | 读 `spec/state/.trace` 累计 → 跨 feature 报告 |
+| `measure-opc-cost.js` | 读 `spec/state/.trace` → OPC 介入 5 维归因 |
 
 ---
 
@@ -203,12 +256,15 @@ spec/
 
 | 项 | 约束 |
 |---|---|
-| `spec/` 目录位置 | 项目根目录的 `spec/`（或 god demo 的根目录），**不可嵌套** |
-| `sources.md` 文件名 | 固定，不允许重命名（validator 硬编码） |
-| `spec.feature` 文件名 | 固定 |
+| `spec/` 目录位置 | 项目根目录的 `spec/`，**不可嵌套** |
+| `sources.md` / `spec.feature` / `summary.md` | 顶层，固定文件名（validator 硬编码） |
+| `state/` 子目录 | 收 `meta.json` + `.trace`（机器数据）|
+| `review/` 子目录 | 收 `review-YYYY-MM-DD.md`（评审产物，日期避免覆盖）|
+| `domain/` 子目录 | 收 `domain.md`（领域知识，prd 阶段 0 加载）|
+| `.archive/` 子目录 | 收 `<ts>_v<ver>.tar.gz` + `.archive-index`（git 隐藏，spec-archive 产出）|
 | 编码 | UTF-8（中文/英文 Gherkin 均可） |
-| 一个项目几个 spec.feature | 默认 1 个（一个功能一个文件）；多 feature 项目用目录 `spec/<feature>/spec.feature` 扩展（**当前不支持**，仅作为预留扩展位） |
-| `archive/` 命名 | `spec-<MAJOR>.<MINOR>.<PATCH>/`（如 `spec-1.0.0/`）|
+| 一个项目几个 spec.feature | 默认 1 个；多 feature 用 `spec/<feature>/spec.feature` 扩展（**预留**，未实现）|
+| 兼容老路径 | 脚本读路径时同时尝试 `state/meta.json` + `meta.json` 等，向后兼容 god 老 demo |
 
 ---
 
@@ -223,4 +279,6 @@ spec/
 
 ## 10. 版本
 
+- **v0.5.1** (2026-06-16)：**G13.1 结构固化**。新增 `init-spec-dir.js`（一次性建好 4 子目录 + 2 placeholder）+ `spec-lint.js`（结构守门，拦 AI 误建文件）。`commands/prd.md` 阶段 0 加 init-spec-dir，阶段 3a 加 spec-lint；`commands/dev.md` 阶段 0 加 spec-lint。15 单元测试全过（init 5 + lint 8 + 既有 137）。
+- **v0.5.0** (2026-06-16)：**G13 spec/ 子目录分层落地**。`meta.json` / `.trace` → `state/`；`review.md` → `review/review-<date>.md`；`domain.md` → `domain/`。OPC 直接看 3 个文件顶层（sources / spec.feature / summary），其他收进子目录。脚本同时尝试新/旧路径，向后兼容。
 - **v0.1.0** (2026-06-16)：初版。基于 [[SPEC-FORMAT.md]] v1 + [[TESTING.md]] v1 + [[CLAUDE.md]] v0.1.0 同步出齐。

@@ -69,7 +69,24 @@ console.log('test-gen.test.js');
 // ---------- 1. parseScenarios ----------
 
 test('parseScenarios: 解析 SC + tags + GWT', () => {
-  const sc = tg.parseScenarios(fs.readFileSync('demo/lead-scoring/spec/spec.feature', 'utf8'));
+  // fixture 内联,避免被 god 自带 demo 演进影响（lead-scoring 已扩到 4 SC）
+  const fixture = `@spec-version 1.0.0
+Feature: Test
+  description
+
+  @SC-001 @happy
+  Scenario: A
+    Given a
+    When b
+    Then c
+
+  @SC-002 @sad-path
+  Scenario: B
+    Given d
+    When e
+    Then f
+`;
+  const sc = tg.parseScenarios(fixture);
   assertEq(sc.length, 2);
   assertEq(sc[0].id, 'SC-001');
   assert(sc[0].tags.includes('happy'), '应含 happy');

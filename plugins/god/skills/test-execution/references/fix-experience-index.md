@@ -22,11 +22,10 @@
 | unknown | Test timeout + waitForLoadState + networkidle 或 load | fix-experience/e2e-networkidle-timeout.md | SPA 有持续轮询，networkidle 永远不满足；waitForLoadState('load') 只等 HTML 解析，Vue 组件异步渲染未完成 | 禁止 `waitForLoadState('networkidle')` 和 `waitForLoadState('load')` 等待内容；必须用 `expect(locator).toBeVisible({ timeout: 15000 })` |
 | unknown | Test timeout of 30000ms exceeded + waitForResponse | fix-experience/e2e-wait-for-response.md | playwright.config.ts 未设置 test 级 timeout，默认 30000ms 被前置步骤耗尽，waitForResponse 被硬截断 | playwright.config.ts 必须设置 `timeout: 60000`；gen-skeleton.js 已修复，旧项目需手动补加 |
 | unknown | click 后无 API 请求 + el-message-box | fix-experience/e2e-message-box-selector.md | 确认弹窗选择器无容器限定，匹配到页面其他 primary 按钮，点击了错误按钮 | el-message-box 按钮必须加 `.el-message-box` 容器限定 |
-| assertion_failed | 全部失败 + .el-table timeout + localStorage认证标志=false | fix-experience/e2e-storagestate-cas-login.md | CAS session cookie 跨实例失效 + localStorage 认证标志在 sessionStorage 无法持久化 | 用 auth-login.js 保存 storageState；登录勾选"自动登录"；auth-login.js 自动注入配置的 localStorage 标志 |
-| check-environment | E2E 全量重定向到 CAS 登录页 + pre-check cas_tgt_missing | fix-experience/e2e-cas-tgt-missing.md | agent-browser state save 只保存当前域 cookie，CAS 域 TGT 未捕获，Playwright 加载后被重定向 | 必须用 auth-login.js（Playwright context.storageState()）；test-config.json 设置 auth.ssoUrl；pre-check 自动检测 |
+| assertion_failed | 全部失败 + .el-table timeout + localStorage认证标志=false | （无独立经验文件，参考 auto-login-passport SKILL §CAS/SSO 跨域识别） | CAS session cookie 跨实例失效 + localStorage 认证标志在 sessionStorage 无法持久化 | 用 auth-login.js 保存 storageState；登录勾选"自动登录"；auth-login.js 自动注入配置的 localStorage 标志 |
 | api_path_error | Cannot read properties of null | fix-experience/api-null-data-path.md | 创建接口返回 data:null，脚本假设有 bizKey | 写入接口只断言 `code`；`data` 字段用可选链 `data?.field` |
 | network_error | ENOENT /dev/stdin | fix-experience/env-git-bash-windows.md | Windows Git Bash 兼容性问题 | 统一用 run-tests.js 执行；禁止 `python3`、`2>&1 \| tee` |
-| unknown | E2E 100% selector_not_found + dom-probe.md 含"交互清单（PRD + UI 原型驱动）" | fix-experience/e2e-dom-probe-forged.md | LLM 将 2a-pre 探测规划直接当作 dom-probe.md 输出，跳过 agent-browser 真实探测，选择器全部是推断值 | 检查 dom-probe.md 时间戳是否整点、是否含 snapshot 运行时数据；重新执行阶段一真实探测 |
+| unknown | E2E 100% selector_not_found + dom-probe.md 含"交互清单（PRD + UI 原型驱动）" | fix-experience/e2e-dom-probe-forged.md | LLM 将 2a-pre 探测规划直接当作 dom-probe.md 输出，跳过 Playwright 真实探测，选择器全部是推断值 | 检查 dom-probe.md 时间戳是否整点、是否含 snapshot 运行时数据；重新执行阶段一真实探测 |
 
 ## 按插件文件索引（溯源用）
 
@@ -41,12 +40,12 @@
 | skills/test-scripting/references/api-case-writing.md | api-null-data-path.md | API 脚本生成规范 |
 | scripts/test-design/gen-skeleton.js | e2e-overlay-blocking.md, e2e-tour-blocking.md, e2e-wait-for-response.md, api-vitest-include-path.md | 骨架生成（fixtures.ts 模板、playwright.config.ts timeout、apiPrefix 剥离、vitest root 字段） |
 | skills/test-execution/scripts/lib/error-classifier.js | api-null-data-path.md | 错误分类逻辑 |
-| testing/auth-login.js | e2e-storagestate-cas-login.md | 登录态保存脚本（项目级，非插件） |
-| skills/test-execution/scripts/check-auth.js | e2e-storagestate-cas-login.md, e2e-cas-tgt-missing.md | 登录态检查（localStorage 检查 + CAS TGT 检测，从配置读取检查项） |
-| skills/test-execution/scripts/pre-check.js | e2e-storagestate-cas-login.md, e2e-cas-tgt-missing.md | 预检 + storageState 自动修正（localStorage 检查 + CAS TGT 检测，从配置读取） |
+| testing/auth-login.js | — | 登录态保存脚本（项目级，非插件） |
+| skills/test-execution/scripts/check-auth.js | — | 登录态检查（localStorage 检查 + CAS TGT 检测，从配置读取检查项） |
+| skills/test-execution/scripts/pre-check.js | — | 预检 + storageState 自动修正（localStorage 检查 + CAS TGT 检测，从配置读取） |
 
-| skills/test-probing/SKILL.md | e2e-cas-tgt-missing.md | 登录态验证（check-auth.js 调用加 --sso-url，新增 cas_tgt_missing 处理） |
-| skills/auto-login-passport/SKILL.md | e2e-cas-tgt-missing.md | 登录唯一权威（优先级链 + CAS/SSO 识别 + 手动面板） |
+| skills/test-probing/SKILL.md | — | 登录态验证（check-auth.js 调用加 --sso-url，新增 cas_tgt_missing 处理） |
+| skills/auto-login-passport/SKILL.md | — | 登录唯一权威（优先级链 + CAS/SSO 识别 + 手动面板） |
 | skills/test-probing/references/dom-probing.md | e2e-dom-probe-forged.md | DOM 探测规范（新增核心禁令、2a-pre 输出路径改为 .cache/probe-plan.md、时间戳真实性要求） |
 | skills/test-gate/scripts/gate-check.js | e2e-dom-probe-forged.md | 产物门禁（新增步骤 17：dom-probe.md 真实性检查） |
 

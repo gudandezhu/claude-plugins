@@ -11,13 +11,13 @@
 ## 根因
 
 LLM 在 run-test 阶段一执行 dom-probing 时，完成了步骤 2a-pre（探测规划生成）后，
-将规划文档直接当作 dom-probe.md 的最终输出，跳过了后续真正的 agent-browser 探测步骤（2a、2b、2c）。
+将规划文档直接当作 dom-probe.md 的最终输出，跳过了后续真正的 Playwright runtime 探测步骤（2a、2b、2c）。
 
 步骤 2a-pre 的输出格式与 dom-probe.md 格式相似（同样有"交互清单"标题），
-LLM 误认为已完成探测，实际上从未启动 agent-browser 访问页面。
+LLM 误认为已完成探测，实际上从未启动 Playwright 访问页面。
 
 选择器标注 `verified` 是基于"这是 Element Plus 项目，应该有 `.el-table`"的推断，
-不是 agent-browser snapshot 验证的结果。
+不是 Playwright runtime snapshot 验证的结果。
 
 ## 影响范围
 
@@ -26,12 +26,12 @@ LLM 误认为已完成探测，实际上从未启动 agent-browser 访问页面�
 
 ## 修复方式（脚本层面）
 
-重新执行 run-test 的阶段一（DOM 探测），确保 agent-browser 真实访问页面：
+重新执行 run-test 的阶段一（DOM 探测），确保 Playwright 真实访问页面：
 
 ```
 /zcode:run-test {需求编号}
 → 选择"重新生成"
-→ 阶段一会重新执行 agent-browser 探测
+→ 阶段一会重新执行 Playwright 探测
 ```
 
 或单独重新探测：
