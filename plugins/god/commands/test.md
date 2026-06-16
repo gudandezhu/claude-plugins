@@ -20,6 +20,11 @@ argument-hint: 项目目录
    - 3 项全过后，**S1 签字前**自动跑 `spec-cli advance` 把 phase 推到 `accepted`
    - 任一失败 → S1 不能签字，回退修复
 6. **OPC 看 summary.md 签字**（不直接打开 spec.feature）—— 详见 [RFC-0002 spec-summary](../docs/rfcs/0002-spec-summary.md)
+7. **S1 出口 OPC 成本归因**（v0.4.0 起，D5 P1）：
+   - 跑 `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/measure-opc-cost.js <项目目录> --json` 自动算 5 维归因
+   - 把归因结果写入验收报告 "OPC 介入成本" 段
+   - 标 L0/L1/L2/L3 档位 + 预算是否在内
+   - 详见 [RFC-0005 OPC 预算分级](../docs/rfcs/0005-opc-cost-tiered.md) + [ADR-0005](../docs/adrs/0005-opc-cost-tiered.md)
 
 ## spec 生命周期角色
 
