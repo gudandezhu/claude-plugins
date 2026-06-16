@@ -24,7 +24,14 @@ fi
 echo "[god pre-commit] 检查 spec 状态机 + 防漂移..."
 
 # 1. idea 阶段无 meta.json = 合法跳过
-if [ ! -f "$SPEC_DIR/meta.json" ]; then
+# 兼容 v0.5.0+ G13: meta.json 在 spec/state/ 下; 老项目在 spec/
+META_JSON=""
+if [ -f "$SPEC_DIR/state/meta.json" ]; then
+  META_JSON="$SPEC_DIR/state/meta.json"
+elif [ -f "$SPEC_DIR/meta.json" ]; then
+  META_JSON="$SPEC_DIR/meta.json"
+fi
+if [ -z "$META_JSON" ]; then
   echo "[god pre-commit] 无 meta.json（idea 阶段合法），跳过检查"
   exit 0
 fi

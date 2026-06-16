@@ -13,7 +13,8 @@ else
   PLUGIN_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 fi
 
-if [ ! -f "$SPEC_DIR/meta.json" ]; then
+# 兼容 v0.5.0+ G13: meta.json 在 spec/state/ 下; 老项目在 spec/
+if [ ! -f "$SPEC_DIR/state/meta.json" ] && [ ! -f "$SPEC_DIR/meta.json" ]; then
   echo "[god session-end] 无 meta.json（idea 阶段）"
   exit 0
 fi
