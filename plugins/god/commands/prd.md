@@ -49,7 +49,9 @@ prd 的全部目的是**把模糊想法梳理成无歧义、可验证的需求**
 
 加载 `brainstorm` skill，完整执行其方法论。
 
-终点：**Handoff 产出 `spec/sources.md` 草稿**（需求清单 + MoSCoW + 未决项 + 元信息 + M1-M3 Snapshot + Check 结论），需求清晰到能写 GWT，无歧义、无遗漏、未决项已结案。
+**M3 C2 通过后 → 加载 `user-perspective-analyzer` skill**（核心流程节点已对齐，按角色深入挖掘真实视角与隐性需求）。产物写 `spec/sources/user-perspectives/{role}.md` + `_summary.md`，路径记录到 sources.md 元信息区。**Handoff 之前必跑**——build-spec 阶段会读用户视角文档作为 REQ 命名的语义参考。
+
+终点：**Handoff 产出 `spec/sources.md` 草稿**（需求清单 + MoSCoW + 未决项 + 元信息 + M1-M3 Snapshot + Check 结论 + 用户视角文档路径），需求清晰到能写 GWT，无歧义、无遗漏、未决项已结案。
 
 ### 阶段 2：固化（加载 build-spec skill）
 
@@ -70,9 +72,15 @@ prd 的全部目的是**把模糊想法梳理成无歧义、可验证的需求**
 
 ### 阶段 3：自检（拆 3a 机械 + 3b 语义）
 
-#### 3a 机械校验
+#### 3a 机械校验（v0.4.0 起硬挂）
 
-跑 `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>`，**校验项全过**：
+**v0.4.0 强化**：本阶段 3a 必跑，**不通过则 prd 阶段 3 不进 3b**（exit 1 强制回退）：
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>
+```
+
+**校验项全过**：
 - 格式项（Feature / 版本 / Scenario ID / GWT）
 - 双向绑定（sources.md ↔ spec.feature）
 - **C5 锚点**（`spec/sources.md` 必须含 `- **C5 Spec 评审** (...)` 行，通过/未跑二选一，格式见 `skills/spec-review/SKILL.md` 阶段 4）
@@ -83,6 +91,11 @@ prd 的全部目的是**把模糊想法梳理成无歧义、可验证的需求**
 - C5 格式错 → 主 agent 伪造或漏字段
 - C5 写"通过"但分 < 90 → 自相矛盾
 - 任一失败 → 阶段 3b 没真正完成,**回到 3b 重跑**（不能直接补锚点蒙混）
+
+**v0.4.0 起硬规则**：
+- spec-validate exit code != 0 → **prd 阶段 3a FAIL**，不进入 3b
+- C5 失败 → 回 3b 重跑（不能直接补锚点）
+- 其他校验失败 → 按 validator 报错定位回对应阶段修
 
 **不通过 → 回对应阶段修**（C5 失败回 3b；其他按 validator 报错定位）。
 
