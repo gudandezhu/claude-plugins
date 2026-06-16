@@ -10,7 +10,14 @@ argument-hint: 项目目录
 ## 流程
 
 1. **前置**：spec + 代码就绪，validator 确认"所有 SC 已实现"
-2. **执行**：为每个 SC 写测试（命名规则见 `SPEC-FORMAT.md`），配置 playwright，跑通
+2. **执行**：G6 test-gen（v0.4.0+ P1 已落）出测试桩，AI 在桩上写实现：
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/test-gen.js <项目目录> [--force] [--framework vitest|jest]
+   # 读 spec/spec.feature → 写 tests/<feature-slug>.spec.<ts|js>
+   # 每个 SC 一个 it('SC-XXX: <name>', ...) 桩
+   # @sad-path 用 it.todo（强提示 AI 必填）
+   ```
+   AI 在桩上写真实断言（如 `expect(score(3)).toBeGreaterThanOrEqual(80)`）
 3. **自检**：跑 validator，确认"所有 SC 已测试" + N/N 完整绑定（zero-drift）
 4. **产出**：验收报告（内容与模板见既有 test 相关 skill），流程闭环
 5. **S1 出口 spec-cli advance**（v0.4.0 起，G1 P0）：
