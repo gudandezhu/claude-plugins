@@ -101,6 +101,14 @@ node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-validate.js <项目目录>
 
 #### 3b 语义评审（强制环节）
 
+**前置产物：自动跑 `spec-render`**（v0.4.0+ G7 落地）。在加载 `spec-review` skill 前**自动**执行：
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-render.js <项目目录>
+```
+
+产出 `spec/review.md`（D1 需求完整性 + D2 用户视角 + D3 GWT 可验证性 + D4 双向绑定 + 评审草稿占位）。spec-review 评审者基于 review.md 做评分，不直接读 spec.feature Gherkin 原文。**review.md 不入 git**，每次 spec 改完重 render。
+
 **加载 `spec-review` skill**(一句话入口)。不要绕过本 SKILL 自己拼 `eval-loop(...)`——本 SKILL 内部固定 `maxIterations=1` 禁用 Fix 阶段,绕过则违背评审契约。
 
 `spec-review` skill 对 `spec/sources.md` + `spec/spec.feature` 做语义质量门禁:
