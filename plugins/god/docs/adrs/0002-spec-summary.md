@@ -59,5 +59,5 @@ god v0.3.0 把 G8 spec-summary 从 P1 提为 P0（[roadmap §3.2 G8](../roadmap.
 ## 5. 关联
 
 - 3 视角：[`01-ops-runbook.md §1 D5`](../perspectives/01-ops-runbook.md) / [`03-architect-perspective.md §3`](../perspectives/03-architect-perspective.md)
-- 上一 ADR：[`ADR-0001 spec 状态机 6 vs 4 状态`](0001-spec-lifecycle-6-vs-4-states.md)
+- 上一 ADR：[`ADR-0000 spec 状态机 6 vs 4 状态`](0000-spec-lifecycle-6-vs-4-states.md)
 - 下一 RFC：[`RFC-0003 hooks 集成（G3）`](../rfcs/0003-hooks-integration.md)（待写）

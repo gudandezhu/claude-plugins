@@ -2,7 +2,7 @@
 
 > **状态**：草稿（v0.4.0 P0）
 > **作者**：god 架构组
-> **关联 ADR**：合并后改名为 `0001-adr-spec-cli-approved.md`
+> **关联 ADR**：合并后改名为 `0003-spec-cli-state-machine.md`
 > **关联 3 视角**：[`01-ops-runbook.md §1 D1`](../perspectives/01-ops-runbook.md) / [`02-dev-perspective.md §2-3`](../perspectives/02-dev-perspective.md) / [`03-architect-perspective.md §2`](../perspectives/03-architect-perspective.md)
 > **关联 roadmap**：[`docs/roadmap.md §3.2 G1+G2`](../roadmap.md)
 

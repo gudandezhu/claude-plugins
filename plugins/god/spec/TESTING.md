@@ -1,6 +1,6 @@
 # 回归测试手册
 
-> god plugin spec 子系统的回归测试指南。每次改 `spec-validate.js` / `SPEC-FORMAT.md` / `spec-fmt.js` / spec-review SKILL / build-spec SKILL **之前**，**必须**先跑一遍本手册的测试，**全部通过**才能改。
+> god plugin spec 子系统的回归测试指南。每次改 `spec-validate.js` / `SPEC-FORMAT.md` / spec-review SKILL / build-spec SKILL **之前**，**必须**先跑一遍本手册的测试，**全部通过**才能改。
 
 ## 为什么需要这手册
 
@@ -19,7 +19,7 @@ god plugin 的 spec 系统是"AI 自动化验收"的核心：spec 写了啥、AI
 | **L3 真实场景** | `demo/guess-number/` | 旧 demo 在新机制下行为不变 | < 1 min |
 | **L4 边界** | `/tmp/god-integration/` | 0 @intent / 100% sad-path / 多 SC 共享 | 2 min |
 | **L5 错误恢复** | `/tmp/god-integration/` | 报错→理解→修复→通过 | 3 min |
-| **L6 回归 CLI** | — | `spec-validate.js --help` / `spec-fmt.js --help` | < 1 min |
+| **L6 回归 CLI** | — | `spec-validate.js --help` | < 1 min |
 
 **全部加起来 < 15 分钟**。每次改 spec 系统前必跑。
 
@@ -145,6 +145,53 @@ cd /tmp/god-tag-test && \
 ```bash
 rm -rf /tmp/god-tag-test
 ```
+
+---
+
+## L1-B 状态机单元测试（v0.4.0 起，G1 必跑）
+
+**目的**：验证 `spec-cli.js` 的 6 状态合法性、转移规则、gate 校验、trace 留痕。
+
+### 跑法
+
+```bash
+node spec/scripts/spec-cli.test.js
+# 期望: 20 passed, 0 failed
+```
+
+### 场景覆盖
+
+| 测试组 | 覆盖点 |
+|---|---|
+| 常量 | VALID_PHASES 含 6 状态；PHASE_ORDER 严格递增 |
+| init | 必填 --spec-id / 必填合法 --phase / 正常路径 / 重复 init 拒绝 |
+| status | 正常输出含 phase + gates；无 meta 时输出 idea |
+| advance | 无 meta 拒绝；drafted → reviewed 需 C5 锚点；有 C5 则过；不可跳级；--force 跳过 + trace 标 FORCE；accepted 不能再 advance |
+| rollback | 必填 --to；必填 --reason；必须回退（不能向前）；正常回退清掉被回退阶段 gate + trace 标 ROLLBACK + 含 reason |
+| check | meta 缺失拒绝；合法 phase + gate 通过 |
+
+### meta.json schema（v0.4.0 起）
+
+```json
+{
+  "specId": "lead-scoring",
+  "version": "2.0.1",
+  "phase": "reviewed",
+  "owner": "fan",
+  "createdAt": "2026-07-01T10:00:00Z",
+  "updatedAt": "2026-07-02T14:25:00Z",
+  "relatedPR": [42, 44],
+  "scopes": ["lead-scoring"],
+  "gates": {
+    "drafted": "2026-07-01T11:30:00Z",
+    "reviewed": "2026-07-02T14:25:00Z"
+  }
+}
+```
+
+### .trace 格式
+
+每行 = `2026-07-02T14:25:00Z drafted → reviewed` 或带 `[FORCE]` / `ROLLBACK ... | reason: ...` 后缀。
 
 ---
 
@@ -398,16 +445,6 @@ rm -rf /tmp/god-edge
 # spec-validate 不带参数
 node $(git rev-parse --show-toplevel)/plugins/god/spec/scripts/spec-validate.js
 # 期望: 报"spec.feature 不存在"或类似,而不是崩溃
-
-# spec-fmt --help
-node $(git rev-parse --show-toplevel)/plugins/god/spec/scripts/spec-fmt.js --help
-# 期望: 打印用法说明
-
-# spec-fmt --next-id
-mkdir -p /tmp/god-cli && touch /tmp/god-cli/spec.feature
-node $(git rev-parse --show-toplevel)/plugins/god/spec/scripts/spec-fmt.js /tmp/god-cli --next-id
-# 期望: 输出 "SC-001"
-rm -rf /tmp/god-cli
 ```
 
 ---

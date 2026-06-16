@@ -117,8 +117,9 @@ god/
 │   ├── 0001-spec-cli-state-machine.md
 │   └── 0002-spec-summary.md
 ├── docs/adrs/                      ADR 决议（同编号格式；RFC 合并后改名为 ADR-NNNN）
-│   ├── 0001-spec-lifecycle-6-vs-4-states.md
-│   └── 0002-spec-summary.md
+│   ├── 0000-spec-lifecycle-6-vs-4-states.md  基础架构（6 vs 4 状态）
+│   ├── 0002-spec-summary.md
+│   └── 0003-spec-cli-state-machine.md        G1+G2 捆绑落地
 ├── hooks/                          L4 顶层 hook 配置目录（roadmap G3 接入 .claude/settings.json 后启用）
 ├── templates/                      L4 产物模板（task/ + hooks/ v0.2.0 建）
 └── docs/perspectives/              v0.4.0 起 3 视角全景演练（业务/开发/设计 4 类闭环）

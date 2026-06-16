@@ -13,6 +13,13 @@ argument-hint: 项目目录
 2. **执行**：为每个 SC 写测试（命名规则见 `SPEC-FORMAT.md`），配置 playwright，跑通
 3. **自检**：跑 validator，确认"所有 SC 已测试" + N/N 完整绑定（zero-drift）
 4. **产出**：验收报告（内容与模板见既有 test 相关 skill），流程闭环
+5. **S1 出口 spec-cli advance**（v0.4.0 起，G1 P0）：
+   - 跑 `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-summary.js gen <项目目录>` 重新产出 summary.md
+   - 跑 `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-summary.js check <项目目录>` 校验 4 项
+   - 跑 `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-cli.js check <项目目录>` 校验状态机合法性
+   - 3 项全过后，**S1 签字前**自动跑 `spec-cli advance` 把 phase 推到 `accepted`
+   - 任一失败 → S1 不能签字，回退修复
+6. **OPC 看 summary.md 签字**（不直接打开 spec.feature）—— 详见 [RFC-0002 spec-summary](../docs/rfcs/0002-spec-summary.md)
 
 ## spec 生命周期角色
 

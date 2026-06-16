@@ -2,7 +2,7 @@
 
 > **状态**：草稿（v0.4.0 P0）
 > **作者**：god 架构组
-> **关联 ADR**：合并后改名为 `0002-adr-spec-summary-approved.md`
+> **关联 ADR**：合并后改名为 ADR-0002（已落 `0002-spec-summary.md`）
 > **关联 3 视角**：[`01-ops-runbook.md §1 D5 S1`](../perspectives/01-ops-runbook.md) / [`03-architect-perspective.md §3 RFC-001`](../perspectives/03-architect-perspective.md)
 > **关联 roadmap**：[`docs/roadmap.md §3.2 G8`](../roadmap.md)（G8 v0.3.0 提 P0）
 
