@@ -113,6 +113,12 @@ god/
 │   ├── roadmap.md                  改造优先级（必做/应做/可缓做）
 │   ├── incidents/                  事后复盘沉淀（v0.2.0 建）
 │   └── spec-directory.md           spec/ 目录结构与产物
+├── docs/rfcs/                      RFC 提案（4 位补零编号 NNNN-xxx.md；v0.4.0 起启用）
+│   ├── 0001-spec-cli-state-machine.md
+│   └── 0002-spec-summary.md
+├── docs/adrs/                      ADR 决议（同编号格式；RFC 合并后改名为 ADR-NNNN）
+│   ├── 0001-spec-lifecycle-6-vs-4-states.md
+│   └── 0002-spec-summary.md
 ├── hooks/                          L4 顶层 hook 配置目录（roadmap G3 接入 .claude/settings.json 后启用）
 ├── templates/                      L4 产物模板（task/ + hooks/ v0.2.0 建）
 └── docs/perspectives/              v0.4.0 起 3 视角全景演练（业务/开发/设计 4 类闭环）
@@ -203,7 +209,12 @@ god 当前 vs 完整 god 还差 10 块。**完整 roadmap、优先级、依赖�
 
 ## 10. 文档版本
 
-- **v0.4.0** (2026-06-16)：**3 视角全景演练**。`docs/perspectives/` 入库 3 份文档（01-ops 933 行 / 02-dev 742 行 / 03-architect 796 行），含业务/开发/设计/产品 4 类闭环；为 v0.4.0 实际演进提供 5 个关键决策（G1+G2 捆绑 / G8 强约束 / G3 强 trace / ADR-RFC 编号规约 / OPC 预算分级归因）。
+- **v0.4.0** (2026-06-16)：**3 视角全景演练 + G8 真实实现**。
+  - 文档：`docs/perspectives/` 3 份（01-ops 933 行 / 02-dev 742 行 / 03-architect 796 行），含业务/开发/设计/产品 4 类闭环。
+  - 规约：`docs/conventions.md §1.8` ADR/RFC 4 位补零编号 + 核心数据改必走 RFC。
+  - RFC-0001 spec-cli 状态机 + ADR-0001 6 vs 4 状态决议。
+  - **G8 真实落地**（D2 P0）：`spec/scripts/spec-summary.js` + 11/11 单元测试 + 模板 v0.1.0 + `commands/prd.md §2.5` 自动跑 gen；RFC-0002 转 ADR-0002。
+  - 提供 v0.4.0+ 演进 4 个未做项：G1+G2 捆绑实现（RFC-0001 待开）、G3 hooks 集成、OPC 预算分级归因。
 - **v0.3.0** (2026-06-16)：**OPC 定位**。§1.1 4 产品目标 + 1 系统目标 + 6 文档全部从"PM/AI/程序员协作"切到"OPC × AI 外骨骼"。新增 §1.3 OPC 注意力预算（< 30 分钟 / feature）。G8 spec-summary 由 P1 升级为 P0（目标 1 唯一验收手段）。
 - **v0.2.0** (2026-06-16)：补齐 6 子文档（architecture/conventions/human-ai-contract/failure-modes/roadmap/spec-directory），建 `docs/incidents/` 与 `templates/hooks/` 脚手架。索引图"待建"标识全部清除。
 - **v0.1.0** (2026-06-16)：初版索引地图。

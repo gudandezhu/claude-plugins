@@ -86,6 +86,41 @@
 - 编号子文档（`01-proposal-*.md`）保留在 `proposals/` 子目录，不进 `docs/`
 - 跨文档引用 = `[[name]]` 形式（指向文档名，不带 .md 后缀）
 
+### 1.8 docs/rfcs/ + docs/adrs/ 编号规约
+
+> **v0.4.0 新增**。原因：3 份 perspectives 演练发现 god 历史 PR/RFC 编号格式混乱（0001/001/0008 三种并存），定死规约。
+
+| 项 | 规则 | 例 |
+|---|---|---|
+| **编号格式** | **4 位补零**，从 0001 开始 | `0001` / `0042` / `0256` |
+| **编号永不重置** | god 项目期内连续递增；不复用 | 删了 RFC 0003 不补 0004 |
+| **R 命名** | `docs/rfcs/NNNN-<short-kebab>.md` | `0001-spec-cli-state-machine.md` |
+| **A 命名** | `docs/adrs/NNNN-<short-kebab>.md` | `0001-spec-lifecycle-6-vs-4-states.md` |
+| **R vs A 区别** | **R 描述要做什么**（提案）；**A 描述已经定下什么**（决议）。R 一旦合并 = 改名 A | `0001-rfc-spec-cli` → 合并 → `0001-adr-spec-cli-approved` |
+| **谁可以加编号** | 任何人可起草，但 PR 合并前 = 草稿（不占号风险：合同时才正式编号）| — |
+
+**核心数据改 = 必走 RFC**（写进 PR 模板必填段）：
+
+| 改什么 | 是否必走 RFC | 写 ADR 还是 RFC |
+|---|---|---|
+| spec 状态机增/减状态 | **是** | RFC → 合并 → ADR |
+| 三大铁律 | **是** | RFC → 合并 → ADR（CLAUDE.md §0）|
+| L1/L2/L3/L4 边界 | **是** | RFC → 合并 → ADR（CLAUDE.md §2）|
+| 6 介入点 | **是** | RFC → 合并 → ADR（CLAUDE.md §6）|
+| 校验 14 项 | 是（新增项）| RFC（小改动可走 PR）|
+| skill/command 增删 | 否（走 PR）| — |
+| scripts/ 子目录增删 | **是**（conventions §5 改）| RFC（小改动可走 PR）|
+| 命名/版本规则 | 否（走 PR）| — |
+
+**PR 模板必含**（v0.4.0 后启用）：
+
+```markdown
+## 关联 RFC / ADR
+- [ ] 关联 RFC NNNN: <标题或 "无">
+- [ ] 关联 ADR NNNN: <标题或 "无">
+- [ ] 若改核心数据（状态机/铁律/分层/介入点）= 必走 RFC；本 PR 已挂载编号
+```
+
 ---
 
 ## 2. 版本号
