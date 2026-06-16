@@ -33,16 +33,23 @@ node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/spec-summary.js check <项目目录>
 - `phase: implemented/verified/accepted` → 已实现，跳过本阶段
 - 校验失败 → 回 `/god:prd` 修复
 
-### 阶段 1：实现代码（v0.4.0+ 含 G5 占位）
+### 阶段 1：实现代码（v0.4.0+ 含 G5 dev-gen）
 
-为每个 `@SC-xxx` 实现代码，**标注 `@spec`** 绑定（绑定规则见 SPEC-FORMAT.md §4）。
+**G5 dev-gen**（v0.4.0+ P1 已落）：先跑 `node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/dev-gen.js <项目目录>` 出骨架：
 
-> **G5 dev-gen 占位**（v0.4.0 P1 规划中）：未来 `dev-gen <项目目录>` 可自动产出空函数 + `@spec SC-xxx` 标注 + TODO，AI 改骨架而非从零写。当前 AI 从零写。
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/spec/scripts/dev-gen.js <项目目录> [--force]
+# 读 spec/spec.feature → 写 src/<feature-slug>.js 或 .ts
+# 每个 SC 一个 export function（含 JSDoc @spec SC-xxx + TODO + GWT 注释）
+```
+
+**AI 在骨架上改**——消解"读 spec → 想函数签名 → 写 @spec 标注"重复劳动。
 
 **禁止**：
 - 绕过 build-spec 直接改 spec.feature（防漂移机制 #1）
 - 改代码不写 `@spec` 标注（spec-validate #7 FAIL）
 - 给 spec 没有的 SC 加 `@spec` 标注（spec-validate #9 FAIL）
+- 删除 dev-gen 生成的 `@spec` 标注（必须保留以通过 validator #7）
 
 ### 阶段 2：自检（必跑，3 步）
 
