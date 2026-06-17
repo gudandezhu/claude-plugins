@@ -1,6 +1,36 @@
+---
+type: log
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../CLAUDE.md]
+---
+
 # god 文档 changelog
 
 > CLAUDE.md §10 的详细变更历史。**本文件不重复 CLAUDE.md 摘要**，只展开每版做了什么。
+
+## v0.7.2 (2026-06-16)
+
+**doc-sentinel 调度从 SessionStart 钩子 + claude -p 脱机跑改为 CC CronCreate（durable=true）**。
+
+- **新调度机制**：on 调 CC `CronCreate`（durable=true）注入 prompt 到当前 session 队列；off 调 `CronDelete` 删任务；status 调 `CronList` 交叉验证。**完全无 hook 依赖**。
+- **新增** `scripts/doc-sentinel/cron.js`：纯函数调度器（`parseOnArgs` / `buildCronExpr` / `buildPrompt`），cron 表达式偏移 7 分避 :00/:30 高峰。
+- **新增** `scripts/doc-sentinel/cron.test.js`：25 个单元测试 case（参数解析 + cron 表达式 + prompt 必含串）。
+- **改** `install.js`：去掉 `installHook` SessionStart 钩子注册，新增 `cleanupLegacyHook(cwd)` 防御性清理 v0.7.0/v0.7.1 残留。
+- **改** `uninstall.js`：保留 `removeHook` 作兜底（v0.7.0/v0.7.1 残留清理）。
+- **改** `status.js`：不再探测 SessionStart 钩子，改读 `.claude/scheduled_tasks.json`（项目级 + 用户级双路径）+ `.god/doc-sentinel.json`，输出 `cron: ✓ id=<id> expr='...' 下次 ~HH:MM`；不一致时给 ⚠️ 警告。
+- **改** `config.js`：新增 `cronId` 字段 + `recordCronId()` / `clearCronId()` / `readScheduledTasks()`，disable 同步清 cronId。
+- **删** `scripts/doc-sentinel/run-headless.sh`（v0.7.0 的 `claude -p` 脱机跑方案整体撤回）。
+- **改** `commands/doc-sentinel.md`：on 改"install.js → cron.js 拿 cron 表达式+prompt → CC CronCreate → recordCronId"；off 改"CronList → CronDelete → uninstall.js"；status 调 status.js + CronList 交叉验证。
+- **改** `docs/adrs/0012-doc-sentinel.md`：§3.1 架构图改"CC CronCreate 调度"；§3.5 重写 cron 表达式 + prompt 模板（不再硬编码 god 仓路径，${cwd} 注入）；§5 验收改 7 个测试；§7 删"7 天 cron 过期"加"durable 跨 session 落点"；§10 关系表改指向 cron.js；§11 追加 v0.7.2 行。
+- **改** `docs/doc-sentinel/USER-GUIDE.md`：§0 / §1 / §3 / §5 / §6 按新机制重写。
+- **改** `CLAUDE.md` §3 索引图（`scripts/doc-sentinel/` 注释 + `agents/` 行删除）+ §5 G14 行（v0.7.0 → v0.7.2，含 cron.js 调度器 + 7 个测试）。
+- **改** `docs/roadmap.md` §1 G14 行落点列加 `cron.js 调度器`。
+- **改** `.claude-plugin/plugin.json`：`version 0.7.1 → 0.7.2`（PATCH），description 更新。
+- **频率**：默认 30 min，可调（`on N`，N 区间 [5, 1440] 分钟）。
+- **测试**：新增 `cron.test.js` 25 case；其余 6 个 `*.test.js` 不变；合计 7 文件全过。
 
 ## v0.7.1 (2026-06-16)
 
