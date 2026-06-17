@@ -73,6 +73,46 @@ const GATE_NAMES = {
   accepted: '/god:test 验收报告 + 用户签字',
 };
 
+// ---------- phaseCapabilities（v0.5.2 P0 改进：阶段化校验数据驱动）----------
+//
+// 改一处 → 改 DEFAULT_PHASE_CAPABILITIES 即可,不会忘改 if-else
+// 旧 demo 不带 phaseCapabilities 字段 → 自动回退到 DEFAULT（向后兼容）
+//
+const DEFAULT_PHASE_CAPABILITIES = {
+  drafted: {
+    requireSpecFeature: true,
+    requireSources: true,
+  },
+  reviewed: {
+    requireC5Anchor: true,
+  },
+  implemented: {
+    validatePhase: 'implemented',
+    // 允许"缺测试"放过的 SC tag 列表
+    // 当前策略：所有 tag 都允许在 implemented 阶段放过（测试在 verified 阶段才强约束）
+    // v0.5.1: 普通 SC + sad-path SC 都降级为 info
+    allowMissingTestTags: ['happy', 'sad-path', 'edge', 'intent'],
+  },
+  verified: {
+    validatePhase: 'verified',
+    allowMissingTestTags: [],  // verified 阶段全 1:1 强约束
+  },
+  accepted: {
+    requireAcceptance: true,
+    requireSummaryCheck: true,
+  },
+};
+
+/**
+ * 拿当前阶段的能力配置：meta.phaseCapabilities[phase] ?? DEFAULT
+ * （meta 缺字段时静默回退,保持 v0.5.1 旧 demo 行为不变）
+ */
+function getPhaseCapabilities(meta, targetPhase) {
+  const fromMeta = (meta && meta.phaseCapabilities || {})[targetPhase];
+  const def = DEFAULT_PHASE_CAPABILITIES[targetPhase] || {};
+  return Object.assign({}, def, fromMeta || {});
+}
+
 // ---------- 工具函数 ----------
 
 function readJson(p) {
@@ -111,44 +151,63 @@ function tracePath(specDir) {
   return path.join(specDir, '.trace');
 }
 
-// ---------- Gate 校验 ----------
+// ---------- Gate 校验（v0.5.2 P0：数据驱动）----------
 
-function checkGate(specDir, targetPhase) {
-  // 每个 gate 对应 validator 或外部命令；这里做轻量实现
+function checkGate(specDir, targetPhase, meta) {
+  // 数据驱动：capabilities 决定校验规则，不再 if-else 字符串比对
+  // meta 缺 phaseCapabilities → 用 DEFAULT_PHASE_CAPABILITIES（向后兼容）
+  const cap = getPhaseCapabilities(meta, targetPhase);
   const errors = [];
-  if (targetPhase === 'drafted' || targetPhase === 'reviewed') {
-    // 校验 spec.feature 存在
-    if (!fs.existsSync(path.join(specDir, 'spec.feature'))) {
-      errors.push('缺 spec.feature');
-    }
-    if (!fs.existsSync(path.join(specDir, 'sources.md'))) {
-      errors.push('缺 sources.md');
-    }
+
+  // 1. 顶层文件存在
+  if (cap.requireSpecFeature && !fs.existsSync(path.join(specDir, 'spec.feature'))) {
+    errors.push('缺 spec.feature');
   }
-  if (targetPhase === 'reviewed') {
-    // 校验 C5 锚点（spec-validate.js #11）
-    // 格式：`- **C5 Spec 评审** (...)` 或 `C5:` 简写
+  if (cap.requireSources && !fs.existsSync(path.join(specDir, 'sources.md'))) {
+    errors.push('缺 sources.md');
+  }
+
+  // 2. C5 锚点（reviewed 阶段）
+  if (cap.requireC5Anchor) {
     const sources = fs.readFileSync(path.join(specDir, 'sources.md'), 'utf8');
     if (!/C5\s*Spec\s*评审/.test(sources) && !/C5\s*[:：]/.test(sources)) {
       errors.push('缺 C5 锚点（spec-validate.js #11）');
     }
   }
-  if (targetPhase === 'implemented' || targetPhase === 'verified') {
-    // 跑 spec-validate.js（实现态校验）
+
+  // 3. spec-validate 跑（implemented / verified 阶段）
+  if (cap.validatePhase) {
     try {
       const validateScript = path.join(__dirname, 'spec-validate.js');
-      execSync(`node ${validateScript} ${path.dirname(specDir)}`, { stdio: 'pipe' });
+      const phaseArg = `--phase=${cap.validatePhase}`;
+      // v0.5.2 P0：把 cap.allowMissingTestTags 真透传给 spec-validate.js
+      // （之前是死代码——spec-validate 自己硬编码降级规则）
+      // 容错：cap.allowMissingTestTags 缺字段时传空数组（保守：实现态什么也不放过）
+      const allowTags = Array.isArray(cap.allowMissingTestTags) ? cap.allowMissingTestTags : [];
+      const allowArg = `--allow-missing-test-tags=${allowTags.join(',')}`;
+      execSync(`node ${validateScript} ${phaseArg} ${allowArg} ${path.dirname(specDir)}`, { stdio: 'pipe' });
     } catch (e) {
-      errors.push('spec-validate.js 失败（SC 缺代码或测试）');
+      // 把"缺测试"是否降级,交给 spec-validate.js 看 allowMissingTestTags
+      // 这里只透传它的报错（v0.5.1 行为）
+      const stage = cap.validatePhase === 'implemented' ? '代码 @spec 标注' : '代码+测试 SC 完整绑定';
+      errors.push(`spec-validate.js 失败（${stage}未达标）`);
     }
   }
-  if (targetPhase === 'accepted') {
-    // 跑 spec-summary check
+
+  // 4. 验收报告（accepted 阶段）
+  if (cap.requireSummaryCheck) {
     try {
       const summaryScript = path.join(__dirname, 'spec-summary.js');
       execSync(`node ${summaryScript} check ${path.dirname(specDir)}`, { stdio: 'pipe' });
     } catch (e) {
       errors.push('spec-summary check 失败（summary.md 不合格）');
+    }
+  }
+  if (cap.requireAcceptance) {
+    // ACCEPTANCE.md 强约束：演练/真实项目必写验收报告（v0.5.0+ P0）
+    const acceptancePath = path.join(path.dirname(specDir), 'ACCEPTANCE.md');
+    if (!fs.existsSync(acceptancePath)) {
+      errors.push('ACCEPTANCE.md 缺失（演练/真实项目必写验收报告，含流程时间线/真跑证据/OPC 成本归因/反蒙混自检）');
     }
   }
   return errors;
@@ -206,9 +265,9 @@ function cmdAdvance(projectDir, opts) {
   }
   const nextPhase = VALID_PHASES[currentIdx + 1];
 
-  // gate 校验
+  // gate 校验（v0.5.2 P0：传 meta 供 phaseCapabilities 读取）
   if (!opts.force) {
-    const errors = checkGate(specDir, nextPhase);
+    const errors = checkGate(specDir, nextPhase, meta);
     if (errors.length) {
       console.error(`✗ ${meta.phase} → ${nextPhase} 失败：`);
       errors.forEach(e => console.error(`  - ${e}`));
@@ -294,8 +353,8 @@ function cmdCheck(projectDir) {
     console.error(`✗ phase "${meta.phase}" 非法`);
     process.exit(1);
   }
-  // 跑 spec-validate.js 双校验
-  const errors = checkGate(specDir, meta.phase);
+  // 跑 spec-validate.js 双校验（v0.5.2 P0：传 meta）
+  const errors = checkGate(specDir, meta.phase, meta);
   if (errors.length) {
     console.error('✗ check 失败：');
     errors.forEach(e => console.error(`  - ${e}`));
@@ -342,6 +401,8 @@ function cmdInit(projectDir, opts) {
     relatedPR: [],
     scopes: [opts.specId],
     gates: { [opts.phase]: nowIso() },
+    // v0.5.2 P0：阶段化校验数据驱动（每 phase 一份 capabilities,可被 advance 时覆盖）
+    phaseCapabilities: JSON.parse(JSON.stringify(DEFAULT_PHASE_CAPABILITIES)),
   };
   writeJson(metaFile, meta);
   appendTrace(specDir, `INIT specId=${opts.specId} phase=${opts.phase}`);
@@ -369,6 +430,11 @@ function parseArgs(argv) {
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const { subcmd, opts } = parseArgs(process.argv);
   if (subcmd === 'status') cmdStatus(opts.projectDir);
   else if (subcmd === 'advance') cmdAdvance(opts.projectDir, opts);
@@ -378,6 +444,7 @@ function main() {
   else if (subcmd === '__test_export__') {
     return {
       VALID_PHASES, PHASE_ORDER, GATE_NAMES,
+      DEFAULT_PHASE_CAPABILITIES, getPhaseCapabilities,
       checkGate, appendTrace,
       readJson, writeJson, findSpecDir,
     };
@@ -385,6 +452,7 @@ function main() {
   else if (require.main !== module) {
     return {
       VALID_PHASES, PHASE_ORDER, GATE_NAMES,
+      DEFAULT_PHASE_CAPABILITIES, getPhaseCapabilities,
       checkGate, appendTrace,
       readJson, writeJson, findSpecDir,
     };
@@ -395,4 +463,17 @@ function main() {
   }
 }
 
-module.exports = main();
+// v0.5.2 P0 修复：require 时不跑 main()，避免父进程 argv 含 --help 时子进程被 process.exit(0) 杀
+// 旧代码 `module.exports = main();` 在 require 时无条件跑 main；main() 顶部检查 process.argv 的 --help，
+// 当父进程（如 spec-cli.test.js --help）require 本模块时，process.argv 含 '--help'，main 跑 → exit(0) → 子进程被杀
+// 修复：仅 require.main === module 时跑 main()；被 require 时只导出符号表
+if (require.main === module) {
+  main();
+} else {
+  module.exports = {
+    VALID_PHASES, PHASE_ORDER, GATE_NAMES,
+    DEFAULT_PHASE_CAPABILITIES, getPhaseCapabilities,
+    checkGate, appendTrace,
+    readJson, writeJson, findSpecDir,
+  };
+}

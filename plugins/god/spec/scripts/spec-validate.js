@@ -272,7 +272,10 @@ function validateIntentAnchor(sourcesContent, intentScenarios, specScenarios) {
 // ---------- 校验 @sad-path SC 必有失败模式覆盖 ----------
 // 复用现有 codeMap/testMap,跟普通 SC 一视同仁。
 // 唯一加强: 错误消息前缀标 "[sad-path]",让"该 SC 失败但测试漏了"在报告中一眼可见
-function validateSadPathBinding(sadPathScenarios, codeMap, testMap) {
+// 阶段化（v0.5.2 P0）：phase=implemented + sad-path tag 在 allowMissingTestTags → 缺测试降级为 info
+function validateSadPathBinding(sadPathScenarios, codeMap, testMap, options = {}) {
+  const phase = options.phase || 'verified';
+  const allowMissingTestTags = options.allowMissingTestTags || [];
   const checks = [];
   const errors = [];
   function pass(msg) { checks.push({ ok: true, msg }); }
@@ -284,7 +287,18 @@ function validateSadPathBinding(sadPathScenarios, codeMap, testMap) {
     const code = codeMap[s.id] || [];
     const test = testMap[s.id] || [];
     if (code.length === 0) fail(`[sad-path] ${s.id} 缺代码 @spec 标注:失败模式未实现`);
-    if (test.length === 0) fail(`[sad-path] ${s.id} 缺测试 SC-xxx: 用例:失败模式未覆盖`);
+    // 缺测试降级判断（v0.5.2 P0：capabilities 数据驱动）
+    // 条件：phase=implemented + 代码已写 + SC 至少一个 tag 在 allowMissingTestTags 列表
+    const canDowngrade = phase === 'implemented'
+      && code.length > 0
+      && s.tags.some(t => allowMissingTestTags.includes(t));
+    if (test.length === 0) {
+      if (canDowngrade) {
+        pass(`[sad-path] ${s.id} 缺测试（${phase} 阶段 sad-path 在 allowMissingTestTags 降级为 info）`);
+      } else {
+        fail(`[sad-path] ${s.id} 缺测试 SC-xxx: 用例:失败模式未覆盖`);
+      }
+    }
     if (code.length > 0 && test.length > 0) pass(`[sad-path] ${s.id} 失败模式有实现+覆盖`);
   });
 
@@ -339,7 +353,17 @@ function validateSourcesBinding(sourcesPath, specScenarios) {
 }
 
 // ---------- 校验 ----------
-function validate(projectDir) {
+//
+// 阶段化 + 缺测试降级：
+// - phase=implemented: 允许"代码有 @spec / 测试无 SC-xxx: 用例"的 SC 降级为 info，前提是 SC 至少有一个 tag 在 allowMissingTestTags 列表里
+// - phase=verified: 全 1:1 强约束（allowMissingTestTags 列表不生效）
+//
+// 设计：validate() 内部对每个 SC 计算 `missingTestEligible`（是否在当前 allowMissingTestTags 配置下可降级），
+// 然后根据 phase 决定是否生成"绑定不完整"错误。这样 capabilities 真的驱动校验，不是死代码。
+function validate(projectDir, options = {}) {
+  const phase = options.phase || 'verified';
+  const allowMissingTestTags = options.allowMissingTestTags || [];
+
   const specPath = ['spec/spec.feature', 'spec.feature']
     .map(p => path.join(projectDir, p))
     .find(p => fs.existsSync(p));
@@ -412,33 +436,64 @@ function validate(projectDir) {
 
   // 6.8. @sad-path 强化绑定检查(基于已有 codeMap/testMap,零额外扫描)
   // 跟普通 SC 同要求,仅错误前缀加 [sad-path] 让失败模式无覆盖一眼可见
+  // v0.5.2 P0：传 options 让 sad-path 也走 capabilities 数据驱动
   const sadPathScenarios = spec.scenarios.filter(s => s.tags.includes('sad-path'));
-  const sadPathResult = validateSadPathBinding(sadPathScenarios, codeMap, testMap);
+  const sadPathResult = validateSadPathBinding(sadPathScenarios, codeMap, testMap, { phase, allowMissingTestTags });
   checks.push(...sadPathResult.checks);
   errors.push(...sadPathResult.errors);
   const matrix = [];
   let boundCount = 0;
   const uniqueIds = [...new Set(ids)];
+  // 收集"降级为 info"的 check/msg（不动 errors）
+  const downgradedMsgs = new Set();
   for (const id of uniqueIds) {
     const code = codeMap[id] || [];
     const test = testMap[id] || [];
+    const scObj = spec.scenarios.find(s => s.id === id);
     // @intent SC 是"反述意图"被人类确认,不是被测对象——豁免代码+测试绑定
     // C6 锚点已确保意图被锁,validator 7.8.9 不再要求
-    const isIntent = spec.scenarios.find(s => s.id === id)?.tags.includes('intent');
-    const ok = isIntent || (code.length > 0 && test.length > 0);
-    if (ok) boundCount++;
-    else fail(`${id} 绑定不完整（代码${code.length}处 / 测试${test.length}处）`);
-    matrix.push({ id, code, test, ok });
+    const isIntent = scObj?.tags.includes('intent');
+    const isSadPath = scObj?.tags.includes('sad-path');
+    const hasCode = code.length > 0;
+    const hasTest = test.length > 0;
+
+    // 计算"在当前 allowMissingTestTags 下,这个 SC 缺测试可不可降级"
+    // 条件：phase=implemented + 测试缺 + 代码有 + SC 至少一个 tag 在 allow 列表里
+    const scTags = scObj?.tags || [];
+    const tagAllowed = scTags.some(t => allowMissingTestTags.includes(t));
+    const missingTestEligible =
+      phase === 'implemented' && !hasTest && hasCode && tagAllowed;
+
+    if (isIntent) {
+      // @intent 不要求代码+测试绑定
+      boundCount++;
+    } else if (hasCode && hasTest) {
+      boundCount++;
+    } else if (missingTestEligible) {
+      // implemented 阶段 + 缺测试 + 在 allowMissingTestTags 里 → 降级为 info,不计入 errors
+      const tagLabel = scTags.filter(t => allowMissingTestTags.includes(t)).join('/');
+      const prefix = isSadPath ? `[sad-path] ` : '';
+      downgradedMsgs.add(`${prefix}${id} 绑定不完整（代码${code.length}处 / 测试${test.length}处） — ${tagLabel} 在 ${phase} 阶段缺测试降级为 info`);
+    } else {
+      // 真正的绑定不完整（无论 implemented 还是 verified）→ 计入 errors
+      const prefix = isSadPath ? `[sad-path] ` : '';
+      fail(`${prefix}${id} 绑定不完整（代码${code.length}处 / 测试${test.length}处）`);
+    }
+    matrix.push({ id, code, test, ok: isIntent || (hasCode && hasTest) || missingTestEligible });
+  }
+  // 把降级为 info 的消息加进 checks（不计入 errors，让 OPC 看到"哪些被放过"）
+  for (const msg of downgradedMsgs) {
+    checks.push({ ok: true, msg });
   }
   if (matrix.length && matrix.every(m => m.ok)) pass('所有 SC 已实现且已测试');
-  if (matrix.length) pass(`追溯绑定：${boundCount}/${matrix.length} SC 完整`);
+  if (matrix.length) pass(`追溯绑定：${boundCount}/${matrix.length} SC 完整${downgradedMsgs.size ? `（+${downgradedMsgs.size} 缺测试降级）` : ''}`);
 
   // 孤儿代码标注（代码标了 spec 没有的 SC）
   const orphanCode = Object.keys(codeMap).filter(id => !uniqueIds.includes(id));
   orphanCode.forEach(id => fail(`孤儿代码标注：${id} 在代码有 @spec 但 spec 无此 Scenario`));
   if (!orphanCode.length) pass('无孤儿代码标注');
 
-  return { checks, errors, matrix, counts: { sc: uniqueIds.length, ok: boundCount }, version: spec.version, feature: spec.feature };
+  return { checks, errors, matrix, counts: { sc: uniqueIds.length, ok: boundCount }, version: spec.version, feature: spec.feature, phase, allowMissingTestTags, downgraded: downgradedMsgs.size };
 }
 
 // ---------- 报告输出 ----------
@@ -475,11 +530,53 @@ function report(result, projectDir) {
 
 // ---------- 入口 ----------
 function main() {
-  const projectDir = path.resolve(process.argv[2] || process.cwd());
-  const result = validate(projectDir);
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
+  // 支持 --phase=implemented|verified 阶段化校验
+  // implemented: 只查代码 @spec 标注（#7），允许测试暂缺
+  // verified: 查代码 + 测试 SC 完整绑定（#7 #8 full 1:1）
+  // 默认 = verified（向后兼容）
+  //
+  // 支持 --allow-missing-test-tags=tag1,tag2 透传 capabilities.allowMissingTestTags
+  // （v0.5.2 P0 改进：capabilities 字段是数据驱动的真信号，不再死代码）
+  // 在 implemented 阶段：测试缺 + 代码有 + SC 至少一个 tag 在 allow 列表里 → 降级为 info
+  // verified 阶段忽略此参数（全 1:1 强约束）
+  //
+  // 向后兼容：未传 --allow-missing-test-tags 时，implemented 阶段回退 v0.5.1 默认 ['happy','sad-path']。
+  // 显式传空字符串（"--allow-missing-test-tags="）时，使用 []，即"什么也不放过"（spec-cli 透传 cap 的语义）。
+  let phase = 'verified';
+  let allowMissingTestTags;
+  let allowTagsExplicitlySet = false;
+  let dirArg = null;
+  for (const arg of process.argv.slice(2)) {
+    if (arg.startsWith('--phase=')) {
+      phase = arg.slice('--phase='.length);
+      if (!['implemented', 'verified'].includes(phase)) {
+        console.error(`✗ --phase 取值只能是 implemented | verified，收到: ${phase}`);
+        process.exit(2);
+      }
+    } else if (arg.startsWith('--allow-missing-test-tags=')) {
+      allowMissingTestTags = arg.slice('--allow-missing-test-tags='.length)
+        .split(',').map(s => s.trim()).filter(Boolean);
+      allowTagsExplicitlySet = true;
+    } else if (!arg.startsWith('--')) {
+      dirArg = arg;
+    }
+  }
+  // 未显式传参 → 回退 v0.5.1 默认（保持向后兼容）
+  if (!allowTagsExplicitlySet) {
+    allowMissingTestTags = ['happy', 'sad-path'];
+  }
+  const projectDir = path.resolve(dirArg || process.cwd());
+  const result = validate(projectDir, { phase, allowMissingTestTags });
   const { text, passed } = report(result, projectDir);
   console.log(text);
   process.exit(passed ? 0 : 1);
 }
 
-main();
+if (require.main === module) main();
+module.exports = { main, validate, parseSpec, parseSources, scanCode, scanTests, walk };
+

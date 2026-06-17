@@ -283,6 +283,11 @@ function generateReview(parsed, reqs, codeMap, testMap, today) {
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const projectDir = process.argv[2];
   if (!projectDir) {
     console.error('用法: node spec-render.js <项目目录> [--dry-run] [--force]');

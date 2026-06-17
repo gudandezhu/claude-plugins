@@ -17,7 +17,14 @@ fi
 USER_NAME="${USER:-unknown}"
 COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-echo "$TIMESTAMP NO-VERIFY commit by $USER_NAME hash=$COMMIT_HASH" >> "$SPEC_DIR/.trace"
-echo "[god post-commit] ✗ --no-verify 救命场景：已写 .trace 留痕"
+# 救命场景分类: 演练/破环/rehearsal/test/test-only/test-fix 显式豁免崩点计数
+# 设: GOD_NOVERIFY_REASON="rehearsal" git commit --no-verify -m "..."
+REASON="${GOD_NOVERIFY_REASON:-救命}"
+if [ -n "$GOD_NOVERIFY_REASON" ]; then
+  echo "$TIMESTAMP NO-VERIFY $REASON commit by $USER_NAME hash=$COMMIT_HASH" >> "$SPEC_DIR/.trace"
+  echo "[god post-commit] ✗ --no-verify 留痕: reason=$REASON"
+else
+  echo "$TIMESTAMP NO-VERIFY commit by $USER_NAME hash=$COMMIT_HASH" >> "$SPEC_DIR/.trace"
+  echo "[god post-commit] ✗ --no-verify 救命场景：已写 .trace 留痕"
+fi
 exit 0

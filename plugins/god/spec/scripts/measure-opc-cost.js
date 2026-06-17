@@ -47,14 +47,41 @@ function parseTrace(traceContent) {
   }).filter(Boolean);
 }
 
+// NO-VERIFY 分类:
+// - "救命" 类（未设 GOD_NOVERIFY_REASON）→ 真实崩点, 计入崩点成本 + 升级档位
+// - "演练/rehearsal/破环/test-only/test-fix" 类(显式 reason) → 豁免, 不计入崩点成本 + 不升级档位
+//   这些是 hook 拦截演练 / 测试 fixture / demo 自身需要的"破环"动作, 不是真实 bug
+//
+// 注：必须用 includes() 而不是 \b 边界 regex。
+// \b 在 CJK 字符上不工作——中文不是 \w 字符，"演练破环" 中 "演"/"练"/"破"/"环" 任意两字之间都没有 \b。
+// 用 substr.includes() 做 CJK 友好的子串匹配，英文按 "词" 在子串里也能命中（substring of word 也算演练意图）。
+const REHEARSAL_REASONS = ['演练', '破环', 'rehearsal', 'test-only', 'test-fix', 'exercise'];
+function classifyNoVerify(event) {
+  return REHEARSAL_REASONS.some(r => event.includes(r)) ? 'rehearsal' : 'real';
+}
+
 function countFailures(trace) {
   let noVerify = 0;
+  let noVerifyRehearsal = 0;
   let rollbacks = 0;
+  // v0.7.0+ G18: S 拒签归因
+  let sRejectSpec = 0, sRejectImpl = 0, sRejectOther = 0, sAccept = 0;
   for (const t of trace) {
-    if (t.event.includes('NO-VERIFY')) noVerify++;
+    if (t.event.includes('NO-VERIFY')) {
+      noVerify++;
+      if (classifyNoVerify(t.event) === 'rehearsal') noVerifyRehearsal++;
+    }
     if (t.event.includes('ROLLBACK')) rollbacks++;
+    // S 拒签分类 (v0.7.0+ sign-gate.js 写 trace 格式: "phase → phase (S2 reject-spec)")
+    if (/S[123]\s+reject-spec/.test(t.event)) sRejectSpec++;
+    else if (/S[123]\s+reject-impl/.test(t.event)) sRejectImpl++;
+    else if (/S[123]\s+reject/.test(t.event)) sRejectOther++;
+    if (/S[123]\s+accept/.test(t.event)) sAccept++;
   }
-  return { noVerify, rollbacks };
+  return {
+    noVerify, noVerifyRehearsal, noVerifyReal: noVerify - noVerifyRehearsal, rollbacks,
+    sRejectSpec, sRejectImpl, sRejectOther, sAccept,
+  };
 }
 
 function computeCost(trace) {
@@ -93,18 +120,27 @@ function computeCost(trace) {
     : 0;
   // 3) test 介入：last advance 之后 OPC 看 demo + 签字（粗算 = total - prd - dev）
   const test = Math.max(0, total - prd - dev);
-  // 4) 崩点修复：NO-VERIFY commit 累计时长
-  const noVerifyCount = trace.filter(t => t.event.includes('NO-VERIFY')).length;
-  const fixes = noVerifyCount * 15 * 60;  // 假设每次救命 15 min（保守估计）
-  // 5) 翻脸决策：rollback 次数 × 平均决策时长
+  // 4) 崩点修复：NO-VERIFY commit 累计时长(只算"真崩点",演练类豁免) + S reject-impl
+  //    v0.7.0+ G18: S reject-impl = spec 对 + 代码跑偏 = 跟 NO-VERIFY 同性质(崩点)
+  const noVerifyRealCount = trace.filter(t =>
+    t.event.includes('NO-VERIFY') && classifyNoVerify(t.event) === 'real'
+  ).length;
+  const { sRejectImpl } = countFailures(trace);
+  const fixes = (noVerifyRealCount + sRejectImpl) * 15 * 60;  // 假设每次真崩 15 min
+  // 5) 翻脸决策：rollback + S 拒签(spec 错)
+  //    v0.7.0+ G18: S reject-spec = spec 错 = 跟 ROLLBACK 同性质(翻脸)
+  //    修复 Gap 3：S1 reject(无 -spec/-impl 后缀,OPC 主观拒签 spec)也是翻脸,应计入 redo + 升级 L2
+  //    旧实现只算 sRejectSpec,漏算 sRejectOther(纯 S1 reject),trace 上有但成本归零
   const rollbackCount = trace.filter(t => t.event.includes('ROLLBACK')).length;
-  const redo = rollbackCount * 20 * 60;  // 假设每次翻脸 20 min
+  const { sRejectSpec, sRejectOther } = countFailures(trace);
+  const redo = (rollbackCount + sRejectSpec + sRejectOther) * 20 * 60;  // 假设每次翻脸 20 min
 
-  // 档位判断
-  const { noVerify, rollbacks } = countFailures(trace);
+  // 档位判断：崩点/翻脸全算
+  // 修复 Gap 3：sRejectOther(S1 reject 无后缀)也升级到 L2（OPC 主观拒签 spec = 翻脸）
+  const { noVerify, noVerifyReal, noVerifyRehearsal, rollbacks, sRejectImpl: sRI, sRejectSpec: sRS, sRejectOther: sRO } = countFailures(trace);
   let tier = 'L0';
-  if (rollbacks >= 1) tier = 'L2';
-  else if (noVerify >= 1) tier = 'L1';
+  if (rollbacks >= 1 || sRejectSpec >= 1 || sRejectOther >= 1) tier = 'L2';
+  else if (noVerifyReal >= 1 || sRejectImpl >= 1) tier = 'L1';
 
   const budgetSec = BUDGET[tier];
   const inBudget = total <= budgetSec;
@@ -112,7 +148,8 @@ function computeCost(trace) {
   return {
     total, prd, dev, test, fixes, redo,
     tier, inBudget, budgetSec,
-    noVerify, rollbacks,
+    noVerify, noVerifyReal, noVerifyRehearsal, rollbacks,
+    sRejectSpec, sRejectImpl, sRejectOther,
     message: inBudget
       ? `✓ 在 ${tier} 预算内（${total}s / ${budgetSec}s）`
       : `✗ 超 ${tier} 预算（${total}s / ${budgetSec}s，超 ${total - budgetSec}s）`,
@@ -127,19 +164,24 @@ function formatHuman(cost) {
     return sec === 0 ? `${min}min` : `${min}min${sec}s`;
   };
   let out = '';
-  out += `OPC 介入成本归因（${cost.tier}）：\n`;
+  out += `OPC 介入成本归因（${cost.tier}，v0.7.0+ 含 S 事件）：\n`;
   out += `  总介入:  ${fmt(cost.total)}\n`;
   out += `  prd 阶段: ${fmt(cost.prd)}\n`;
   out += `  dev 阶段: ${fmt(cost.dev)}\n`;
   out += `  test 阶段: ${fmt(cost.test)}\n`;
-  out += `  崩点修复: ${fmt(cost.fixes)} (${cost.noVerify} 次 NO-VERIFY)\n`;
-  out += `  翻脸决策: ${fmt(cost.redo)} (${cost.rollbacks} 次 ROLLBACK)\n`;
+  out += `  崩点修复: ${fmt(cost.fixes)} (${cost.noVerifyReal} NO-VERIFY + ${cost.sRejectImpl || 0} S reject-impl / ${cost.noVerifyRehearsal} 演练豁免)\n`;
+  out += `  翻脸决策: ${fmt(cost.redo)} (${cost.rollbacks} ROLLBACK + ${cost.sRejectSpec || 0} S reject-spec + ${cost.sRejectOther || 0} S reject)\n`;
   out += `  预算:    ${fmt(cost.budgetSec)} (${cost.tier})\n`;
   out += `  ${cost.message}\n`;
   return out;
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const projectDir = process.argv[2];
   if (!projectDir) {
     console.error('用法: node measure-opc-cost.js <项目目录> [--json]');

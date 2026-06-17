@@ -219,6 +219,72 @@ test('CLI: 无 trace → 0 feature', () => {
   assert(/无 feature 数据/.test(r.out) || /无数据/.test(r.out));
 });
 
+// ---------- RFC-0013 G18: S 事件归因 ----------
+test('G18: countFailures 识别 S1/S2/S3 reject-spec', () => {
+  const trace = [
+    { time: new Date('2026-06-17T10:00:00Z'), event: 'INIT' },
+    { time: new Date('2026-06-17T11:00:00Z'), event: 'reviewed → implemented (S1 accept)' },
+    { time: new Date('2026-06-17T12:00:00Z'), event: 'implemented → drafted (S2 reject-spec)' },
+  ];
+  const r = trends.countFailures(trace);
+  assertEq(r.sAccept, 1, '应识别 S1 accept');
+  assertEq(r.sRejectSpec, 1, '应识别 S2 reject-spec');
+  assertEq(r.sRejectImpl, 0);
+  assertEq(r.sRejectOther, 0);
+});
+
+test('G18: countFailures 分类 S reject-impl / reject', () => {
+  const trace = [
+    { time: new Date(), event: 'implemented → reviewed (S2 reject-impl)' },
+    { time: new Date(), event: 'verified → accepted (S3 accept)' },
+    { time: new Date(), event: 'reviewed (S1 reject)  → reviewed (prd 内部处置)' },
+  ];
+  const r = trends.countFailures(trace);
+  assertEq(r.sRejectImpl, 1);
+  assertEq(r.sAccept, 1);
+  assertEq(r.sRejectOther, 1, 'S1 reject 无 -spec/-impl 后缀算 other');
+});
+
+test('G18: computeFeatureCost 把 S reject-spec 计入 L2', () => {
+  const trace = [
+    { time: new Date('2026-06-17T10:00:00Z'), event: 'INIT draft: x' },
+    { time: new Date('2026-06-17T11:00:00Z'), event: 'implemented → drafted (S2 reject-spec)' },
+    { time: new Date('2026-06-17T12:00:00Z'), event: 'drafted → reviewed' },
+    { time: new Date('2026-06-17T13:00:00Z'), event: 'reviewed → implemented (S2 accept)' },
+  ];
+  const c = trends.computeFeatureCost(trace);
+  assertEq(c.tier, 'L2', 'S2 reject-spec 应升 L2');
+  assertEq(c.sRejectSpec, 1);
+});
+
+test('G18: computeFeatureCost 把 S reject-impl 计入 L1', () => {
+  const trace = [
+    { time: new Date('2026-06-17T10:00:00Z'), event: 'INIT draft: x' },
+    { time: new Date('2026-06-17T11:00:00Z'), event: 'implemented → reviewed (S2 reject-impl)' },
+    { time: new Date('2026-06-17T12:00:00Z'), event: 'reviewed → implemented (S2 accept)' },
+  ];
+  const c = trends.computeFeatureCost(trace);
+  assertEq(c.tier, 'L1', 'S2 reject-impl 应升 L1');
+  assertEq(c.sRejectImpl, 1);
+});
+
+test('G18: summarize 把 S 拒签累计加到 report 字段', () => {
+  const features = [
+    { total: 600, tier: 'L0', noVerify: 0, rollbacks: 0, sRejectSpec: 1, sRejectImpl: 0 },
+    { total: 1200, tier: 'L1', noVerify: 0, rollbacks: 0, sRejectSpec: 0, sRejectImpl: 1 },
+  ];
+  const s = trends.summarize(features);
+  assertEq(s.sRejectSpecTotal, 1, 'sRejectSpecTotal 应累加');
+  assertEq(s.sRejectImplTotal, 1, 'sRejectImplTotal 应累加');
+});
+
+test('G18: CLI 输出含 S reject-spec / reject-impl 段', () => {
+  const r = run(f1);
+  assert(r.ok);
+  assert(/S reject-spec/.test(r.out), `应输出 S reject-spec 段,实际: ${r.out}`);
+  assert(/S reject-impl/.test(r.out), `应输出 S reject-impl 段,实际: ${r.out}`);
+});
+
 cleanup();
 
 console.log(`\n${passed} passed, ${failed} failed`);

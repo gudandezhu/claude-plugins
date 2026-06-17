@@ -8,7 +8,7 @@ description: doc-sentinel 后台文档巡检 agent 的方法论决策树。CC Cr
 
 > god 插件**维护期外骨骼**。每 4 小时巡检 god 仓库所有文档健康度，自动修复 + git commit（**不 push**）。
 >
-> 设计依据：[`docs/rfcs/0012-doc-sentinel.md`](../../rfcs/0012-doc-sentinel.md) / 合并后 ADR-0012
+> 设计依据：[`docs/adrs/0012-doc-sentinel.md`](../../adrs/0012-doc-sentinel.md)（前身 RFC-0012 v0.6.0 合并改名）
 > 入口：[`agents/doc-sentinel/AGENT.md`](../../agents/doc-sentinel/AGENT.md)
 > 机械工具：[`scripts/doc-sentinel/`](../../scripts/doc-sentinel/)（9 个 check 脚本 + 1 个 facade）
 
@@ -134,11 +134,12 @@ doc-sentinel 自动巡检发现。来源: plugins/god/scripts/doc-sentinel/check
 
 | 场景 | 检测 | 兜底 |
 |---|---|---|
-| cron 没触发 | 24h 内 0 个新 commit | `CronList` 查任务；不存在则重建 |
+| SessionStart 钩子没触发 | 24h 内 0 个新 commit | `cat .claude/settings.json` 查钩子；缺则 `/god:doc-sentinel on` 重建 |
 | git commit 冲突 | exit code ≠ 0 | 写 runs/.json 的 `error` 字段，不重试 |
 | agent 跑飞 > 30min | CC idle timeout | 不删未完成候选；下 cycle 续做 |
 | 巡检脚本挂 | exit 2 | runs/.json 写 `fatal`，下 cycle 优先重跑 |
-| 7 天 cron 过期 | durable=true 也最多 7 天 | 短期人工每周重建（30s）；中期加周续期 cron |
+
+**v0.7.0+ 不再有"cron 过期"问题**——SessionStart 钩子存项目 settings.json，**永久有效**直到用户主动 off。
 
 ---
 
@@ -147,7 +148,7 @@ doc-sentinel 自动巡检发现。来源: plugins/god/scripts/doc-sentinel/check
 | 章节 | 详细在哪 |
 |---|---|
 | §2 修复策略细节 | [`rules/auto-fix-rules.md`](rules/auto-fix-rules.md) |
-| §3 commit 格式来源 | [`../../docs/conventions.md` §3.1](../../conventions.md) |
+| §3 commit 格式来源 | [`../../docs/conventions.md` §3.1](../../docs/conventions.md) |
 | §4 agent prompt 模板 | [`../../agents/doc-sentinel/AGENT.md`](../../agents/doc-sentinel/AGENT.md) |
-| §5 禁止事项来源 | [`../../docs/rfcs/0012-doc-sentinel.md` §6](../../rfcs/0012-doc-sentinel.md) |
-| §6 失败兜底 | [`../../docs/failure-modes.md`](../../failure-modes.md)（新增"doc-sentinel 故障"段）|
+| §5 禁止事项来源 | [`../../docs/adrs/0012-doc-sentinel.md` §6](../../docs/adrs/0012-doc-sentinel.md) |
+| §6 失败兜底 | [`../../docs/failure-modes.md`](../../docs/failure-modes.md)（新增"doc-sentinel 故障"段）|

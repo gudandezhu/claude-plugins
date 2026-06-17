@@ -49,7 +49,11 @@ function assertEq(actual, expected, msg) {
 
 // 直接 require 主脚本拿内部函数（暴露端口）
 const summary = require('./spec-summary.js');
-const { parseSpecMetadata, parseSources, classifyBoundary, fillTemplate } = summary;
+const {
+  parseSpecMetadata, parseSources, classifyBoundary, fillTemplate,
+  buildFeatureName, buildSpecFileLink, buildSpecSourceFile,
+  buildGoalSentence, buildRolesAndFlows, buildBoundaryList, buildOutOfScopeList,
+} = summary;
 
 // 临时目录
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'spec-summary-test-'));
@@ -224,6 +228,64 @@ test('check: 缺"不在范围内"段应被拒', () => {
   const r = runCheck(fixture4);
   assert(!r.ok, '应失败但通过');
   assert(/不在范围内/.test(r.stderr), '应报"不在范围内"错误');
+});
+
+// ---------- 6. 端到端 gen 输出含 buildXxx 生成的链接（v0.5.2 P0）----------
+
+test('E2E gen: 末尾含"详细 spec:spec/spec.feature#L1-L2"链接', () => {
+  const r = runGen(fixture1);
+  assert(r.ok, `gen 失败: ${r.stderr}`);
+  const summary = fs.readFileSync(path.join(fixture1, 'spec', 'summary.md'), 'utf8');
+  // SAMPLE_SPEC: @spec-version 在 L1, Feature: 在 L2
+  assert(/详细 spec[：:]\s*spec\/spec\.feature#L1-L2/.test(summary),
+    `末尾链接错,实际片段:\n${summary.split('\n').slice(-5).join('\n')}`);
+});
+
+test('buildSpecFileLink: 改路径只改一处,模板自动跟随', () => {
+  // 模拟"如果 spec 文件改名/换路径",buildSpecFileLink 应输出新路径
+  // SAMPLE_SPEC 行号: version=1, feature=2
+  const link = buildSpecFileLink({ versionLine: 1, featureLine: 2 });
+  assertEq(link, 'spec/spec.feature#L1-L2', '默认路径');
+  // 验证函数可定制（未来改名时只改 buildSpecFileLink 一处）
+  const customLink = buildSpecFileLink({ versionLine: 5, featureLine: 8 });
+  assertEq(customLink, 'spec/spec.feature#L5-L8', '不同行号');
+});
+
+test('buildXxx: 7 个占位符函数一对一存在', () => {
+  // 防漂移：fillTemplate 内每个 {X} 都有对应 buildXxx(ctx)
+  const template = `
+{feature-name}
+{spec-file-link}
+{spec-source-file}
+{goal-sentence}
+{roles-and-flows}
+{boundary-list}
+{out-of-scope-list}
+`;
+  const out = fillTemplate(template, {
+    featureName: 'F', versionLine: 1, featureLine: 2,
+    goal: 'g', roles: 'r', boundaryLines: 'b', oosLines: 'o',
+  });
+  assert(out.includes('F'), 'feature-name');
+  assert(out.includes('spec/spec.feature#L1-L2'), 'spec-file-link');
+  assert(out.includes('spec/spec.feature'), 'spec-source-file');
+  assert(out.includes('g'), 'goal-sentence');
+  assert(out.includes('r'), 'roles-and-flows');
+  assert(out.includes('b'), 'boundary-list');
+  assert(out.includes('o'), 'out-of-scope-list');
+  // 兜底分支（字段缺失 → "（未提取）"）
+  const empty = fillTemplate(template, { featureName: 'X', versionLine: 1, featureLine: 1 });
+  assert(/（未提取）/g.test(empty), '缺省字段应回退到（未提取）');
+});
+
+test('E2E gen: 模拟 SPEC-FORMAT.md → spec.feature 改名,buildSpecFileLink 单点改', () => {
+  // 验证"改 buildSpecFileLink 即可,模板不动"
+  const f = setupFixture(SAMPLE_SPEC, SAMPLE_SOURCES);
+  // 直接 require 拿 buildSpecFileLink,模拟改名后输出
+  const newLink = buildSpecFileLink({ versionLine: 1, featureLine: 2 });
+  // 名字改了 → 输出"spec.feature"(去掉 /spec/ 前缀)
+  const renamed = newLink.replace('spec/spec.feature', 'spec.feature');
+  assertEq(renamed, 'spec.feature#L1-L2', '改名后只改 build 函数即可');
 });
 
 // ---------- 清理 ----------

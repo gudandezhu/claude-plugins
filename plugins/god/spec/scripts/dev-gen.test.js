@@ -251,6 +251,56 @@ test('CLI: TS 项目产 .ts', () => {
   assert(fs.existsSync(path.join(f3, 'src', 'test-feature.ts')), '应产 .ts');
 });
 
+// ---------- RFC-0013 G17: dev-gen phase 前置校验 ----------
+function setupProjectWithPhase(phase) {
+  const dir = path.join(tmpRoot, 'proj-phase-' + phase + '-' + Math.random().toString(36).slice(2, 8));
+  fs.mkdirSync(dir);
+  fs.mkdirSync(path.join(dir, 'spec'));
+  fs.writeFileSync(path.join(dir, 'spec', 'spec.feature'),
+    `@spec-version 1.0.0
+Feature: Test
+  @SC-001
+  Scenario: x
+    Given x
+    When y
+    Then z
+`);
+  fs.writeFileSync(path.join(dir, 'spec', 'sources.md'),
+    '# Test\n\n## 需求清单\n\n| REQ-ID | 描述 | MoSCoW | 归属 |\n|---|---|---|---|\n| REQ-001 | a | c | → SC-001 |\n');
+  // v0.5.0+ G13: meta 在 state/ 下
+  fs.mkdirSync(path.join(dir, 'spec', 'state'));
+  fs.writeFileSync(path.join(dir, 'spec', 'state', 'meta.json'),
+    JSON.stringify({ specId: 'my-feat', version: '1.0.0', phase }, null, 2));
+  return dir;
+}
+
+const fDrafted = setupProjectWithPhase('drafted');
+test('G17: dev-gen 拒绝 phase=drafted (spec 未走完 prd)', () => {
+  const r = run(fDrafted);
+  assert(!r.ok, 'drafted 应被拒');
+  assert(/拒绝/.test(r.stderr) && /drafted/.test(r.stderr), `应报 drafted,实际: ${r.stderr}`);
+});
+
+const fIdea = setupProjectWithPhase('idea');
+test('G17: dev-gen 拒绝 phase=idea (未走 prd)', () => {
+  const r = run(fIdea);
+  assert(!r.ok, 'idea 应被拒');
+  assert(/拒绝/.test(r.stderr) && /idea/.test(r.stderr), `应报 idea,实际: ${r.stderr}`);
+});
+
+const fAccepted = setupProjectWithPhase('accepted');
+test('G17: dev-gen 拒绝 phase=accepted (已交付)', () => {
+  const r = run(fAccepted);
+  assert(!r.ok, 'accepted 应被拒');
+  assert(/拒绝/.test(r.stderr) && /accepted/.test(r.stderr), `应报 accepted,实际: ${r.stderr}`);
+});
+
+const fReviewed = setupProjectWithPhase('reviewed');
+test('G17: dev-gen 允许 phase=reviewed (正常路径)', () => {
+  const r = run(fReviewed);
+  assert(r.ok, `reviewed 应通过,实际: ${r.stderr}`);
+});
+
 cleanup();
 
 console.log(`\n${passed} passed, ${failed} failed`);

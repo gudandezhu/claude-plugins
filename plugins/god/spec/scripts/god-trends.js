@@ -51,11 +51,22 @@ function parseTrace(traceContent) {
 
 function countFailures(trace) {
   let noVerify = 0, rollbacks = 0;
+  // v0.7.0+ G18: S 拒签分类 — 计入崩点(L1)/ 翻脸(L2) 档位
+  let sRejectSpec = 0, sRejectImpl = 0, sRejectOther = 0;
+  let sAccept = 0, softAck = 0;
   for (const t of trace) {
     if (t.event.includes('NO-VERIFY')) noVerify++;
     if (t.event.includes('ROLLBACK')) rollbacks++;
+    // S 拒签归因 (v0.7.0+ sign-gate.js 写 trace 格式: "phase → phase (S2 reject-spec)")
+    if (/S[123]\s+reject-spec/.test(t.event)) sRejectSpec++;
+    else if (/S[123]\s+reject-impl/.test(t.event)) sRejectImpl++;
+    else if (/S[123]\s+reject/.test(t.event)) sRejectOther++;
+    // S 签字通过
+    if (/S[123]\s+accept/.test(t.event)) sAccept++;
+    // 软失败免责
+    if (t.event.includes('soft-ack')) softAck++;
   }
-  return { noVerify, rollbacks };
+  return { noVerify, rollbacks, sRejectSpec, sRejectImpl, sRejectOther, sAccept, softAck };
 }
 
 function computeFeatureCost(trace) {
@@ -66,11 +77,18 @@ function computeFeatureCost(trace) {
   if (!init || !lastAdvance) return { total: 0, tier: 'L0', noVerify: 0, rollbacks: 0 };
   const endTime = (accepted || lastAdvance).time;
   const total = Math.max(0, Math.floor((endTime - init.time) / 1000));
-  const { noVerify, rollbacks } = countFailures(trace);
+  const { noVerify, rollbacks, sRejectSpec, sRejectImpl, sRejectOther } = countFailures(trace);
+  // 档位判断（v0.7.0+ 改）:
+  //   L0 纯流程     = 无 NO-VERIFY + 无 ROLLBACK + 无 S 拒签
+  //   L1 含 1 崩     = 1 次崩点 (NO-VERIFY OR S reject-impl) — 实现错
+  //   L2 含 1 翻脸   = 1 次 S reject-spec OR 1 次 S reject — spec 错
+  //   L2 也含 1 ROLLBACK(原语义保留)
+  //   L3 ≥ 2 次累计
+  const sRejects = sRejectSpec + sRejectImpl + sRejectOther;
   let tier = 'L0';
-  if (rollbacks >= 1) tier = 'L2';
-  else if (noVerify >= 1) tier = 'L1';
-  return { total, tier, noVerify, rollbacks };
+  if ((rollbacks || 0) >= 1 || sRejectSpec >= 1) tier = 'L2';
+  else if ((noVerify || 0) >= 1 || sRejectImpl >= 1) tier = 'L1';
+  return { total, tier, noVerify, rollbacks, sRejects, sRejectSpec, sRejectImpl };
 }
 
 function aggregateFeatures(traceContent) {
@@ -113,11 +131,16 @@ function summarize(features) {
   const tierDist = { L0: 0, L1: 0, L2: 0, L3: 0 };
   for (const f of features) {
     tierDist[f.tier] = (tierDist[f.tier] || 0) + 1;
-    if ((f.noVerify + f.rollbacks) >= 2) tierDist.L3++;
+    // v0.7.0+ G18: S 拒签 + NO-VERIFY + ROLLBACK 累计 ≥ 2 算 L3
+    // 兼容老 fixture: sRejects 缺省视为 0
+    const fSum = (f.noVerify || 0) + (f.rollbacks || 0) + (f.sRejects || 0);
+    if (fSum >= 2) tierDist.L3++;
   }
 
   const noVerifyTotal = features.reduce((s, f) => s + f.noVerify, 0);
   const rollbacksTotal = features.reduce((s, f) => s + f.rollbacks, 0);
+  const sRejectSpecTotal = features.reduce((s, f) => s + (f.sRejectSpec || 0), 0);
+  const sRejectImplTotal = features.reduce((s, f) => s + (f.sRejectImpl || 0), 0);
 
   // 趋势：看最近 3 feature 的档位
   let trend = '平稳';
@@ -131,7 +154,10 @@ function summarize(features) {
     else if (v0 > v1 && v1 > v2) trend = '↓ 降级';
   }
 
-  return { count: features.length, avg, median, min, max, tierDist, noVerifyTotal, rollbacksTotal, trend };
+  return {
+    count: features.length, avg, median, min, max, tierDist,
+    noVerifyTotal, rollbacksTotal, sRejectSpecTotal, sRejectImplTotal, trend,
+  };
 }
 
 function formatHuman(s) {
@@ -141,22 +167,31 @@ function formatHuman(s) {
     return `${Math.floor(sec / 60)}min`;
   };
   let out = '';
-  out += `god 趋势报告（v0.4.0+ 自我监控）：\n`;
+  out += `god 趋势报告（v0.7.0+ 自我监控，RFC-0013 G18）：\n`;
   out += `  feature 数:    ${s.count}\n`;
   out += `  OPC 介入时长:  avg=${fmt(s.avg)}  median=${fmt(s.median)}  min=${fmt(s.min)}  max=${fmt(s.max)}\n`;
   out += `  档位分布:      L0=${s.tierDist.L0}  L1=${s.tierDist.L1}  L2=${s.tierDist.L2}  L3=${s.tierDist.L3 || 0}\n`;
   out += `  NO-VERIFY:     ${s.noVerifyTotal} 次（救命场景累计）\n`;
   out += `  ROLLBACK:      ${s.rollbacksTotal} 次（翻脸决策累计）\n`;
+  out += `  S reject-spec: ${s.sRejectSpecTotal || 0} 次（spec 错翻脸，v0.7.0+）\n`;
+  out += `  S reject-impl: ${s.sRejectImplTotal || 0} 次（实现错崩点，v0.7.0+）\n`;
   out += `  趋势（最近 3）: ${s.trend}\n`;
   out += `\n  解读：\n`;
   out += `    L3 ≥ 1  → 系统失败信号，需 root cause\n`;
-  out += `    L2 ≥ 1  → OPC 主观不满意，建议 ADR 落档原因\n`;
+  out += `    L2 ≥ 1  → OPC 主观不满意（或 S reject-spec），建议 ADR 落档原因\n`;
+  out += `    S reject-spec ≥ 1 → spec 错漏，建议回 prd 阶段 1/2 重 brainstorm\n`;
+  out += `    S reject-impl ≥ 1 → 实现没跟 spec，建议重读 spec.feature 修代码\n`;
   out += `    trend ↑  → 介入时长恶化，关注 hooks/dev-gen 自动化\n`;
-  out += `    trend ↓  → 自动化生效，god v0.4.0+ 工具链正反馈\n`;
+  out += `    trend ↓  → 自动化生效，god v0.7.0+ 工具链正反馈\n`;
   return out;
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const projectDir = process.argv[2];
   if (!projectDir) {
     console.error('用法: node god-trends.js <项目目录> [--json]');

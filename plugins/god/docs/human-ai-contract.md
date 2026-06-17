@@ -1,6 +1,6 @@
 # OPC × AI 协作契约
 
-> **定位**：CLAUDE.md §6 子文档。定义 god 流水线中 **OPC（One Person Company）** 必须在场的 6 个介入点 + 6 点之间的 AI 自主区间。
+> **定位**：CLAUDE.md §6 子文档。定义 god 流水线中 **OPC（One Person Company）** 必须在场的介入点 + 介入点之间的 AI 自主区间。
 > 不承载：brainstorm / build-spec / spec-review 自身方法（见 `skills/brainstorm/SKILL.md` / `skills/build-spec/SKILL.md` / `skills/spec-review/SKILL.md`）。
 > **改 god 的方向 = 改 CLAUDE.md。改 god 流程细节 = 改本文。**
 
@@ -8,35 +8,51 @@
 
 ## 0. 一句话总则
 
-> **6 个点必介入；6 个点之间 AI 全自动，禁止 OPC 打断。**
-
-CLAUDE.md §6 已写："除 6 个必介入点外，其他环节 AI 全自主，OPC 不需要在场。" 本文件是铁律的**操作手册**。
+> **v0.7.0+ 新规约（RFC-0013）**：**3 个签字 Gate + 1 个动态问** = OPC 必介入点。
+> 介入点之间 AI 全自动，禁止 OPC 打断。
 
 | 项 | 答案 |
 |---|---|
 | 谁来介入 | **OPC**（One Person Company，CLAUDE.md §1.1）|
-| 介入总时长 | **< 30 分钟 / feature**（CLAUDE.md §1.3 预算）|
-| 介入多少次 | 简单档 4-5 次 / 复杂档 6-10 次；**上限 12 次**，超 = 流程没走通 |
+| 介入总时长 | **< 30 分钟 / feature**（CLAUDE.md §1.3 预算，L0 档）|
+| 介入多少次 | 简单档 5-6 次 / 复杂档 7-8 次；**上限 8 次**（v0.7.0+ RFC-0013 新规约）|
 | 介入多深 | 1 次 ack = 1 道选择题或 1 句确认；不做完整需求写作 |
 | 超预算后果 | 系统失败（不是"OPC 加班"） |
 | 不介入会怎样 | 方向错 / 流程错 / 评审形式化 / 验收走过场 → 返工代价 ≥ 10x |
 
+**v0.6.0 → v0.7.0 变化**：
+
+| 旧（v0.6.0 6 介入点）| 新（v0.7.0 3 Gate + 1 动态问）| 说明 |
+|---|---|---|
+| C1 目标价值 | **保留**（prd 阶段 1 内部）| brainstorm skill 触发 |
+| C2 核心流程 | **保留**（prd 阶段 1 内部）| brainstorm skill 触发 |
+| C3 动态疑问 | **保留** | ask-user skill 封装 |
+| C4 总流程 | **保留**（prd 阶段 1 内部）| brainstorm skill 触发 |
+| P1 评审不通过 | **删除**（自动回 prd 阶段 1/2）| 评审失败不单独问 |
+| S1 验收签字 | **改为 S3** | sign-gate skill 触发 |
+| **新增 S1 Prd 出口** | S1 Gate | sign-gate skill 触发 |
+| **新增 S2 Dev 出口** | S2 Gate | sign-gate skill 触发 |
+| C6 Intent 反述 | **保留** | @intent SC 仍写 C6 锚点 |
+
 ---
 
-## 1. 6 个必介入点（速查表）
+## 1. 3 签字 Gate + 1 动态问（速查表，v0.7.0+ RFC-0013 新规约）
 
-| # | 名称 | 触发时机 | command 阶段 | OPC 的决策项 | 跳过风险 |
-|---|------|---------|-------------|----------|---------|
-| **C1** | 目标价值 Gate | brainstorm M1 末尾 | `/god:prd` 阶段 1 | "为什么做？做成什么样算赢？" | 方向错，spec 写得再细也是废的 |
-| **C2** | 核心流程 Gate | brainstorm M3 末尾 | `/god:prd` 阶段 1 | "主流程对不对？选哪条 approach？" | 流程错，下游 dev/test 全部返工 |
-| **C3** | 动态疑问点 | brainstorm M1-M3 全程 | `/god:prd` 阶段 1 | 1-N 道选择题，逐条确认 | 留到固化才发现 = 推翻重来 |
-| **C4** | 总流程 Gate | brainstorm M3 末尾，C2 之后 | `/god:prd` 阶段 1 | "整张图对不对？有没有漏？" | 单点对 ≠ 全局对，最后一刻才发现漏了关键场景 |
-| **P1** | 评审不通过决策 | spec-review 未通过 / 3 轮超限 | `/god:prd` 阶段 3b | "回 brainstorm / 回 build-spec / 显式跳过" | 评审形式化通过 = 漏洞带进 dev |
-| **S1** | 验收签字 | dev + test 全过 | `/god:test` 阶段 3-4 | "通过 / 退回 / 部分通过" | 没签字 = 不算交付，OPC 翻脸 |
+| # | 名称 | 触发时机 | skill 阶段 | OPC 的决策项 | 跳过风险 |
+|---|------|---------|-----------|----------|---------|
+| **S1** | Prd 出口签字 Gate | prd 阶段 3c | `sign-gate` skill | "通过 / 改需求 / 撤回" | 偏了直接进 dev = 返工 10× |
+| **S2** | Dev 出口签字 Gate | dev-pipeline 末尾 | `sign-gate` skill | "通过 / spec 错（回 prd）/ 实现错（回 dev）" | 实现跑偏直接进 test = 测试白跑 |
+| **S3** | Test 出口签字 Gate | test-pipeline 末尾 | `sign-gate` skill | "通过 / 退回 / 部分通过" | 没签字 = 不算交付，OPC 翻脸 |
+| **C3** | 动态疑问点 | prd 阶段 1 M1-M3 全程 | `ask-user` skill | 1-N 道选择题，逐条确认 | 留到固化才发现 = 推翻重来 |
 
-**C1-C4 必走**。**P1 / S1 是分支触发**——仅在评审不通过 / dev-test 完成后出现。
+**S1/S2/S3 由 `sign-gate` skill 统一管理**，每个 Gate = 1 次 AskUserQuestion（`ask-user` skill 封装）。
 
-**附属 C6（Intent 反述）**：`@intent` SC 必经的人介入点，机制见 `skills/spec-review/SKILL.md` §5。算 6 个点之外的"条件必介入"，按需触发。
+**prd 阶段 1 内部仍走 C1/C2/C4 Gate**（brainstorm skill 触发），但 OPC 体验不变：
+- C1/C2/C4 由 brainstorm skill 在阶段 1 内部触发
+- 阶段 1 M1/M2/M3 末尾分别弹 1 次
+- prd 一条龙模式下 C1/C2/C4 与 S1 衔接（合计 4 次 prd 阶段门禁）
+
+**附属 C6（Intent 反述）**：`@intent` SC 必经的人介入点，机制见 `skills/spec-review/SKILL.md` §5。算 Gate 之外的"条件必介入"，按需触发。
 
 ---
 

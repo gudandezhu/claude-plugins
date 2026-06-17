@@ -90,6 +90,11 @@ function walkSub(specDir, rel, allowed, violations) {
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const projectDir = process.argv[2] || process.cwd();
   if (!fs.existsSync(projectDir)) {
     console.error(`✗ 项目目录不存在: ${projectDir}`);

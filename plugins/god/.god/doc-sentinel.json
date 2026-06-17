@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "scope": "project",
+  "mode": "auto-commit",
+  "schedule": "session-start",
+  "checks": {
+    "V1": true,
+    "N1": true,
+    "D1": true,
+    "F1": true,
+    "T1": true,
+    "P1": true,
+    "G1": true,
+    "C1": true,
+    "M1": true
+  }
+}

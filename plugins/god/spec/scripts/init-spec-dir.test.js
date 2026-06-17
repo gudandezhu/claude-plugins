@@ -81,6 +81,17 @@ try {
 } finally { cleanup(tmp4); }
 test('.gitkeep: 4 子目录全有', () => {});
 
+// ---------- 4.5. state/.trace 占位 (v0.5.0+ G13 修复) ----------
+const tmp45 = tmpProject();
+try {
+  execSync(`node ${SCRIPT} ${tmp45}`, { stdio: 'pipe' });
+  const tracePath = path.join(tmp45, 'spec', 'state', '.trace');
+  assert(fs.existsSync(tracePath), 'spec/state/.trace 应存在（v0.5.0+ G13 修复）');
+  // 必须落在 state/ 下,不是 legacy spec/.trace
+  assert(!fs.existsSync(path.join(tmp45, 'spec', '.trace')) || fs.statSync(path.join(tmp45, 'spec', '.trace')).isDirectory() === false, 'spec/.trace 不应被建（fallback 路径）');
+} finally { cleanup(tmp45); }
+test('G13: state/.trace 占位自动建,避免 fallback', () => {});
+
 // ---------- 5. 错误: 项目目录不存在 ----------
 try {
   execSync(`node ${SCRIPT} /nonexistent/path/xxx 2>&1`, { stdio: 'pipe' });

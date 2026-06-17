@@ -52,5 +52,29 @@ if ! node "$PLUGIN_ROOT/spec/scripts/spec-validate.js" "$PROJECT_DIR"; then
   exit 1
 fi
 
+# 4. RFC-0013 G19: phase 推进后必须 S 锚点签字（防 phase 漂移）
+# 已 implemented/verified 但 sources.md 缺对应 S 锚点 → 拒 commit
+PHASE=$(grep -o '"phase"[[:space:]]*:[[:space:]]*"[^"]*"' "$META_JSON" 2>/dev/null | head -1 | sed -E 's/.*"phase"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')
+if [ -n "$PHASE" ]; then
+  case "$PHASE" in
+    implemented|verified|accepted)
+      # 至少需要对应 S 锚点存在
+      NEED=""
+      case "$PHASE" in
+        implemented) NEED="S1 Prd 出口签字" ;;
+        verified)    NEED="S2 Dev 出口签字" ;;
+        accepted)    NEED="S3 Test 出口签字" ;;
+      esac
+      SOURCES="$SPEC_DIR/sources.md"
+      if [ -f "$SOURCES" ] && ! grep -q "$NEED" "$SOURCES"; then
+        echo ""
+        echo "[god pre-commit] ✗ phase=$PHASE 但 sources.md 缺 '$NEED' 锚点"
+        echo "[god pre-commit] 提示：跑 sign-gate.js 补签 / git commit --no-verify 救命"
+        exit 1
+      fi
+      ;;
+  esac
+fi
+
 echo "[god pre-commit] ✓ 检查通过"
 exit 0

@@ -1,7 +1,7 @@
 # ADR-0009: god 自我监控（plan.md §4 Week 4 E）
 
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
-> **替代**：[`plan.md §4 Week 4 E`](../plan.md) + [RFC-0009（集成 ADR）](../rfcs/0009-god-self-monitoring.md)
+> **替代**：[`plan.md §4 Week 4 E`](../plan.md) + [ADR-0009-spec-render（同年同号）](../adrs/0009-spec-render.md)
 > **决议日**：2026-07-13
 > **影响范围**：`spec/scripts/god-trends.js` / `demo/lead-scoring/DASHBOARD.md` / `commands/test.md` S1 出口
 

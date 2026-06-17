@@ -125,15 +125,31 @@ function classifyBoundary(text) {
   });
 }
 
+// ---------- 占位符 build 函数（v0.5.2 P0 改进：模板只留占位符，实现全在代码里）----------
+//
+// 改链接 / 改文件名 → 改 buildSpecFileLink() 一处,模板自动跟随
+// 改"goal 缺省文案" → 改 buildGoalSentence() 一处
+// 加新占位符 → 写一个 buildXxx() + 在 fillTemplate 调一次
+//
+function buildFeatureName(ctx) { return ctx.featureName; }
+function buildSpecFileLink(ctx) {
+  return `spec/spec.feature#L${ctx.versionLine}-L${ctx.featureLine}`;
+}
+function buildSpecSourceFile() { return 'spec/spec.feature'; }
+function buildGoalSentence(ctx) { return ctx.goal || '（未提取）'; }
+function buildRolesAndFlows(ctx) { return ctx.roles || '（未提取）'; }
+function buildBoundaryList(ctx) { return ctx.boundaryLines || '（未提取）'; }
+function buildOutOfScopeList(ctx) { return ctx.oosLines || '（未提取）'; }
+
 function fillTemplate(template, ctx) {
   return template
-    .replace(/\{feature-name\}/g, ctx.featureName)
-    .replace(/\{spec-file-link\}/g, `spec/SPEC-FORMAT.md  \n> 详细 spec：spec/SPEC-FORMAT.md#L${ctx.versionLine}-L${ctx.featureLine}`)
-    .replace(/\{spec-source-file\}/g, 'spec/spec.feature')
-    .replace(/\{goal-sentence\}/g, ctx.goal || '（未提取）')
-    .replace(/\{roles-and-flows\}/g, ctx.roles || '（未提取）')
-    .replace(/\{boundary-list\}/g, ctx.boundaryLines || '（未提取）')
-    .replace(/\{out-of-scope-list\}/g, ctx.oosLines || '（未提取）');
+    .replace(/\{feature-name\}/g, buildFeatureName(ctx))
+    .replace(/\{spec-file-link\}/g, buildSpecFileLink(ctx))
+    .replace(/\{spec-source-file\}/g, buildSpecSourceFile(ctx))
+    .replace(/\{goal-sentence\}/g, buildGoalSentence(ctx))
+    .replace(/\{roles-and-flows\}/g, buildRolesAndFlows(ctx))
+    .replace(/\{boundary-list\}/g, buildBoundaryList(ctx))
+    .replace(/\{out-of-scope-list\}/g, buildOutOfScopeList(ctx));
 }
 
 // ---------- 子命令 ----------
@@ -248,20 +264,43 @@ function cmdCheck(projectDir) {
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const [, , subcmd, projectArg] = process.argv;
   if (subcmd === 'gen') cmdGen(projectArg);
   else if (subcmd === 'check') cmdCheck(projectArg);
   else if (subcmd === '__test_export__') {
-    return { parseSpecMetadata, parseSources, classifyBoundary, fillTemplate };
+    return {
+      parseSpecMetadata, parseSources, classifyBoundary, fillTemplate,
+      buildFeatureName, buildSpecFileLink, buildSpecSourceFile,
+      buildGoalSentence, buildRolesAndFlows, buildBoundaryList, buildOutOfScopeList,
+    };
   }
   else {
     // 被 require 时不报错（测试场景）
     if (require.main !== module) {
-      return { parseSpecMetadata, parseSources, classifyBoundary, fillTemplate };
+      return {
+        parseSpecMetadata, parseSources, classifyBoundary, fillTemplate,
+        buildFeatureName, buildSpecFileLink, buildSpecSourceFile,
+        buildGoalSentence, buildRolesAndFlows, buildBoundaryList, buildOutOfScopeList,
+      };
     }
     console.error('用法: node spec-summary.js <gen|check> [project-dir]');
     process.exit(1);
   }
 }
 
-module.exports = main();
+// v0.5.2 P0 修复：require 时不跑 main()（避免父进程 --help 杀子进程）
+// 旧 `module.exports = main();` 在 require 时无条件跑 main → 父进程 argv 含 --help 时子进程被 exit(0)
+if (require.main === module) {
+  main();
+} else {
+  module.exports = {
+    parseSpecMetadata, parseSources, classifyBoundary, fillTemplate,
+    buildFeatureName, buildSpecFileLink, buildSpecSourceFile,
+    buildGoalSentence, buildRolesAndFlows, buildBoundaryList, buildOutOfScopeList,
+  };
+}

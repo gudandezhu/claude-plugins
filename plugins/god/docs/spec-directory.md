@@ -65,7 +65,7 @@ spec/
   - 评审者读：review
   - 调研者读：domain
   - 历史追溯读：archive
-- god 老版本曾把 meta.json / .trace / review.md / domain.md 平铺到 spec/ 顶层（v0.4.0 形态），现统一收进子目录
+- god 旧版曾把 meta.json / .trace / review.md / domain.md 平铺到 spec/ 顶层，现统一收进子目录
 - 兼容：脚本读路径时同时尝试 `state/meta.json` 和 `meta.json`（向后兼容 god 老 demo）
 
 ---
@@ -83,41 +83,53 @@ spec/
 | `review/review-<date>.md` | spec/review/ | 评审 checklist（D1-D4 自评草稿）| `spec-render.js` | `spec-review` 评审者 |
 | `domain/domain.md` | spec/domain/ | 领域知识（术语表 / 角色 / 流程 / 反模式）| OPC（prd 阶段 0）| `brainstorm` / `build-spec` / `spec-review` |
 | `.archive/<ts>_v<ver>.tar.gz` | spec/.archive/ | 历史快照（git 隐藏）| `spec-archive.js` | `spec-archive restore` |
-| `scripts/spec-validate.js` | god spec/scripts/ | 机械校验 14+ 项 | god 维护者 | `/god:prd` 阶段 3a、`/god:dev` 门禁 |
-| `scripts/spec-cli.js` | god spec/scripts/ | SC 状态机 6 态 | god 维护者 | `build-spec` / `/god:dev` / `/god:test` S1 |
-| `scripts/spec-summary.js` | god spec/scripts/ | 渲染 summary.md | god 维护者 | `/god:prd` 阶段 2.5 |
-| `scripts/spec-render.js` | god spec/scripts/ | 渲染 review/<date>.md | god 维护者 | `/god:prd` 阶段 3b |
-| `scripts/spec-archive.js` | god spec/scripts/ | 快照 / 回滚 / 列出 | god 维护者 | spec 变更前自动调 |
-| `scripts/spec-lint.js` | god spec/scripts/ | spec/ 结构守门 | god 维护者 | `/god:prd` 阶段 3a + `/god:dev` 阶段 0 |
-| `scripts/init-spec-dir.js` | god spec/scripts/ | 建好 spec/ 子目录 | god 维护者 | `/god:prd` 阶段 0 一次性 |
-| `scripts/dev-gen.js` | god spec/scripts/ | spec → 代码骨架 | god 维护者 | `/god:dev` 阶段 1 |
-| `scripts/test-gen.js` | god spec/scripts/ | spec → 测试桩 | god 维护者 | `/god:test` 阶段 2 |
-| `scripts/god-trends.js` | god spec/scripts/ | 跨 feature 趋势 | god 维护者 | 自我监控 |
-| `scripts/measure-opc-cost.js` | god spec/scripts/ | OPC 介入成本归因 | god 维护者 | `/god:test` S1 出口 |
-| `scripts/install-hooks.js` | god spec/scripts/ | 一键装 hooks | god 维护者 | 项目初始化时 |
+| `spec/scripts/spec-validate.js` | god spec/scripts/ | 机械校验 14+ 项 | god 维护者 | `/god:prd` 阶段 3a、`/god:dev` 门禁 |
+| `spec/scripts/spec-cli.js` | god spec/scripts/ | SC 状态机 6 态 | god 维护者 | `build-spec` / `/god:dev` / `/god:test` S1 |
+| `spec/scripts/spec-summary.js` | god spec/scripts/ | 渲染 summary.md | god 维护者 | `/god:prd` 阶段 2.5 |
+| `spec/scripts/spec-render.js` | god spec/scripts/ | 渲染 review/<date>.md | god 维护者 | `/god:prd` 阶段 3b |
+| `spec/scripts/spec-archive.js` | god spec/scripts/ | 快照 / 回滚 / 列出 | god 维护者 | spec 变更前自动调 |
+| `spec/scripts/spec-lint.js` | god spec/scripts/ | spec/ 结构守门 | god 维护者 | `/god:prd` 阶段 3a + `/god:dev` 阶段 0 |
+| `spec/scripts/init-spec-dir.js` | god spec/scripts/ | 建好 spec/ 子目录 | god 维护者 | `/god:prd` 阶段 0 一次性 |
+| `spec/scripts/dev-gen.js` | god spec/scripts/ | spec → 代码骨架 | god 维护者 | `/god:dev` 阶段 1 |
+| `spec/scripts/test-gen.js` | god spec/scripts/ | spec → 测试桩 | god 维护者 | `/god:test` 阶段 2 |
+| `spec/scripts/god-trends.js` | god spec/scripts/ | 跨 feature 趋势 | god 维护者 | 自我监控 |
+| `spec/scripts/measure-opc-cost.js` | god spec/scripts/ | OPC 介入成本归因 | god 维护者 | `test-pipeline` 阶段 6 出口 |
+| `spec/scripts/install-hooks.js` | god spec/scripts/ | 一键装 hooks | god 维护者 | 项目初始化时 |
+| `spec/scripts/spec-readiness.js` | god spec/scripts/ | 7 项清晰度校验（[RFC-0013](../rfcs/0013-prd-pipeline.md)）| god 维护者 | prd 阶段 2.5 硬挂 |
+| `spec/scripts/sign-gate.js` | god spec/scripts/ | S1/S2/S3 统一签字（[RFC-0013](../rfcs/0013-prd-pipeline.md)）| god 维护者 | 3 个 Gate 必走 |
 
 ---
 
 ## 3. spec 生命周期（状态机）
 
-由 `/god:prd` → `/god:dev` → `/god:test` 三个 command 编排，skill 承载方法，validator 守门。
+由 `/god:prd` 一条龙编排（[RFC-0013](../rfcs/0013-prd-pipeline.md)），skill 承载方法，sign-gate + validator 守门。
 
 ```
-                     /god:prd                 /god:dev              /god:test
-                     ────────                 ────────              ────────
-                     brainstorm              读 spec.feature       读 spec.feature
-   (idea)            ↓ load skill             ↓ 实现代码            ↓ 生成测试
-                     sources.md 草稿          (标注 @spec SC-xxx)    (命名 SC-xxx:)
-                     ↓ build-spec
-   ┌─────────┐       spec.feature v1.0.0     src/<file>.<ext>     tests/<file>.spec.*
-   │ drafted │ ─────────────────────────→  ─────────────────→  ──────────────→
-   └─────────┘                              [implemented]        [verified]
-        ↑                                                                │
-        │                                                                ↓
-        │                                                          /god:test 验收
-        │                                                                │
-        │   变更回 /god:prd 重走 dev/test（升 MAJOR/MINOR/PATCH）       [accepted]
-        └──────────────────────────────────────────────────────────────────┘
+                    /god:prd 一条龙
+                    ─────────────
+                    brainstorm  → build-spec  → spec-readiness  → spec-review
+   (idea)            ↓             ↓              ↓                  ↓
+                     sources.md   spec.feature   7 项校验          D1-D4 评分
+                     草稿         v1.0.0         6 硬 + 1 软       ≥ 90 分
+                     ↓             ↓              ↓                  ↓
+   ┌─────────┐       ╔════ S1 Prd 出口签字 Gate ════╗
+   │ drafted │ ────→ ║ reviewed ──→ implemented    ║ → dev-pipeline → S2
+   └─────────┘       ╚══════════════════════════════╝
+        ↑                                          ↓
+        │                                          tests/<file>.spec.*
+        │                                          (命名 SC-xxx:)
+        │                                          ↓
+        │                                    ╔══ S3 Test 出口签字 Gate ══╗
+        │                                    ║ verified → accepted         ║
+        │                                    ╚═════════════════════════════╝
+        │
+        │   拒签回退（sign-gate.js 自动处置）:
+        │     S1 拒签 → 回 drafted (prd 阶段 1/2 内部)
+        │     S2 拒签归因 spec 错 → 回 drafted + @spec-version MAJOR
+        │     S2 拒签归因 实现错 → 回 reviewed (重做 dev)
+        │     S3 拒签归因 spec 错 → 回 drafted + @spec-version MAJOR
+        │     S3 拒签归因 实现错 → 回 implemented (重做 dev)
+        └──────────────────────────────────────────────────────────────────
 ```
 
 **6 个状态**：
@@ -125,20 +137,33 @@ spec/
 | 状态 | 含义 | 落档标志 |
 |---|---|---|
 | (idea) | 仅口头 / 模糊需求 | 无文件 |
-| `drafted` | spec.feature + sources.md 完整、双向绑定通过、`@spec-version 1.0.0` | `build-spec` 自检通过 |
+| `drafted` | spec.feature + sources.md 完整、双向绑定通过、`@spec-version 1.0.0` | `build-spec` + spec-validate #1-6 通过 |
 | `reviewed` | `drafted` 后跑过 spec-review（≥90 分 或 显式跳过+C5 锚点留痕） | `sources.md` 含 C5 锚点行 |
 | `implemented` | 每个 SC 在源码有 `@spec SC-xxx` 标注 | `spec-validate.js` 校验 #7 通过 |
 | `verified` | 每个 SC 在测试有 `SC-xxx:` 用例 | `spec-validate.js` 校验 #8 通过 |
-| `accepted` | `/god:test` 输出验收报告 + 用户签字 | 验收产物落档 |
+| `accepted` | `S3 签字` + 验收报告落档 | S3 锚点 + measure-opc-cost.js 输出 |
+
+**RFC-0013 新规约**：
+
+- **3 签字 Gate** = 状态机硬门禁（不可跳过）
+  - S1（reviewed → implemented）= `sign-gate.js --gate S1 --verdict accept`
+  - S2（implemented → verified）= `sign-gate.js --gate S2 --verdict accept`
+  - S3（verified → accepted）= `sign-gate.js --gate S3 --verdict accept`
+- **7 项清晰度校验** = S1 前置（`spec-readiness.js`）
+  - 6 硬指标：未决项归零 / REQ 全有 SC / GWT 无 TBD / user-perspectives / summary.md 合规 / C5 锚点
+  - 1 软指标：sad-path 覆盖 ≥ 30%
+- **拒签自动回退** = 状态机不可跳
+  - 拒签必带 `--reason`
+  - 拒签归因（spec 错 / 实现错）由 sign-gate skill 强制问 OPC
 
 **强制流转规则**：
 
-1. `drafted` 之前必经 `/god:prd`（加载 `brainstorm` + `build-spec`），禁止手动写 spec.feature
+1. `drafted` 之前必经 `prd` skill（默认走法）或 `prd-edit` skill（轻量改需求）
 2. `drafted → reviewed` 必经 `spec-review` skill；用户跳过必须写 C5 锚点"未跑 + 免责确认"行
-3. `reviewed → implemented` 必经 `/god:dev`；代码改动必须**含 `@spec SC-xxx` 标注**
-4. `implemented → verified` 必经 `/god:test`；测试用例必须**以 `SC-xxx:` 开头命名**
-5. `verified → accepted` 必经**用户签字**（6 个必介入点之一）
-6. 任意状态变更需求 → **回 `/god:prd` 重走**（不许原地改 spec.feature）
+3. `reviewed → implemented` 必经 `dev-pipeline` skill + S1 签字 Gate
+4. `implemented → verified` 必经 `test-pipeline` skill + S2 签字 Gate
+5. `verified → accepted` 必经 S3 签字 Gate（含 measure-opc-cost.js）
+6. 任意状态变更需求 → **回 prd 阶段 1/2 重走**（不许原地改 spec.feature）
 
 ---
 
@@ -204,7 +229,7 @@ spec/
 
 [[CLAUDE.md#4.2 5 大防漂移机制]] 的逐项落实：
 
-| 防什么 | 机制 | 落地文件 / 工具 | 状态（v0.4.0）|
+| 防什么 | 机制 | 落地文件 / 工具 | 状态 |
 |---|---|---|---|
 | 绕过 build-spec 改 spec | `spec-cli.js` 强校验 | `spec/scripts/spec-cli.js` | ✅ 已落（commit `fc31904`）|
 | 代码 `@spec` 标了 spec 没的 SC | `spec-validate.js` #9 | `spec/scripts/spec-validate.js` 的 `validate()` 主流程 | ✅ 已实现 |
@@ -234,13 +259,16 @@ spec/
 | `/god:prd` 阶段 0（domain.md 加载） | 读 `spec/domain/domain.md` 提供术语统一 |
 | `/god:prd` 阶段 1（brainstorm） | 产出 `spec/sources.md` 草稿 |
 | `/god:prd` 阶段 2（build-spec） | 产出 `spec/spec.feature` v1.0.0 |
-| `/god:prd` 阶段 2.5（spec-summary） | 写 `spec/summary.md`（顶层，OPC 主看）|
+| `/god:prd` 阶段 2.5（spec-readiness） | 跑 `spec-readiness.js` 校验 7 项（6 硬 + 1 软）|
+| `/god:prd` 阶段 2.6（spec-summary） | 写 `spec/summary.md`（顶层，OPC 主看）|
 | `/god:prd` 阶段 3a（build-spec 自检） | 跑 `spec-validate.js` 校验 #1-6、#10-13 |
 | `/god:prd` 阶段 3b（spec-render） | 写 `spec/review/review-<date>.md`（评审 checklist）|
+| `/god:prd` 阶段 3c（S1 签字 Gate） | `sign-gate.js --gate S1` 推 phase reviewed → implemented |
 | `spec-review` skill | 读 `sources.md` + `spec.feature` + `review/<date>.md`；写 C5 锚点回 `sources.md` |
-| `/god:dev` | 读 `spec.feature`；写代码标注 `@spec SC-xxx`；写 `state/meta.json` 推进 |
-| `/god:test` | 读 `spec.feature` + 代码；写测试 `SC-xxx:`；写 `state/.trace` |
-| `/god:test` S1 出口 | 跑 `measure-opc-cost.js` + `spec-cli check`；用户签字 |
+| `dev-pipeline` skill | 读 `spec.feature`；写代码标注 `@spec SC-xxx`；写 `state/meta.json` 推进 |
+| `dev-pipeline` 末尾（S2 签字 Gate） | `sign-gate.js --gate S2` 推 phase implemented → verified |
+| `test-pipeline` skill | 读 `spec.feature` + 代码；写测试 `SC-xxx:`；写 `state/.trace` |
+| `test-pipeline` 末尾（S3 签字 Gate） | `sign-gate.js --gate S3` 推 phase verified → accepted + 跑 `measure-opc-cost.js` |
 
 | spec/ → 下游 | 产物 / 消费 |
 |---|---|
@@ -276,9 +304,3 @@ spec/
 - **删产物**：先确认无下游消费（grep `spec/scripts/`、`commands/`、`skills/`）
 
 ---
-
-## 10. 版本
-
-- **v0.5.1** (2026-06-16)：**G13.1 结构固化**。新增 `init-spec-dir.js`（一次性建好 4 子目录 + 2 placeholder）+ `spec-lint.js`（结构守门，拦 AI 误建文件）。`commands/prd.md` 阶段 0 加 init-spec-dir，阶段 3a 加 spec-lint；`commands/dev.md` 阶段 0 加 spec-lint。15 单元测试全过（init 5 + lint 8 + 既有 137）。
-- **v0.5.0** (2026-06-16)：**G13 spec/ 子目录分层落地**。`meta.json` / `.trace` → `state/`；`review.md` → `review/review-<date>.md`；`domain.md` → `domain/`。OPC 直接看 3 个文件顶层（sources / spec.feature / summary），其他收进子目录。脚本同时尝试新/旧路径，向后兼容。
-- **v0.1.0** (2026-06-16)：初版。基于 [[SPEC-FORMAT.md]] v1 + [[TESTING.md]] v1 + [[CLAUDE.md]] v0.1.0 同步出齐。

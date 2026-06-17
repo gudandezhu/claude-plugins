@@ -112,6 +112,11 @@ function generateSkeleton(scenarios, featureSlug, useTs) {
 }
 
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const projectDir = process.argv[2];
   if (!projectDir) {
     console.error('用法: node dev-gen.js <项目目录> [--dry-run] [--force]');
@@ -141,6 +146,20 @@ function main() {
   const metaPathOld = path.join(specDir, 'meta.json');
   const metaContent = readFileSafe(fs.existsSync(metaPathNew) ? metaPathNew : metaPathOld);
   const meta = metaContent ? JSON.parse(metaContent) : null;
+  // RFC-0013 G17: dev-gen phase 前置校验（防"绕过 prd 直接开发"第 2 道闸）
+  // 允许: reviewed（首次生成）/ implemented（重生成）/ verified（重生成 + 测试后调）
+  // 拒绝: idea / drafted（spec 未走完 prd）/ accepted（已交付,不许改）
+  // 向后兼容: meta 缺失时默许通过（老 demo 无 meta.json）
+  if (meta && meta.phase) {
+    const allowed = ['reviewed', 'implemented', 'verified'];
+    if (!allowed.includes(meta.phase)) {
+      console.error(`✗ dev-gen 拒绝: phase = ${meta.phase}`);
+      console.error(`  允许 phase: ${allowed.join(' / ')}`);
+      console.error(`  当前状态: ${meta.phase === 'idea' ? '未走 prd' : meta.phase === 'drafted' ? '未走 spec-review' : meta.phase === 'accepted' ? '已交付' : '未知'}`);
+      console.error(`  修复: 跑 prd 完成 S1 签字（详见 sign-gate.js）`);
+      process.exit(1);
+    }
+  }
   const featureSlug = getFeatureSlug(specDir, meta);
   const useTs = isTypeScriptProject(projectDir);
   const scenarios = parseFeatureScenarios(specContent);

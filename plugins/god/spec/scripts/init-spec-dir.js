@@ -110,7 +110,19 @@ function writeGitkeep(dir) {
   if (!fs.existsSync(g)) fs.writeFileSync(g, '', 'utf8');
 }
 
+function writeEmptyTrace(specDir) {
+  // v0.5.0+ G13: 强制 .trace 写到 spec/state/.trace（旧 fallback spec/.trace 已废弃）
+  // 空文件占位让 spec-cli.js 的 tracePath() 命中新路径
+  const t = path.join(specDir, 'state', '.trace');
+  if (!fs.existsSync(t)) fs.writeFileSync(t, '', 'utf8');
+}
+
 function main() {
+  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
+    const { printHelp } = require('./_lib/help');
+    printHelp(__filename);
+    process.exit(0);
+  }
   const projectDir = process.argv[2] || process.cwd();
   const specDir = path.join(projectDir, 'spec');
   if (!fs.existsSync(projectDir)) {
@@ -137,6 +149,10 @@ function main() {
       }
     }
   }
+
+  // v0.5.0+ G13: 建好空 state/.trace 占位,避免 spec-cli tracePath() 落到 legacy spec/.trace
+  // 必须在 for 循环后,state/ 已建
+  writeEmptyTrace(specDir);
 
   console.log(`✓ spec/ 子目录结构已建（v0.5.0+ G13）`);
   for (const c of created) console.log(`  + ${c}`);
