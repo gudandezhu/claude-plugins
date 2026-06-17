@@ -8,8 +8,7 @@ description: doc-sentinel 后台文档巡检 agent 的方法论决策树。CC Cr
 
 > god 插件**维护期外骨骼**。每 4 小时巡检 god 仓库所有文档健康度，**自动修复 + git commit（不 push）**。不询问用户、不弹 AskUserQuestion、不等 ack —— cron 调度触发即跑，找什么改什么。
 >
-> 设计依据：[`docs/adrs/0012-doc-sentinel.md`](../../adrs/0012-doc-sentinel.md)（前身 RFC-0012 v0.6.0 合并改名）
-> 入口：[`agents/doc-sentinel/AGENT.md`](../../agents/doc-sentinel/AGENT.md)
+> 设计依据：[`docs/adrs/0012-doc-sentinel.md`](../../docs/adrs/0012-doc-sentinel.md)（前身 RFC-0012 v0.6.0 合并改名）
 > 机械工具：[`scripts/doc-sentinel/`](../../scripts/doc-sentinel/)（9 个 check 脚本 + 1 个 facade）
 
 ---
@@ -152,6 +151,6 @@ doc-sentinel 自动巡检发现。来源: plugins/god/scripts/doc-sentinel/check
 |---|---|
 | §2 修复策略细节 | [`rules/auto-fix-rules.md`](rules/auto-fix-rules.md) |
 | §3 commit 格式来源 | [`../../docs/conventions.md` §3.1](../../docs/conventions.md) |
-| §4 agent prompt 模板 | [`../../agents/doc-sentinel/AGENT.md`](../../agents/doc-sentinel/AGENT.md) |
+| §4 agent prompt 模板 | 当前 session 调起即由 CC CronCreate prompt 直接承载，无 AGENT.md 中转 |
 | §5 禁止事项来源 | [`../../docs/adrs/0012-doc-sentinel.md` §6](../../docs/adrs/0012-doc-sentinel.md) |
 | §6 失败兜底 | [`../../docs/failure-modes.md`](../../docs/failure-modes.md)（新增"doc-sentinel 故障"段）|
