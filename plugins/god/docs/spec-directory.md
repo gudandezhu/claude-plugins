@@ -26,23 +26,37 @@ spec/
 └── summary.md              # OPC 验收 1 页纸（顶层，OPC 看的主产物）
 ```
 
-完整结构（G13 落地）：
+完整结构（G13 落地 + 业务域拆分）：
 
 ```
 spec/
-├── sources.md              # 母本（brainstorm + C1-C6 锚点）
-├── spec.feature            # 真相源（Gherkin + @SC-xxx）
-├── summary.md              # OPC 验收 1 页纸（G8 自动生成）
-├── state/                  # 状态机数据（机器读，不入 git）
-│   ├── meta.json           # phase / version / gates / owner
-│   └── .trace              # 状态机历史（god-trends 数据源）
-├── review/                 # 评审产物（spec-render 产出）
+├── architecture/            # 架构文档（横切关注点，prd / dev 阶段都维护）
+│   ├── business.md          # 业务架构（业务域切分 + 域职责 + 域关系）
+│   └── tech.md              # 技术架构（服务划分 + API 契约 + DB schema + 通信）
+├── domains/                 # 业务域集合（**1 domain 1 spec.feature**）
+│   ├── D-market-data/
+│   │   ├── sources.md       # 母本（domain 内 REQ）
+│   │   ├── spec.feature     # 真相源（domain 内 SC-001~NNN）
+│   │   └── state/
+│   │       └── meta.json    # domain 级 phase
+│   ├── D-ai-report/
+│   └── ...
+├── tasks/                   # task 追踪（type: domain | sc | cross-cutting）
+│   ├── T-001.json
+│   └── index.json
+├── sources.md               # 母本（项目级 brainstorm + C1-C6 锚点）— 兼容老路径
+├── spec.feature             # 真相源（项目级 Gherkin + @SC-xxx）— 兼容老路径
+├── summary.md               # OPC 验收 1 页纸（G8 自动生成）
+├── state/                   # 状态机数据（机器读，不入 git）
+│   ├── meta.json            # phase / version / gates / owner
+│   └── .trace               # 状态机历史（god-trends 数据源）
+├── review/                  # 评审产物（spec-render 产出）
 │   └── review-YYYY-MM-DD.md  # 含 D1-D4 自评草稿 + 4 维度评分
-├── domain/                 # 领域知识（plan §4.1 B 落地）
-│   └── domain.md           # 术语表 / 角色 / 业务流程 / 反模式
-└── .archive/               # 历史快照（spec-archive 产出，git 隐藏目录）
+├── domain/                  # 领域知识（plan §4.1 B 落地）— 单数 domain 兼容
+│   └── domain.md            # 术语表 / 角色 / 业务流程 / 反模式
+└── .archive/                # 历史快照（spec-archive 产出，git 隐藏目录）
     └── <timestamp>_v<version>.tar.gz
-    └── .archive-index      # 索引行
+    └── .archive-index       # 索引行
 ```
 
 **目录分组原则**：
@@ -311,5 +325,67 @@ spec/
 - **改校验项**：先跑 [[TESTING.md]] L1-L6 全过；改 TESTING.md 加对应 L1 单元场景
 - **改文件名 / 路径**：视为破坏性变更，需走 RFC；同步改 `spec-validate.js`、`build-spec`、`spec-review` 三处引用
 - **删产物**：先确认无下游消费（grep `spec/scripts/`、`commands/`、`skills/`）
+
+---
+
+## 10. 业务域拆分（v0.7.0+ 落地）
+
+> **核心设计**：spec 是系统行为的描述，应按**业务域**（business domain）拆分——
+> 1 个业务域 = 1 个独立 spec 模块（独立 spec.feature + 独立 sources.md + 独立 state）。
+> 业务架构靠**目录结构** `spec/domains/D-XXX/` 表示；技术架构靠 `spec/architecture/tech.md` 文档。
+
+### 10.1 业务域拆分规则
+
+```yaml
+业务域 = 一组高内聚低耦合的功能，特征:
+  - 同一类数据模型（如"市场数据"域 = 行情 + 历史 + 快照）
+  - 同一类用户角色（如"运营后台"域 = admin 视角所有功能）
+  - 同一类业务流程（如"AI 报告"域 = 输入 → 4 Agent → 输出）
+```
+
+### 10.2 SC 归属判定
+
+| 判定依据 | 归到 |
+|---|---|
+| SC 涉及 X 业务域的数据模型 | D-X |
+| SC 涉及 X 业务域的用户角色 | D-X |
+| SC 涉及 X 业务域的核心流程 | D-X |
+| SC 跨多个 D-XXX | 标 `cross-cutting`，归到主 D-XXX + spec.feature 顶部 `@cross-cutting D-Y, D-Z` |
+
+### 10.3 架构文档契约
+
+| 文档 | 干啥的 | 谁维护 | 何时更新 |
+|---|---|---|---|
+| `spec/architecture/business.md` | 业务架构（业务域切分 + 域职责 + 域关系）| OPC + AI（brainstorm）| 新业务域时 |
+| `spec/architecture/tech.md` | 技术架构（服务划分 + API + DB + 通信）| dev subagent | dev 完事后同步 |
+
+**横切关注点**：prd / dev / test 阶段都读 architecture/，架构在每阶段都被维护和应用（**架构不漂移**）。
+
+### 10.4 Task 追踪
+
+`spec/tasks/` 记录 task 状态：
+
+```json
+// T-001.json
+{
+  "id": "T-001",
+  "type": "domain" | "sc" | "cross-cutting",
+  "domain_ids": ["D-ai-report"],
+  "scope": ["D-ai-report/SC-001", "D-ai-report/SC-002"],
+  "phase": "prd" | "ui" | "dev" | "test" | "accepted",
+  "status": "pending" | "in_progress" | "paused" | "done" | "rejected",
+  "checkpoint": "spec/tasks/T-001-checkpoint.json",
+  "created_at": "...",
+  "updated_at": "..."
+}
+```
+
+**打断/继续**：task 级——OPC 说"暂停 T-001" → 写 checkpoint → subagent 退出；"继续 T-001" → subagent 读 checkpoint 续跑。
+
+### 10.5 兼容老路径
+
+`spec/sources.md` / `spec/spec.feature` / `spec/summary.md` 兼容 god 老版本（v0.5.0~v0.6.x）单文件 spec 模式。
+
+**新项目**（v0.7.0+）推荐按业务域拆分到 `spec/domains/D-XXX/`。
 
 ---

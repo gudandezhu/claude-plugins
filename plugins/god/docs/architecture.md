@@ -55,6 +55,73 @@ related: [../CLAUDE.md, conventions.md, spec-directory.md]
 
 ---
 
+## 2.5 业务架构 vs 技术架构（横切关注点）
+
+> **架构不是流水线阶段，是横切关注点**——prd / dev / test 阶段都维护和应用。
+> 业务架构 = "**做什么**"（OPC 看）；技术架构 = "**怎么做**"（开发看）。两件事必须分开。
+
+### 业务架构（business.md）
+
+| 项 | 内容 |
+|---|---|
+| 干啥的 | 系统由几个**业务域**组成 + 域间关系 |
+| 谁关心 | OPC + 产品 |
+| 产出 | `spec/architecture/business.md`（业务域清单 + 域职责 + 域关系图）|
+| 物理落地 | 目录结构 `spec/domains/D-XXX/`（**1 domain 1 spec.feature**）|
+| 何时更新 | prd 阶段 1 brainstorm（新增业务域时）|
+| 谁维护 | OPC + AI 协作（brainstorm subagent 提示）|
+
+### 技术架构（tech.md）
+
+| 项 | 内容 |
+|---|---|
+| 干啥的 | 每个业务域怎么实现 + 域间通信 + 数据流 |
+| 谁关心 | 架构师 + 开发 |
+| 产出 | `spec/architecture/tech.md`（服务划分 + API 契约 + DB schema + 通信方式）|
+| 物理落地 | `src/D-XXX/`（按业务域组织代码）|
+| 何时更新 | dev 阶段后（**架构与代码同步**——dev subagent 完事后跑 tech.md 同步检查）|
+| 谁维护 | dev subagent（写完代码后必须同步 tech.md）|
+
+### 阶段 × 架构矩阵
+
+| 阶段 | 读 business.md | 写 business.md | 读 tech.md | 写 tech.md |
+|---|---|---|---|---|
+| prd 阶段 1 brainstorm | ✅ | ✅（新业务域）| △（约束参考）| ❌ |
+| prd 阶段 2 build-spec | ✅ | ❌ | △（API 契约对齐）| ❌ |
+| prd 阶段 3 review | ✅（验 SC 业务域归属）| ❌ | ❌ | ❌ |
+| dev 阶段 | ❌ | ❌ | ✅ | ✅（同步）|
+| test 阶段 | ❌ | ❌ | ✅（服务边界）| ❌ |
+
+### 业务域拆分规则
+
+```yaml
+业务域 = 一组高内聚低耦合的功能，特征:
+  - 同一类数据模型（如"市场数据"域 = 行情 + 历史 + 快照）
+  - 同一类用户角色（如"运营后台"域 = admin 视角所有功能）
+  - 同一类业务流程（如"AI 报告"域 = 输入 → 4 Agent → 输出）
+```
+
+SC 归属判定：
+
+| 判定依据 | 归到 |
+|---|---|
+| SC 涉及 X 业务域的数据模型 | D-X |
+| SC 涉及 X 业务域的用户角色 | D-X |
+| SC 涉及 X 业务域的核心流程 | D-X |
+| SC 跨多个 D-XXX | 标 `cross-cutting`，归到主 D-XXX + spec.feature 顶部 `@cross-cutting D-Y, D-Z` |
+
+### Task 粒度
+
+task 是 SC 聚合（在 prd / dev 阶段都有）：
+
+| type | 含义 | 例子 |
+|---|---|---|
+| `domain` | 1 task = 1 业务域（D-XXX 全部 SC）| T-001 = D-ai-report 全部 SC |
+| `sc` | 1 task = 1 SC | T-002 = SC-006 |
+| `cross-cutting` | 1 task 跨多个 D-XXX | T-003 = "加 RBAC" 涉及 D-market / D-report / D-admin |
+
+---
+
 ## 3. 跨层调用规则
 
 ### 3.1 调用图（谁能调谁）

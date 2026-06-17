@@ -17,6 +17,38 @@ description: |
 
 > 本 skill 服务于 living-spec 子系统（自包含）。其他既有流程的 AC 提取由 `extract-ac` skill 负责,两者不混淆。
 
+## 调用契约
+
+**调用方**：主 agent（prd skill 阶段 2）派 `build-spec` subagent
+**subagent 干**：
+1. 读 `spec/architecture/business.md`（**业务域切分**——决定 spec.feature 拆到哪个 D-XXX）
+2. 读 sources.md → 逐条翻译为 spec.feature（**按 D-XXX 拆分**，1 domain 1 spec.feature 文件）
+3. 写 `spec/domains/D-XXX/spec.feature`（每业务域独立文件）
+4. 跑 spec-validate.js 自检
+**subagent 不能做**：弹 AskUserQuestion / 派 subagent / 跑 sign-gate / 改 spec.state.meta.json
+**subagent 完事回主 agent**，主 agent 跑 spec-validate.js 二次校验 + 推进 phase。
+
+## 业务域拆分规则
+
+**先读 business.md**（如不存在则按"功能聚类"启发式拆）：
+
+```yaml
+# 启发式规则
+业务域 = 一组高内聚低耦合的功能，特征：
+- 同一类数据模型（如"市场数据"域 = 行情 + 历史 + 快照）
+- 同一类用户角色（如"运营后台"域 = admin 视角所有功能）
+- 同一类业务流程（如"AI 报告"域 = 输入 → 4 Agent → 输出）
+```
+
+**SC 归属判定**：
+
+| 判定依据 | 归到 |
+|---|---|
+| SC 涉及 X 业务域的数据模型 | D-X |
+| SC 涉及 X 业务域的用户角色 | D-X |
+| SC 涉及 X 业务域的核心流程 | D-X |
+| SC 跨多个 D-XXX | 标 `cross-cutting`，归到主 D-XXX + 在 spec.feature 顶部 `@cross-cutting D-Y, D-Z` |
+
 ## 核心机制：需求清单外部化（无遗漏保证）
 
 **问题**：brainstorm 阶段梳理出的需求（场景/边界/异常/MoSCoW/未决项）原本只存在 AI 对话上下文里,build-spec 阶段靠"凭脑记"翻译成 Scenario——**没有任何机械机制保证不漏**。

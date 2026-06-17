@@ -29,17 +29,18 @@ description: |
    - S2：spec-validate.js（#7 SC 标注）
    - S3：spec-validate.js（#8 SC 测试）
 4. **展示当前状态**（短）：阶段 + 前置校验结果 + 推 phase 后会到哪
-5. **调 ask-user 弹 1 次选项**：
+5. **调 ask-user 弹 1 次选项**（**含"多会话断点"决策项**）：
    ```
    header: "S1 签字"
    question: "Prd 阶段 3 已就绪（spec-readiness 6/6 硬过 + 1/1 软免责），是否放行开发？"
    options:
-     - 通过：phase reviewed → implemented
+     - 通过 + 继续本会话：phase reviewed → implemented，AI 自动接 dev-pipeline
+     - 通过 + 结束本会话：phase reviewed → implemented，session-end hook 写断点
      - 改需求：保留 phase reviewed（prd 阶段内部处置）
      - 撤回：回 prd 阶段 1 重新 brainstorm
    ```
 6. **调 `node sign-gate.js <项目> --gate S1 --verdict accept` 或 `reject --reason "..."`**
-7. **回显结果**（短）：锚点 + phase 推进/回退
+7. **回显结果**（短）：锚点 + phase 推进/回退 + 写断点决策
 
 ## 拒签归因（S2 / S3）
 
@@ -69,6 +70,25 @@ options:
 - ❌ 拒签不归因直接退回
 - ❌ S2/S3 拒签时 AI 自己脑补"是 spec 错还是实现错"
 - ❌ S1 软失败免责时缺 `--soft-ack` 锚点
+- ❌ 主动建议"下一会话跑 X"——会话接续由 session-end hook 兜底，sign-gate 只在"通过 + 结束本会话"选项触发后写断点
+
+## 多会话断点（核心约束）
+
+> **god 流水线的"会话边界"必须显式建模**。S1/S2/S3 必含"多会话断点"决策项。
+
+| Gate | 选项 | 锚点 |
+|---|---|---|
+| **S1** | 通过 + 继续 / 通过 + 结束本会话 / 改需求 / 撤回 | checkpoint-reviewed.md |
+| **S2** | 通过 + 继续 / 通过 + 结束本会话 / spec 错 / 实现错 | checkpoint-implemented.md |
+| **S3** | 通过 + 继续 / 通过 + 结束本会话 / 退回 / 部分通过 | checkpoint-verified.md |
+
+**"通过 + 结束本会话"** = sign-gate 正常 accept + session-end hook 写 `spec/<phase>-checkpoint.md`。
+
+**禁止**：
+
+- ❌ 主动建议 OPC "结束本会话"（除非 OPC 主动说）
+- ❌ sign-gate 弹签时**省略**"通过 + 结束本会话"选项
+- ❌ 阶段 4/5 内部跑完 N SC 后主动弹"要不要结束本会话"（默认继续）
 
 ## 跟其他 skill 的关系
 

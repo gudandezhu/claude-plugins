@@ -20,15 +20,32 @@ PRD 流水线中**build-spec 完成后、/god:dev 之前**的一道**独立语�
 | 评审产物 | `spec/sources.md` + `spec/spec.feature` |
 | 评分 | 100 分制,≥90 通过 |
 | 分档 | 简单 / 复杂两档(由本 SKILL 在调用前判定) |
-| **循环模式** | **主 agent ↔ reviewer subagent**:派 subagent 评分 → 不通过则主 agent 修复 → 再派 subagent 复评 → 通过或超上限终止 |
-| **失败处理** | **subagent 只检查不修**,主 agent 拿到报告后决策(回 brainstorm / build-spec / 显式跳过) |
+| **循环模式** | **主 agent ↔ reviewer subagent + fixer subagent**:派 reviewer 评分 → 不通过则派 fixer subagent 修 → 再派 reviewer 复评 → 通过或超上限终止 |
+| **失败处理** | **reviewer 只检查不修，fixer 只修不查**——主 agent 拿到报告后决策(回 brainstorm / build-spec / 显式跳过) |
 | **跳过机制** | 用户必须明确输入"我确认跳过 spec-review",并写入 spec 元信息 |
+
+## 调用契约
+
+**调用方**：主 agent（prd skill 阶段 3b）派 `spec-review` subagent
+**主 agent 编排**：
+1. 跑 spec-render.js
+2. 派 `reviewer` subagent（独立 session，worktree 隔离）→ 拿到评分报告
+3. 报告不通过 → 派 `fixer` subagent（独立 session，worktree 隔离）→ 改 spec
+4. 再派 `reviewer` subagent 复评
+5. 循环上限 3 轮（1 评 + 2 复评），超限强制终止
+6. ≥ 90 分通过 / 显式跳过写 C5 锚点
+
+**reviewer subagent 干**：评分 + 输出报告（不修改任何文件）
+**fixer subagent 干**：改 spec（不评分）
+**subagent 不能做**：弹 AskUserQuestion / 派 subagent / 跑 sign-gate / 改 spec.state.meta.json
+
+**关键**：reviewer/fixer **物理隔离**——两个独立 session，**继承上下文 0**。避免"作者同读者"的偏见。
 
 ## 与 eval-loop 默认行为的差异
 
-`eval-loop` skill 提供方法论(rubric + reviewer/fixer 角色规范)。**本 SKILL 不调 eval-loop workflow,改为派单个 reviewer subagent**,原因:
+`eval-loop` skill 提供方法论(rubric + reviewer/fixer 角色规范)。**本 SKILL 不调 eval-loop workflow,改为派 reviewer + fixer subagent 循环**,原因:
 - `sources.md` 和 `spec.feature` 是作者(brainstorm + build-spec)产物,自动 fixer 仍继承作者范式,无法独立视角
-- **修复必须跳出 SKILL 边界**:由主 agent 决定回 brainstorm / build-spec / 显式 Out of Scope
+- **reviewer / fixer 物理隔离**:不同 session,继承上下文 0,避免"边审边改"的作者偏见
 - 循环控制(派→评→修→再派)由主 agent 编排,不依赖 workflow 脚本
 
 ## 工作流程
@@ -96,15 +113,15 @@ ${CLAUDE_PLUGIN_ROOT}/skills/eval-loop/references/rubric-spec-review.md
 
 **主 agent 拿到 subagent 返回的 JSON 报告后,继续走阶段 3 决策**。
 
-### 阶段 3:主 agent ↔ reviewer 循环(直到通过或超上限)
+### 阶段 3:主 agent ↔ reviewer + fixer 循环(直到通过或超上限)
 
-subagent 返回报告后,主 agent 按下表分流:
+reviewer subagent 返回报告后,主 agent 按下表分流:
 
 | 评审结果 | 主 agent 动作 |
 |---|---|
 | `passed=true`(score ≥ 90) | 进入阶段 4(归档) |
 | `passed=false`,扣分维度 = D1 漏 REQ/边界 | **回 brainstorm M2/M3** 重走,再 build-spec,再派 reviewer |
-| `passed=false`,扣分维度 = D2/D3/D4 | **主 agent 直接修 spec 文件**(重写对应 Scenario 或 REQ),改完派 reviewer 复评 |
+| `passed=false`,扣分维度 = D2/D3/D4 | **派 fixer subagent 修 spec 文件**(重写对应 Scenario 或 REQ),改完派 reviewer 复评 |
 | 未结案项 | **主 agent 主动 AskUserQuestion** 问用户,不可静默 |
 
 **循环上限**:同一份 spec 最多派 **3 轮** reviewer subagent(第 1 轮评审 + 最多 2 轮复评)。  
@@ -113,10 +130,11 @@ subagent 返回报告后,主 agent 按下表分流:
 - 历轮扣分维度变化(说明修了哪些 / 还剩哪些)
 - 建议:回 brainstorm 重新梳理 / 显式跳过 / 人工介入
 
-**主 agent 修复约束**(本 SKILL 范围内,主 agent 自己改文件时):
+**fixer subagent 修复约束**(本 SKILL 范围内,fixer 改文件时):
 - 最小化修复:只改扣分项直接相关的内容
 - 不重构:不重写整个 Feature 文件
-- 改完必须再派 reviewer 复评,确认 score 提升(否则视为空转,直接回 brainstorm)
+- 改完必跑 spec-validate.js 自检
+- 改完必须由主 agent 再派 reviewer 复评,确认 score 提升(否则视为空转,直接回 brainstorm)
 
 ### 阶段 4:跳过机制(用户主动)
 

@@ -8,11 +8,19 @@ argument-hint: "[idea or feature description]"
 
 # Brainstorm
 
-> **定位**：本 skill 是 `/god:prd` command 加载的**需求梳理方法库**。目的 = 把模糊想法梳理成无歧义、可验证的需求（能写 GWT）。**所有手段（用户视角分析 / 6 lenses / Need Gate / Challenge Protocol）都是为梳理服务**，本身不是目的。
+> **定位**：本 skill 由 `prd` 阶段 1 **派 brainstorm subagent 调用**——subagent 跑 M1/M2/M3 维护 sources.md 草稿，**主 agent 弹 C1/C2/C4 Gate**。
 >
-> 梳理到里程碑 3（方案闭环）即停,产出 `spec/sources.md` 草稿,交回 prd command 加载 build-spec 固化为 `spec.feature`。
+> 目的 = 把模糊想法梳理成无歧义、可验证的需求（能写 GWT）。**所有手段（用户视角分析 / 6 lenses / Need Gate / Challenge Protocol）都是为梳理服务**，本身不是目的。
+>
+> 梳理到里程碑 3（方案闭环）即停,产出 `spec/sources.md` 草稿,subagent 完事回主 agent，由主 agent 加载 build-spec 固化为 `spec.feature`。
 >
 > **对用户友好原则**：先把能挖的全挖出来（项目文档 / 知识库 / 已有 spec / 代码库），再开口问用户。问必带推荐项和推荐理由，让用户面对的是收敛后的选择题，不是空白问卷。
+
+## 调用契约
+
+**调用方**：主 agent（prd skill 阶段 1）派 `brainstorm` subagent
+**subagent 不能做**：弹 AskUserQuestion / 派 subagent / 跑 sign-gate / 改 spec.state.meta.json
+**subagent 完事回主 agent**，主 agent 弹 C1/C2/C4 Gate。
 
 The goal is **complete, unambiguous requirements** — making implicit assumptions explicit so the right path becomes obvious, and so the eventual spec captures every behavior contract with zero loss.
 
