@@ -2,7 +2,8 @@
   "enabled": true,
   "scope": "project",
   "mode": "auto-commit",
-  "schedule": "session-start",
+  "schedule": "cron",
+  "cronId": null,
   "checks": {
     "V1": true,
     "N1": true,
