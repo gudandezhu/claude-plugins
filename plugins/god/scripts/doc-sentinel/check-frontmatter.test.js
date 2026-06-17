@@ -44,7 +44,12 @@ test('parseFrontmatter: 引号 strip', () => {
 
 test('check: 真实 god 仓库检测 41+ 个缺 status', () => {
   const result = check('.');
-  assertTrue(result.findings.length >= 40, `应 ≥40 finding，实际 ${result.findings.length}`);
+  // v0.7.1 已批量给所有 SKILL.md/commands.md 加 status: stable
+  // v0.7.2 又给 USER-GUIDE.md / commands/doc-sentinel.md 加 frontmatter
+  // 真实期望：能跑通；finding 数因文档增长会漂移，不锁死
+  // "应有 finding" 路径由 tmpRepo 场景（缺 frontmatter 的 SKILL.md）覆盖
+  assertTrue(Array.isArray(result.findings), 'result.findings 应是数组');
+  assertTrue(result.findings.length < 100, `finding 数应 <100（防全仓扫错），实际 ${result.findings.length}`);
 });
 
 test('check: 已有 status 不报', () => {

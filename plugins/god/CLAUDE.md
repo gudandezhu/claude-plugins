@@ -50,13 +50,13 @@
 
 任何功能先问"这对 OPC 的注意力预算有什么影响"，再问"怎么落到 spec"。
 
-### 1.3 OPC 注意力预算（3 档分级归因，v0.4.0 起）
+### 1.3 OPC 注意力预算（3 档分级归因）
 
 > **修订**：3 份 perspectives 演练一致表明硬 30 min 阈值不可达（[ADR-0005](docs/adrs/0005-opc-cost-tiered.md)）。改 3 档分级。
 
 | 档位 | 触发条件 | 预算 | 含义 |
 |---|---|---|---|
-| **L0 纯流程** | 无 F-XX 崩点 + 无 S1 翻脸 | **30 min** | god v0.4.0+ 目标态 |
+| **L0 纯流程** | 无 F-XX 崩点 + 无 S1 翻脸 | **30 min** | 目标态 |
 | **L1 含 1 崩** | 1 次 F-XX 修复（f-01~f-06）| **60 min** | god 自身 bug 导致多花 |
 | **L2 含 1 翻脸** | OPC 验收拒绝重做 | **90 min** | OPC 主观不满意导致返工 |
 | **L3 多次崩/翻脸** | 累计 ≥ 2 次 | 标"超预算" | 系统失败信号 |
@@ -77,7 +77,7 @@
 ## 2. 架构（4 层 + 1 中心 + 1 真相源）
 
 ```
-L1 commands/         路由表（≤ 30 行/个，v0.7.0 RFC-0013 起）
+L1 commands/         路由表（≤ 30 行/个，RFC-0013）
 L2 skills/           方法论，一份一文件（≤ 100 行/个，PR review 硬卡）
 L3 scripts/          机械工具，可独立 node 跑
 L4 hooks+templates   平台注入 + 产物模板
@@ -86,7 +86,7 @@ L4 hooks+templates   平台注入 + 产物模板
 真相源 = spec/ 目录
 ```
 
-**v0.7.0+ 命令层变化（RFC-0013）**：
+**命令层变化（RFC-0013）**：
 
 - 命令层 = 路由表，不再是 SOP（不写方法论 / 步骤 / "为什么"）
 - 命令层遇 gate 必停下，调 sign-gate skill 弹 AskUserQuestion
@@ -112,8 +112,8 @@ god/
 │   ├── human-ai-contract.md        人机协作契约（6 个必介入点）
 │   ├── failure-modes.md            失败模式 + 恢复手册
 │   ├── roadmap.md                  改造优先级（剩余缺口，见 §5）
-│   ├── CHANGELOG.md                版本变更详细历史（CLAUDE.md §10 摘要指此）
-│   ├── perspectives/               v0.4.0 起 3 视角全景演练（业务/开发/设计 4 类闭环）
+│   ├── CHANGELOG.md                版本变更详细历史（git log 是真相源）
+│   ├── perspectives/               3 视角全景演练（业务/开发/设计 4 类闭环）
 │   │   ├── 01-ops-runbook.md
 │   │   ├── 02-dev-perspective.md
 │   │   └── 03-architect-perspective.md
@@ -129,30 +129,30 @@ god/
 │   │   ├── 0003-spec-cli-state-machine.md
 │   │   ├── 0004-hooks-integration.md
 │   │   └── 0013-prd-pipeline.md
-│   └── incidents/                  事后复盘沉淀（v0.2.0 建）
+│   └── incidents/                  事后复盘沉淀
 ├── spec/                           活规格子系统自身的设计
 │   ├── SPEC-FORMAT.md              Gherkin 格式 + SC 绑定规则
 │   ├── scripts/                    spec 子系统自身的 L3 工具（13 脚本 / 175+ 测全过）
 │   │   ├── spec-validate.js        机械校验（14 项 + 3 sad-path）
-│   │   ├── spec-cli.js             SC 状态机 6 态 + meta.json 读写（v0.4.0 落）
-│   │   ├── spec-summary.js         summary.md 渲染（v0.4.0 落，11 单元测试）
-│   │   ├── spec-render.js          review/<date>.md 渲染（v0.5.0 落 G7）
-│   │   ├── spec-archive.js         快照 / 回滚 / 列出（v0.5.0 落 G4）
-│   │   ├── dev-gen.js              spec → 代码骨架（v0.5.0 落 G5，v0.7.0+ G17 phase 前置校验）
-│   │   ├── test-gen.js             spec → 测试桩（v0.5.0 落 G6）
-│   │   ├── init-spec-dir.js        建好 spec/ 子目录结构（v0.5.1 落 G13.1，5 测）
-│   │   ├── spec-lint.js            spec/ 结构守门，拦 AI 误建（v0.5.1 落 G13.1，8 测）
-│   │   ├── god-trends.js           跨 feature 趋势分析（v0.5.0 落 D5）
-│   │   ├── measure-opc-cost.js     OPC 介入成本 5 维归因（v0.5.0 落 D5）
-│   │   ├── install-hooks.js        G3 hook 一键安装（v0.4.0 落）
-│   │   ├── spec-readiness.js       7 项清晰度校验（v0.7.0 落 G15，17 测）
-│   │   └── sign-gate.js            S1/S2/S3 统一签字管理（v0.7.0 落 G16，18 测）
+│   │   ├── spec-cli.js             SC 状态机 6 态 + meta.json 读写
+│   │   ├── spec-summary.js         summary.md 渲染（11 单元测试）
+│   │   ├── spec-render.js          review/<date>.md 渲染（G7）
+│   │   ├── spec-archive.js         快照 / 回滚 / 列出（G4）
+│   │   ├── dev-gen.js              spec → 代码骨架（G5，G17 phase 前置校验）
+│   │   ├── test-gen.js             spec → 测试桩（G6）
+│   │   ├── init-spec-dir.js        建好 spec/ 子目录结构（G13.1，5 测）
+│   │   ├── spec-lint.js            spec/ 结构守门，拦 AI 误建（G13.1，8 测）
+│   │   ├── god-trends.js           跨 feature 趋势分析（D5）
+│   │   ├── measure-opc-cost.js     OPC 介入成本 5 维归因（D5）
+│   │   ├── install-hooks.js        G3 hook 一键安装
+│   │   ├── spec-readiness.js       7 项清晰度校验（G15，17 测）
+│   │   └── sign-gate.js            S1/S2/S3 统一签字管理（G16，18 测）
 │   └── TESTING.md                  spec 系统自身回归手册
-├── commands/                       L1 路由表（prd / doc-sentinel，≤ 30 行/个，v0.7.0+ RFC-0013）
-├── skills/                         L2（42 个 skill，v0.7.0+ 新增 6 个：prd / prd-edit / dev-pipeline / test-pipeline / sign-gate / ask-user）
-├── scripts/                        L3（dev/build/test 等领域工具；v0.4.0 起 `hooks/` 是顶层目录；v0.6.0 起 `doc-sentinel/` 是后台文档巡检 agent 的机械 check 脚本）
+├── commands/                       L1 路由表（prd / doc-sentinel，≤ 30 行/个，RFC-0013）
+├── skills/                         L2（42 个 skill，含 prd / prd-edit / dev-pipeline / test-pipeline / sign-gate / ask-user）
+├── scripts/                        L3（dev/build/test 等领域工具；`hooks/` 是顶层目录；`doc-sentinel/` 是 CC CronCreate 调度（durable=true）的后台文档巡检 agent 的机械 check 脚本）
 ├── workflows/                      L3 workflow（评审/校验/并行）
-├── hooks/                          L4 hook 模板入口（v0.4.0 G3 落地，install-hooks.js 装到项目侧 .claude/settings.json）
+├── hooks/                          L4 hook 模板入口（G3，install-hooks.js 装到项目侧 .claude/settings.json）
 ├── templates/                      L4 产物模板
 │   ├── task/                       任务模板（task-list.json 等）
 │   ├── hooks/                      G3 hook 脚本模板（pre-commit / session-end / post-commit-no-verify）
@@ -174,11 +174,11 @@ god/
 
 ### 4.2 5 大防漂移机制
 
-**v0.4.0 全部落地**。详细机制 + 落点 → [docs/architecture.md §8](docs/architecture.md#8-与三条铁律的对应) + [spec/SPEC-FORMAT.md §4](spec/SPEC-FORMAT.md#4-三者绑定规则防漂移)。
+**全部落地**。详细机制 + 落点 → [docs/architecture.md §8](docs/architecture.md#8-与三条铁律的对应) + [spec/SPEC-FORMAT.md §4](spec/SPEC-FORMAT.md#4-三者绑定规则防漂移)。
 
 ---
 
-## 5. 系统级缺口（v0.6.0 已闭环开发期+维护期）
+## 5. 系统级缺口（已闭环开发期+维护期）
 
 **P0 4 块 + P1 4 块 + P1 增强 2 块 + G10/G11/G13/G13.1/D5 + **G14 维护期** 全部落地**。**剩余 2 块**（P2）详情见 [`docs/roadmap.md`](docs/roadmap.md)：
 
@@ -197,17 +197,17 @@ god/
 - **G13**：spec/ 子目录分层（state/review/domain），8 脚本双路径兼容
 - **G13.1**：结构固化（init-spec-dir.js 5 测 + spec-lint.js 8 测，拦 AI 误建文件）
 - **D5**：measure-opc-cost.js + god-trends.js（自我监控）
-- **G14**：doc-sentinel 后台文档巡检（v0.7.0，[ADR-0012](docs/adrs/0012-doc-sentinel.md)；`commands/doc-sentinel.md` 4 子命令 + `skills/doc-sentinel/` 方法论 + `scripts/doc-sentinel/` 9 check 脚本 + 42 单元测试全过）
-- **G15**：spec-readiness 7 项清晰度校验（v0.7.0 RFC-0013，17 单元测试）
-- **G16**：sign-gate S1/S2/S3 统一签字管理（v0.7.0 RFC-0013，18 单元测试）
-- **G17**：dev-gen phase 前置校验（v0.7.0 RFC-0013，4 单元测试）
-- **总测试**：spec 13 单元测试 175+/175+ + doc-sentinel 6 测试 42/42 全过
+- **G14**：doc-sentinel 后台文档巡检（[ADR-0012](docs/adrs/0012-doc-sentinel.md)；`commands/doc-sentinel.md` 4 子命令 + `skills/doc-sentinel/` 方法论 + `scripts/doc-sentinel/` 9 check 脚本 + `cron.js` 调度器 + 7 单元测试全过）
+- **G15**：spec-readiness 7 项清晰度校验（RFC-0013，17 单元测试）
+- **G16**：sign-gate S1/S2/S3 统一签字管理（RFC-0013，18 单元测试）
+- **G17**：dev-gen phase 前置校验（RFC-0013，4 单元测试）
+- **总测试**：spec 13 单元测试 175+/175+ + doc-sentinel 7 测试（cron + 6 既有）全过
 
 ---
 
 ## 6. OPC 在哪介入（OPC 注意力预算的落点）
 
-**v0.7.0+ 新规约（RFC-0013）**：
+**新规约（RFC-0013）**：
 
 - **3 签字 Gate**（S1/S2/S3）+ **1 动态问**（C3）→ 见 [`docs/human-ai-contract.md`](docs/human-ai-contract.md)
 - S1 = prd → dev 中间（"这是你想要的 spec 吗？"）

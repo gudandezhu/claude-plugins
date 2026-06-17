@@ -5,7 +5,12 @@
  * 路径: <cwd>/.god/doc-sentinel.json（项目级，git tracked）
  * 范围: cwd 必须在 git 仓内或含 package.json 等项目根标记
  *
- * 设计依据: docs/adrs/0012-doc-sentinel.md v0.7.0 扩展
+ * v0.7.2 扩展：
+ *   - 新增 cronId 字段（CC CronCreate 返回的任务 ID）
+ *   - 新增 recordCronId() / clearCronId() 写盘接口
+ *   - hasSessionStartHook() 保留供 off 兜底用
+ *
+ * 设计依据: docs/adrs/0012-doc-sentinel.md v0.7.2 段
  * 零外部依赖，纯 Node 内置模块。
  */
 
@@ -19,7 +24,8 @@ const DEFAULT_CONFIG = {
   enabled: true,
   scope: 'project',
   mode: 'auto-commit',
-  schedule: 'session-start',
+  schedule: 'cron',  // v0.7.2+：固定为 cron（CC CronCreate）
+  cronId: null,       // v0.7.2+：CC CronCreate 返回的任务 ID
   checks: {
     V1: true, N1: true, D1: true, F1: true, T1: true,
     P1: true, G1: true, C1: true, M1: true,
@@ -30,8 +36,6 @@ const PROJECT_ROOT_MARKERS = ['.git', 'package.json', 'pyproject.toml', 'Cargo.t
 
 /**
  * 检测 cwd 是否为项目根
- * @param {string} cwd
- * @returns {boolean}
  */
 function isProjectRoot(cwd) {
   if (!cwd || !fs.existsSync(cwd)) return false;
@@ -40,8 +44,6 @@ function isProjectRoot(cwd) {
 
 /**
  * 读项目级配置
- * @param {string} cwd
- * @returns {object|null} 配置对象；不存在或无效返回 null
  */
 function readConfig(cwd) {
   const p = path.join(cwd, CONFIG_DIR, CONFIG_FILE);
@@ -55,9 +57,6 @@ function readConfig(cwd) {
 
 /**
  * 写项目级配置（不存在则创建 .god/ 目录）
- * @param {string} cwd
- * @param {object} config
- * @returns {string} 写入的文件路径
  */
 function writeConfig(cwd, config) {
   const dir = path.join(cwd, CONFIG_DIR);
@@ -69,8 +68,6 @@ function writeConfig(cwd, config) {
 
 /**
  * 合并默认配置（用户配置 + 默认值）
- * @param {object} userConfig
- * @returns {object}
  */
 function mergeDefaults(userConfig) {
   return {
@@ -82,41 +79,53 @@ function mergeDefaults(userConfig) {
 
 /**
  * 在 cwd 启用 doc-sentinel
- * @param {string} cwd
- * @returns {{config: object, path: string}}
- * @throws {Error} 不在项目根
+ * v0.7.2+：强制刷新 schedule='cron'（v0.7.0/v0.7.1 残留的 'session-start' 必须被覆盖）
  */
 function enable(cwd) {
   if (!isProjectRoot(cwd)) {
     throw new Error(`cwd 不是项目根: ${cwd}（需含 .git / package.json 等标记）`);
   }
   const existing = readConfig(cwd) || {};
-  const config = mergeDefaults({ ...existing, enabled: true });
+  const config = mergeDefaults({
+    ...existing,
+    enabled: true,
+    schedule: 'cron',
+  });
   const filePath = writeConfig(cwd, config);
   return { config, path: filePath };
 }
 
 /**
  * 在 cwd 禁用 doc-sentinel（保留 config 作 audit）
- * @param {string} cwd
- * @returns {{config: object, path: string}}
+ * v0.7.2+：同步清 cronId（off 配套操作）
  */
 function disable(cwd) {
   const existing = readConfig(cwd);
-  if (!existing) {
-    const config = mergeDefaults({ enabled: false });
-    const filePath = writeConfig(cwd, config);
-    return { config, path: filePath };
-  }
-  const config = { ...existing, enabled: false };
+  const baseConfig = existing || {};
+  const config = mergeDefaults({ ...baseConfig, enabled: false, cronId: null });
   const filePath = writeConfig(cwd, config);
   return { config, path: filePath };
 }
 
 /**
+ * v0.7.2+：记录 CC CronCreate 返回的任务 ID
+ */
+function recordCronId(cwd, cronId) {
+  const existing = readConfig(cwd) || {};
+  const config = mergeDefaults({ ...existing, cronId: cronId || null });
+  const filePath = writeConfig(cwd, config);
+  return { config, path: filePath };
+}
+
+/**
+ * v0.7.2+：清空 cronId（off 时与 disable 配套；或 cron 任务异常丢失时）
+ */
+function clearCronId(cwd) {
+  return recordCronId(cwd, null);
+}
+
+/**
  * 取最后一次巡检报告时间
- * @param {string} cwd
- * @returns {string|null} ISO 时间戳；无报告返回 null
  */
 function getLastRunTime(cwd) {
   const runsDir = path.join(cwd, 'docs', 'doc-sentinel', 'runs');
@@ -126,14 +135,11 @@ function getLastRunTime(cwd) {
     .sort()
     .reverse();
   if (files.length === 0) return null;
-  // 文件名是 <ISO>.json 格式
   return files[0].replace(/\.json$/, '').replace(/-/g, (m, i) => i < 10 || i > 18 ? m : ':').slice(0, -4);
 }
 
 /**
- * 判断 SessionStart 钩子是否已注册
- * @param {string} cwd
- * @returns {boolean}
+ * 判断 SessionStart 钩子是否已注册（v0.7.2+ 仅供 off 兜底用）
  */
 function hasSessionStartHook(cwd) {
   const p = path.join(cwd, '.claude', 'settings.json');
@@ -147,6 +153,35 @@ function hasSessionStartHook(cwd) {
   }
 }
 
+/**
+ * v0.7.2+：读 CC 的 durable cron 任务文件
+ *
+ * 路径策略（按假设优先级，E2E 验证后再固化）：
+ *   1. 项目级 <cwd>/.claude/scheduled_tasks.json
+ *   2. 用户级 ~/.claude/scheduled_tasks.json
+ *
+ * 实际存放路径由 CC 平台决定；本函数读存在的那个。
+ *
+ * @param {string} cwd
+ * @returns {object|null} 解析后的对象（CC 格式），或 null
+ */
+function readScheduledTasks(cwd) {
+  const candidates = [
+    path.join(cwd, '.claude', 'scheduled_tasks.json'),
+    path.join(require('os').homedir(), '.claude', 'scheduled_tasks.json'),
+  ];
+  for (const p of candidates) {
+    if (!fs.existsSync(p)) continue;
+    try {
+      return { path: p, data: JSON.parse(fs.readFileSync(p, 'utf8')) };
+    } catch {
+      // 解析失败继续尝试下一个
+      continue;
+    }
+  }
+  return null;
+}
+
 module.exports = {
   CONFIG_DIR,
   CONFIG_FILE,
@@ -158,6 +193,9 @@ module.exports = {
   mergeDefaults,
   enable,
   disable,
+  recordCronId,
+  clearCronId,
   getLastRunTime,
   hasSessionStartHook,
+  readScheduledTasks,
 };

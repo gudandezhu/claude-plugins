@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 /**
- * install.js — 在项目启用 doc-sentinel
+ * install.js — 在项目准备 doc-sentinel（v0.7.2+ 不再写 .claude/settings.json 钩子）
  *
- * 1. 写 .god/doc-sentinel.json
- * 2. 写/合并 .claude/settings.json SessionStart 钩子
- * 3. 创建 docs/doc-sentinel/runs/ 目录
+ * v0.7.2 起：调度由 CC CronCreate 接管，install.js 只负责：
+ *   1. 写 .god/doc-sentinel.json（enable）
+ *   2. 清理 v0.7.0/v0.7.1 残留的 SessionStart doc-sentinel 钩子（防御性）
+ *   3. 创建 docs/doc-sentinel/runs/ 目录
+ *
+ * 不再：
+ *   - 注册 SessionStart 钩子（命令层做调度，install 不沾）
+ *   - 写 .claude/settings.json（CC CronCreate 自管）
  *
  * 用法: node install.js <cwd>
- * 设计依据: docs/adrs/0012-doc-sentinel.md v0.7.0 扩展
+ * 设计依据: docs/adrs/0012-doc-sentinel.md v0.7.2 段
  * 零外部依赖，纯 Node 内置模块。
  */
 
@@ -15,12 +20,56 @@
 
 const fs = require('fs');
 const path = require('path');
-const { enable, isProjectRoot, hasSessionStartHook, DEFAULT_CONFIG } = require('./config');
+const { enable, isProjectRoot } = require('./config');
 
 const HOOK_MARKER = 'doc-sentinel';
-const HOOK_COMMAND_TEMPLATE = (pluginRoot) =>
-  `claude -p "你是 doc-sentinel agent。任务：巡检当前项目（cwd）文档健康度。\\n1. cd 到 cwd\\n2. 跑 ${pluginRoot}/scripts/doc-sentinel/check-facade.js .\\n3. 读 JSON 报告\\n4. 按 ${pluginRoot}/skills/doc-sentinel/SKILL.md 决策树分类每个 finding\\n5. auto-fix 类直接改文件 + git commit（按 .god/doc-sentinel.json mode）\\n6. 写 docs/doc-sentinel/runs/<ISO>.json\\n7. exit\\n不 git push。" --plugin-dir "${pluginRoot}"`;
 
+/**
+ * 清理 v0.7.0/v0.7.1 残留的 SessionStart doc-sentinel 钩子
+ * （保留其他钩子；找不到 / settings.json 不存在都不报错）
+ *
+ * @param {string} cwd
+ * @returns {{removed: boolean, path: string|null, remaining: number}}
+ */
+function cleanupLegacyHook(cwd) {
+  const settingsPath = path.join(cwd, '.claude', 'settings.json');
+  if (!fs.existsSync(settingsPath)) return { removed: false, path: null, remaining: 0 };
+
+  let settings;
+  try {
+    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  } catch {
+    return { removed: false, path: settingsPath, remaining: 0 };
+  }
+
+  if (!Array.isArray(settings.hooks?.SessionStart)) {
+    return { removed: false, path: settingsPath, remaining: 0 };
+  }
+
+  const before = settings.hooks.SessionStart.length;
+  settings.hooks.SessionStart = settings.hooks.SessionStart.filter(
+    h => !JSON.stringify(h).includes(HOOK_MARKER)
+  );
+  const removed = settings.hooks.SessionStart.length < before;
+  const remaining = settings.hooks.SessionStart.length;
+
+  if (!removed) return { removed: false, path: settingsPath, remaining };
+
+  // 清理空数组 / 空对象（与 uninstall.js 一致）
+  if (settings.hooks.SessionStart.length === 0) {
+    delete settings.hooks.SessionStart;
+  }
+  if (Object.keys(settings.hooks).length === 0) {
+    delete settings.hooks;
+  }
+
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+  return { removed: true, path: settingsPath, remaining };
+}
+
+/**
+ * 在 cwd 创建 runs/ 目录 + .gitkeep
+ */
 function ensureRunsDir(cwd) {
   const dir = path.join(cwd, 'docs', 'doc-sentinel', 'runs');
   fs.mkdirSync(dir, { recursive: true });
@@ -31,97 +80,50 @@ function ensureRunsDir(cwd) {
   return dir;
 }
 
-function readSettings(cwd) {
-  const p = path.join(cwd, '.claude', 'settings.json');
-  if (!fs.existsSync(p)) return {};
-  try {
-    return JSON.parse(fs.readFileSync(p, 'utf8'));
-  } catch {
-    return {};
-  }
-}
-
-function writeSettings(cwd, settings) {
-  const dir = path.join(cwd, '.claude');
-  fs.mkdirSync(dir, { recursive: true });
-  const p = path.join(dir, 'settings.json');
-  fs.writeFileSync(p, JSON.stringify(settings, null, 2) + '\n', 'utf8');
-  return p;
-}
-
 /**
- * 在 settings.json 注册 SessionStart 钩子（不覆盖既有钩子）
+ * 完整启用流程（不含 CC CronCreate，由 command 负责）
+ *
  * @param {string} cwd
- * @param {string} pluginRoot
- * @returns {{added: boolean, path: string}}
- */
-function installHook(cwd, pluginRoot) {
-  const settings = readSettings(cwd);
-  if (!settings.hooks) settings.hooks = {};
-  if (!Array.isArray(settings.hooks.SessionStart)) settings.hooks.SessionStart = [];
-
-  // 检查是否已有 doc-sentinel 钩子
-  const exists = settings.hooks.SessionStart.some(h =>
-    JSON.stringify(h).includes(HOOK_MARKER)
-  );
-
-  if (!exists) {
-    settings.hooks.SessionStart.push({
-      matcher: '',
-      hooks: [
-        {
-          type: 'command',
-          command: HOOK_COMMAND_TEMPLATE(pluginRoot),
-        },
-      ],
-    });
-  }
-
-  const filePath = writeSettings(cwd, settings);
-  return { added: !exists, path: filePath };
-}
-
-/**
- * 完整启用流程
- * @param {string} cwd
- * @param {string} pluginRoot
+ * @param {string} [_pluginRoot] 保留参数兼容性（v0.7.0 调用传 pluginRoot；v0.7.2+ 不再使用）
  * @returns {object}
  */
-function install(cwd, pluginRoot) {
+function install(cwd, _pluginRoot) {
   if (!isProjectRoot(cwd)) {
-    throw new Error(`cwd 不是项目根: ${cwd}`);
+    throw new Error(`cwd 不是项目根: ${cwd}（需含 .git / package.json 等标记）`);
   }
 
   // 1. 写 .god/doc-sentinel.json
   const { config: cfg, path: cfgPath } = enable(cwd);
 
-  // 2. 注册 SessionStart 钩子
-  const { added: hookAdded, path: settingsPath } = installHook(cwd, pluginRoot);
+  // 2. 清理 v0.7.0/v0.7.1 残留的 SessionStart doc-sentinel 钩子（防御性）
+  const cleanup = cleanupLegacyHook(cwd);
 
-  // 3. 创建 runs 目录
+  // 3. 创建 runs/ 目录
   const runsDir = ensureRunsDir(cwd);
 
   return {
     config: cfg,
     configPath: cfgPath,
-    settingsPath,
     runsDir,
-    hookAdded,
+    legacyHookCleanup: cleanup,
   };
 }
 
 // CLI
 if (require.main === module) {
   const cwd = process.argv[2] || process.cwd();
-  const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..', '..');
-
   try {
-    const result = install(cwd, pluginRoot);
+    const result = install(cwd);
     console.log(JSON.stringify(result, null, 2));
-    console.log(`\n✓ doc-sentinel 已启用`);
+    console.log(`\n✓ doc-sentinel 已准备`);
     console.log(`  config: ${result.configPath}`);
-    console.log(`  hooks:  ${result.settingsPath}${result.hookAdded ? '（新增）' : '（已存在）'}`);
+    if (result.legacyHookCleanup.removed) {
+      console.log(`  钩子:   ${result.legacyHookCleanup.path}（v0.7.0/v0.7.1 残留 SessionStart 已清理）`);
+    } else {
+      console.log(`  钩子:   无 v0.7.0/v0.7.1 残留`);
+    }
     console.log(`  runs:   ${result.runsDir}`);
+    console.log(`\n下一步：command 会调 CC CronCreate 创建定时任务`);
     process.exit(0);
   } catch (err) {
     console.error('✗', err.message);
@@ -129,4 +131,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { install, installHook, ensureRunsDir, readSettings, writeSettings };
+module.exports = { install, cleanupLegacyHook, ensureRunsDir };
