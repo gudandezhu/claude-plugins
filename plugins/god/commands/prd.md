@@ -28,10 +28,11 @@ status: stable
 
 **架构文档契约**（横切关注点）：
 
-- **业务架构**：`spec/architecture/business.md`（业务域切分 + 域职责 + 域关系）
-- **技术架构**：`spec/architecture/tech.md`（服务划分 + API + DB + 通信）
+- **业务架构**：**真相源 = `spec/domains/D-XXX/README.md`**（每域职责在本域 README），`spec/architecture/business.md` 由 `arch-summary.js` 自动汇总生成（**不手写**）
+- **技术架构**：`spec/architecture/tech.md`（服务划分 + API + DB + 通信）——手写，dev 阶段后同步
 - prd / dev / test 阶段都读 architecture/——架构在每阶段都被维护和应用
-- 业务域用目录结构 `spec/domains/D-XXX/` 表示（**1 domain 1 spec.feature**）
+- 业务域用目录结构 `spec/domains/D-XXX/` 表示（**1 domain 1 spec.feature + 1 README**）
+- **新业务域 = 新建 `spec/domains/D-XXX/README.md` + spec.feature**（不直接改 business.md）
 - dev 阶段写完代码后**同步更新 tech.md**（架构不漂移）
 
 **子规则**：

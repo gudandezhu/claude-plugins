@@ -245,7 +245,7 @@
         <mxCell id="prd_c7" value="spec-cli.js&#10;状态机 (init/advance)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#A855F7;strokeWidth=2;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="240" y="995" width="220" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="prd_c8" value="spec-summary.js&#10;summary.md 渲染" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#A855F7;strokeWidth=2;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="prd_c8" value="arch-summary.js&#10;(新) D-XXX/README&#10;→ business.md 派生" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#A855F7;strokeWidth=2;fontSize=10;align=center;verticalAlign=middle;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="470" y="995" width="220" height="55" as="geometry" />
         </mxCell>
 

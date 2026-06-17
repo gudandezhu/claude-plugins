@@ -328,11 +328,13 @@ spec/
 
 ---
 
-## 10. 业务域拆分（v0.7.0+ 落地）
+## 10. 业务域拆分（v0.7.0+ 落地，v0.7.3 修正真相源）
 
 > **核心设计**：spec 是系统行为的描述，应按**业务域**（business domain）拆分——
 > 1 个业务域 = 1 个独立 spec 模块（独立 spec.feature + 独立 sources.md + 独立 state）。
 > 业务架构靠**目录结构** `spec/domains/D-XXX/` 表示；技术架构靠 `spec/architecture/tech.md` 文档。
+>
+> **v0.7.3 修正**：业务架构的**真相源 = `spec/domains/D-XXX/README.md`**，business.md 由 `arch-summary.js` 自动汇总生成（不手写）。
 
 ### 10.1 业务域拆分规则
 
@@ -352,14 +354,58 @@ spec/
 | SC 涉及 X 业务域的核心流程 | D-X |
 | SC 跨多个 D-XXX | 标 `cross-cutting`，归到主 D-XXX + spec.feature 顶部 `@cross-cutting D-Y, D-Z` |
 
-### 10.3 架构文档契约
+### 10.3 业务域 README（v0.7.3 真相源）
 
-| 文档 | 干啥的 | 谁维护 | 何时更新 |
-|---|---|---|---|
-| `spec/architecture/business.md` | 业务架构（业务域切分 + 域职责 + 域关系）| OPC + AI（brainstorm）| 新业务域时 |
-| `spec/architecture/tech.md` | 技术架构（服务划分 + API + DB + 通信）| dev subagent | dev 完事后同步 |
+`spec/domains/D-XXX/README.md` 是业务架构的**唯一真相源**——本域的所有元信息：
 
-**横切关注点**：prd / dev / test 阶段都读 architecture/，架构在每阶段都被维护和应用（**架构不漂移**）。
+```yaml
+# spec/domains/D-XXX/README.md
+- 域 ID: D-XXX
+- 域名称: <一句话>
+- 核心职责: <一段话>
+- 数据模型: <主要实体/表>
+- 输入: <上游域列表 / 外部依赖>
+- 输出: <下游域列表 / 外部交付>
+- 关系: <与其他 D-XXX 的关系：调用 / 依赖 / 事件 / 共享数据>
+- 状态: <active | deprecated | planned>
+```
+
+**校验规则**（`spec-lint.js` 落地）：
+
+- `spec/domains/` 下每个 D-XXX 必须有 `README.md`
+- 必填字段缺失 → FAIL
+- README 与实际 SC（spec.feature）描述不一致 → WARN
+
+### 10.4 架构文档契约
+
+| 文件 | 类型 | 干啥的 | 谁维护 | 何时更新 |
+|---|---|---|---|---|
+| `spec/domains/D-XXX/README.md` | **真相源** | 本域职责/输入/输出/关系 | OPC + AI（brainstorm）| 新增/修改/删除域时 |
+| `spec/architecture/business.md` | **派生** | 全局业务域视图（汇总各 README）| AI（`arch-summary.js` 自动生成）| prd 阶段 1 末尾自动跑 |
+| `spec/architecture/tech.md` | 真相源 | 技术架构（服务划分 + API + DB）| dev subagent | dev 完事后同步 |
+
+**业务架构的双向引用**：
+
+```
+真相源（手写/AI写）         派生（AI生成）        消费者
+─────────────────         ──────────────        ──────
+D-XXX/README.md    ──→  business.md    ──→  OPC 看 / brainstorm 读
+                              ↑
+                          arch-summary.js
+                       （各 README → 汇总）
+```
+
+**`arch-summary.js` 行为**（计划实装）：
+
+```bash
+node ${PLUGIN_ROOT}/spec/scripts/arch-summary.js <项目>
+# 1. 扫描 spec/domains/D-XXX/README.md
+# 2. 汇总业务域清单 + 域职责 + 域关系图（mermaid）
+# 3. 写 spec/architecture/business.md
+# 4. 比对上次生成：变化 → log 提示 / 变化 > 50% → WARN
+```
+
+**横切关注点**：prd / dev / test 阶段都读 architecture/，架构在每阶段都被维护和应用（**架构不漂移**——以目录为源，business.md 派生）。
 
 ### 10.4 Task 追踪
 

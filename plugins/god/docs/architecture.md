@@ -60,16 +60,38 @@ related: [../CLAUDE.md, conventions.md, spec-directory.md]
 > **架构不是流水线阶段，是横切关注点**——prd / dev / test 阶段都维护和应用。
 > 业务架构 = "**做什么**"（OPC 看）；技术架构 = "**怎么做**"（开发看）。两件事必须分开。
 
-### 业务架构（business.md）
+### 业务架构（**以目录为源**，business.md 派生）
+
+> **核心修正（v0.7.3+）**：业务架构的**真相源 = `spec/domains/` 目录结构**。
+> 各 D-XXX 的 README.md 写本域职责。`spec/architecture/business.md` 由 AI **自动汇总**生成（不手写）。
+> 避免"business.md 列出 D-X 但 domains/ 没有"或反之的漂移。
 
 | 项 | 内容 |
 |---|---|
 | 干啥的 | 系统由几个**业务域**组成 + 域间关系 |
 | 谁关心 | OPC + 产品 |
-| 产出 | `spec/architecture/business.md`（业务域清单 + 域职责 + 域关系图）|
-| 物理落地 | 目录结构 `spec/domains/D-XXX/`（**1 domain 1 spec.feature**）|
-| 何时更新 | prd 阶段 1 brainstorm（新增业务域时）|
+| **真相源** | `spec/domains/D-XXX/README.md`（**每个域的职责在本域 README**）|
+| 派生 | `spec/architecture/business.md`（AI 跑 `arch-summary.js` 从各 D-XXX/README.md 汇总生成）|
+| 物理落地 | 目录结构 `spec/domains/D-XXX/`（**1 domain 1 spec.feature + 1 README**）|
+| 何时更新 | prd 阶段 1 brainstorm 建 D-XXX/README.md（新增/修改/删除域）|
 | 谁维护 | OPC + AI 协作（brainstorm subagent 提示）|
+
+**业务域 README 必填字段**（`spec-lint.js` 校验）：
+
+```yaml
+# spec/domains/D-XXX/README.md
+- 域 ID: D-XXX
+- 域名称: <一句话>
+- 核心职责: <一段话>
+- 输入: <上游域列表 / 外部依赖>
+- 输出: <下游域列表 / 外部交付>
+- 关系: <与其他 D-XXX 的关系：调用 / 依赖 / 事件 / 共享数据>
+```
+
+**校验规则**（`spec-lint.js` 新增）：
+- `spec/domains/` 下每个 D-XXX 必须有 `README.md`
+- README.md 必填字段缺失 → FAIL
+- `spec/architecture/business.md` 与目录结构不一致 → WARN（提示重跑 `arch-summary.js`）|
 
 ### 技术架构（tech.md）
 
@@ -84,13 +106,13 @@ related: [../CLAUDE.md, conventions.md, spec-directory.md]
 
 ### 阶段 × 架构矩阵
 
-| 阶段 | 读 business.md | 写 business.md | 读 tech.md | 写 tech.md |
-|---|---|---|---|---|
-| prd 阶段 1 brainstorm | ✅ | ✅（新业务域）| △（约束参考）| ❌ |
-| prd 阶段 2 build-spec | ✅ | ❌ | △（API 契约对齐）| ❌ |
-| prd 阶段 3 review | ✅（验 SC 业务域归属）| ❌ | ❌ | ❌ |
-| dev 阶段 | ❌ | ❌ | ✅ | ✅（同步）|
-| test 阶段 | ❌ | ❌ | ✅（服务边界）| ❌ |
+| 阶段 | 读 D-XXX/README | 写 D-XXX/README | 跑 arch-summary | 读 tech.md | 写 tech.md |
+|---|---|---|---|---|---|
+| prd 阶段 1 brainstorm | ✅（看现有域）| ✅（新/改/删域）| ✅（重生成 business.md）| △（约束参考）| ❌ |
+| prd 阶段 2 build-spec | ✅（判 SC 业务域归属）| ❌ | ✅ | △（API 契约对齐）| ❌ |
+| prd 阶段 3 review | ✅（验 SC 业务域归属）| ❌ | ✅ | ❌ | ❌ |
+| dev 阶段 | ❌ | ❌ | ❌ | ✅ | ✅（同步）|
+| test 阶段 | ❌ | ❌ | ❌ | ✅（服务边界）| ❌ |
 
 ### 业务域拆分规则
 
