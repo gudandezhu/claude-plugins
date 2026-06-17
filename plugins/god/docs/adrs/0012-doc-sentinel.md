@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0012: doc-sentinel（维护期后台文档巡检 agent）
 
 > **状态**：✅ 已采纳（v0.6.0）
@@ -15,7 +24,7 @@ god 插件 G1-G13/D5 全部聚焦**开发期**（prd→dev→test 闭环）：sp
 
 - **根 `README.md`** 仍写"当前为骨架 / 功能待填充"（实测 v0.5.0+ P0 全闭环），与现状严重漂移
 - **`docs/CHANGELOG.md`** 4 个版本号（v0.1.0 / v0.2.0 / v0.3.0 / v0.4.1）全标 `2026-06-16` 同日，但 git log 显示真实 commit 日期分散在 6/14 ~ 6/16 3 天
-- **`docs/adrs/0009-spec-render.md` + `docs/adrs/0009-god-self-monitoring.md`** — 编号撞了两次（违反 conventions §1.8）
+- **`docs/adrs/0009-spec-render.md` + `docs/adrs/0009-god-self-monitoring.md`** — 编号撞了两次（违反 conventions §1.8）。内部引用已通过 ADR-0009-god-self-monitoring 改指 RFC-0010 god-trends 修正。
 - **3 个 demo 中 2 个半残**：仅 `lead-scoring` 完整（DASHBOARD.md / spec/summary.md / spec/state/.trace / spec/.archive/ 全配齐），`task-tracker` / `url-shortener` 缺 DASHBOARD.md 等
 - **0 个 frontmatter status**：38 个 `SKILL.md` + 3 个 `commands/*.md` 全部无 `status:` 字段，草稿/稳定态靠人脑推断
 - **`plugin.json` version 0.1.0** ↔ **`docs/CHANGELOG.md` 最新 v0.4.1** — 漂移 4 个 MINOR 跳
@@ -44,18 +53,17 @@ god 插件 G1-G13/D5 全部聚焦**开发期**（prd→dev→test 闭环）：sp
 
 ## 3. 详细设计
 
-### 3.1 架构：agent + skill + scripts 三件套
+### 3.1 架构：CC CronCreate 调度 + skill + scripts 三件套
 
 ```
-cc CronCreate ("17 */4 * * *", durable=true)
-  ↓ 触发
-~/.claude/scheduled_tasks.json  (CC 持久化)
-  ↓ enqueue prompt
-Claude Code session
-  ↓ Task(general-purpose) 派发
-doc-sentinel (agents/doc-sentinel/AGENT.md)
-  ├─→ skills/doc-sentinel/SKILL.md (决策树)
-  └─→ scripts/doc-sentinel/check-facade.js (机械检查)
+CC CronCreate (cron 表达式 + durable=true)
+  ↓ 持久化到
+.claude/scheduled_tasks.json  (CC 平台)
+  ↓ 到点 enqueue prompt 到
+当前 Claude Code session
+  ↓ agent 加载
+skills/doc-sentinel/SKILL.md (决策树)
+  └─→ scripts/doc-sentinel/check-facade.js <cwd> (机械检查)
        ├─ check-version-drift.js   (V1)
        ├─ check-numbering.js       (N1)
        ├─ check-demo-trio.js       (D1)
@@ -74,11 +82,11 @@ docs/doc-sentinel/runs/<ISO>.json  (跑报告入 git)
 
 | 形态 | 单独成立? | 理由 |
 |---|---|---|
-| **agent（决策）** | ✓ | 必须有"读文件→判断→改文件→git commit"的决策回路 |
+| **CC CronCreate（调度）** | ✓ | CC 原生能力，durable=true 跨 session 持久，无 hook 依赖 |
 | **script（机械）** | ✓ | 9 类 check 中 5 类是纯机械的（grep/ls/diff/lint），用 Node.js 最稳定 |
 | **skill（方法论）** | ✓ | "巡检决策树 / 修复策略选择"是 L2 方法论 |
-| command | ✗ | commands 上限 3（prd/dev/test，conventions §1.2），不占槽位 |
-| workflow | △ | workflow 是单步编排，doc-sentinel 是 cron 任务，更像 agent |
+| command | ✓ | 4 子命令（on/off/status/review），加载 skill 路由 |
+| workflow | △ | workflow 是单步编排，doc-sentinel 是 cron 任务，更像调度 |
 
 ### 3.2 9 类 check 详表
 
@@ -133,64 +141,69 @@ doc-sentinel 自动巡检发现。来源: plugins/god/scripts/doc-sentinel/check
 
 **pre-commit hook**：默认**不**走 `--no-verify`（实测 doc-sentinel 改动不触发 spec-validate 失败范围）。
 
-### 3.5 CronCreate 接入
+### 3.5 CronCreate 接入（v0.7.2 起）
 
-**cron 表达式**：`17 */4 * * *`（避开 :00 / :30 高峰）
+**cron 表达式生成**（`scripts/doc-sentinel/cron.js` `buildCronExpr`）：
+- 默认 `30 min` → `7,37 * * * *`（避 :00/:30 高峰，所有分钟偏移 OFFSET_MIN=7）
+- `60 min` → `7 * * * *`
+- `15 min` → `7,22,37,52 * * * *`
+- `120 min` → `7 */2 * * *`
+- `1440 min`（每天）→ `7 0 * * *`
+- 频率合法区间 [5, 1440] 分钟；非法由 `cron.js parseOnArgs` 抛错
 
-**触发时间**：02:17 / 06:17 / 10:17 / 14:17 / 18:17 / 22:17
+**触发频率**：用户可调（`on [N min]`），默认 30 min。命令层在 CronCreate 之前先 CronList 找旧任务 CronDelete，避免堆积。
 
-**agent prompt 模板**：
+**agent prompt 模板**（由 `cron.js buildPrompt` 生成）：
 
 ```
-你是 doc-sentinel。任务：每 4 小时巡检 plugins/god 仓库文档健康度，自动修复后 git commit。
+你是 doc-sentinel。当前 session 调起你。
 
-工作目录: /Users/puyifan/project/github/claude-plugins/plugins/god
+任务：巡检 ${cwd} 项目文档健康度，按决策树 auto-fix 后 git commit（不 push）。
 
-执行步骤（机械顺序，不要跳）:
-1. cd 到工作目录
-2. 跑统一入口: node scripts/doc-sentinel/check-facade.js .
+执行步骤（机械顺序，不要跳）：
+1. cd 到工作目录：cd ${cwd}
+2. 跑统一入口：node ${pluginRoot}/scripts/doc-sentinel/check-facade.js .
 3. 读返回的 JSON 报告
-4. 按 skills/doc-sentinel/SKILL.md 决策树分类每个 finding
+4. 按 ${pluginRoot}/skills/doc-sentinel/SKILL.md 决策树分类每个 finding
 5. 对 auto-fix 类的 finding 直接改文件
 6. 按检查项分类 git add + git commit（commit message 见 SKILL.md §commit 规范）
-7. 写本次跑报告: docs/doc-sentinel/runs/<ISO 时间戳>.json
+7. 写本次跑报告：${cwd}/docs/doc-sentinel/runs/<ISO 时间戳>.json（facade 自动写）
 8. ❌ 不 git push
 9. exit 0
 
 禁止:
 - 改 spec/spec.feature / spec/sources.md（真相源保护）
 - 改 docs/adrs/*.md 的编号（破坏外部引用）
+- 改 commands/*.md（commands 上限 3 强约束）
+- 改 spec/scripts/*.js（spec 子系统自身，需走 PR）
+- 自动 bump MAJOR 版本（必走 RFC）
+- 加 Co-Authored-By: Claude（与人工 commit 区分）
 - 跑超过 30 分钟（防止 agent 跑飞）
 ```
 
+**关键变化（vs 早期硬编码版本）**：
+- `${cwd}` 由 `process.cwd()` 注入，**不**硬编码 god 仓路径 → 同一插件可在多个项目使用
+- `${pluginRoot}` 由 `${CLAUDE_PLUGIN_ROOT}` 注入（CC 启动时自动设）
+- prompt 模板在 `cron.js` 集中管理（agent 只调 CronCreate，不拼 prompt 字符串）
+
 ### 3.6 落点
 
-**新增文件**：
+**新增文件**（v0.7.2 增量）：
 
 ```
 plugins/god/
-├── agents/doc-sentinel/AGENT.md                              # agent 主体
-├── skills/doc-sentinel/
-│   ├── SKILL.md                                              # 决策树
-│   ├── rules/auto-fix-rules.md                               # 9 类修复模板
-│   └── checklists/checklist-categories.md                    # 检查项索引
 ├── scripts/doc-sentinel/
-│   ├── check-facade.js                                       # 统一入口
-│   ├── check-version-drift.js      check-version-drift.test.js
-│   ├── check-numbering.js          check-numbering.test.js
-│   ├── check-demo-trio.js          check-demo-trio.test.js
-│   ├── check-frontmatter.js        check-frontmatter.test.js
-│   ├── check-stale-todo.js         check-stale-todo.test.js
-│   ├── check-path-references.js    check-path-references.test.js
-│   ├── check-g-state-machine.js    check-g-state-machine.test.js
-│   ├── check-changelog-dates.js    check-changelog-dates.test.js
-│   ├── check-self.js               check-self.test.js
-│   └── report-format.js
-└── docs/doc-sentinel/
-    ├── README.md
-    ├── runs/.gitkeep
-    └── incidents/0001-doc-sentinel-onboard.md
+│   ├── cron.js                              # v0.7.2+ 调度器（parseOnArgs / buildCronExpr / buildPrompt）
+│   └── cron.test.js                         # v0.7.2+ 单元测试（25 case）
+└── (其余 9 check + report-format + install/uninstall/status/config 既有文件按 §3.6 列表)
 ```
+
+**修改文件**（v0.7.2 增量）：
+- `install.js` — 去掉 SessionStart 钩子注册，新增 `cleanupLegacyHook(cwd)` 防御性清理
+- `uninstall.js` — 兜底 `removeHook(cwd)`（v0.7.0/v0.7.1 残留）
+- `status.js` — 改读 `.claude/scheduled_tasks.json`（CC durable 任务）替代 SessionStart 钩子探测
+- `config.js` — 新增 `cronId` 字段 + `recordCronId()` / `clearCronId()` / `readScheduledTasks()`
+- `commands/doc-sentinel.md` — on/off 改调 CC CronCreate/CronDelete，status 调 CronList 交叉验证
 
 **修改文件**：
 
@@ -230,9 +243,8 @@ plugins/god/
 - [ ] `git log -1 --format=%B | grep "doc-sentinel"` 含来源标识
 - [ ] `docs/doc-sentinel/runs/*.json` ≥ 1 份
 - [ ] V1 / N1 / F1 / P1 / C1 五类预期 finding 全部命中（基于已知痛点）
-- [ ] 9 个 `*.test.js` 单元测试全过
-- [ ] `~/.claude/scheduled_tasks.json` 含 doc-sentinel 任务
-- [ ] 监控 24h 触发 6 次（每 4h）
+- [ ] 7 个 `*.test.js` 单元测试全过（含 `cron.test.js` 25 case）
+- [ ] `.claude/scheduled_tasks.json` 含 doc-sentinel 任务（durable=true）
 
 ---
 
@@ -253,13 +265,15 @@ plugins/god/
 
 | 风险 | 严重度 | 对策 |
 |---|---|---|
-| **7 天 cron 过期** | 高 | 第 2 阶段加周续期 cron `17 9 * * 1`；短期人工每周重建（30s） |
+| **durable 任务跨 session 落点**（CC 平台行为未明） | 中 | `status.js` 读 `.claude/scheduled_tasks.json`（项目级 + 用户级双路径），找不到给 ⚠️ 警告，建议 off→on 重建 |
+| **session 死掉 / 长时间无活跃 session** | 低 | CC 平台把 durable 任务挂起等待，不丢；新 session 启动时自动激活 |
 | **首次跑 commit 量爆炸**（41 个 SKILL.md 加 status 预计 1 commit）| 低 | 按 check 分类不按文件分，单次最多 9 commit |
 | **plugin.json 0.1.0 → 0.6.0 跨越多版本** | 中 | check-version-drift.js 加 `--max-bump=minor` 默认；MAJOR 必走 RFC |
 | **CLAUDE.md 误改** | 中 | SKILL 决策树显式"CLAUDE.md 仅同步 G14 行 + §10 版本行，不动其他段" |
 | **误改 spec/ 真相源** | 高 | agent prompt 显式禁改 + check-self.js 巡检时先 git diff name-only 校验 |
 | **commit 撞车**（多 agent 并发）| 低 | 跑前 `git status` 检查，dirty 跳过本次 |
 | **demo 半残误判** | 低 | D1 明确只复制 lead-scoring 模板，不写真实数据 |
+| **v0.7.0/v0.7.1 残留 SessionStart 钩子** | 中 | `install.js` + `uninstall.js` 双调 `cleanupLegacyHook` / `removeHook` 防御性清理 |
 
 ---
 
@@ -288,7 +302,8 @@ plugins/god/
 | 本 RFC 章节 | 详细在哪 |
 |---|---|
 | §3.2 9 类 check 详表 | `skills/doc-sentinel/SKILL.md`（决策树）+ `rules/auto-fix-rules.md`（修复模板）|
-| §3.5 agent prompt | `agents/doc-sentinel/AGENT.md` |
+| §3.5 agent prompt + cron 表达式 | `scripts/doc-sentinel/cron.js`（`buildPrompt` / `buildCronExpr`）|
+| §3.5 调度命令路由 | `commands/doc-sentinel.md`（on/off 调 CronCreate/CronDelete）|
 | §3.6 落点文件清单 | `plugins/god/CLAUDE.md §3` 索引图（合并后更新）|
 | §4 与 conventions 冲突解决 | `docs/conventions.md §1.1 / §1.5` 例外条款 |
 | §7 风险对策 | `docs/failure-modes.md`（新增"doc-sentinel 故障"段）|
@@ -297,6 +312,7 @@ plugins/god/
 
 ## 11. 文档版本
 
+- **v0.7.2** (2026-06-17)：调度从 SessionStart 钩子 + claude -p 脱机跑改为 CC CronCreate（durable=true）注入当前 session 队列。run-headless.sh 撤回；install.js 去掉钩子注册留防御性 cleanup；新增 cron.js 调度器。详见 CHANGELOG.md v0.7.2 段。
 - **v0.7.1** (2026-06-17)：**撤销 v0.7.0 的"god 自身仓不巡检"决定**。`commands/doc-sentinel.md` 硬规则 #3 删除；`docs/doc-sentinel/USER-GUIDE.md` §5.6 改为"自身仓可用"。dogfooding 价值 > pre-commit 独占巡检的纯粹性。`install.js` 流程本身已对所有 `isProjectRoot()` 通过的仓一视同仁，无需代码改动。
 - **v0.7.0** (2026-06-17)：**v0.6.0 CronCreate 方案废弃**。项目级 on/off 开关 + SessionStart 钩子 + `claude -p` 脱机跑成为主线。v0.6.0 老式 cron 任务 `68de6c0c` 已取消（避免 7 天过期维护负担）。god 自身仓不再用 doc-sentinel 巡检（自身是开发环境，pre-commit hook 守门足够）。详细 v0.7.0 落点见 `docs/CHANGELOG.md` v0.7.0 段 + `commands/doc-sentinel.md` + `docs/doc-sentinel/USER-GUIDE.md`。
 - **v0.6.0** (2026-06-16)：RFC 合并 → ADR-0012，状态改"已采纳"，落地实现（9 个 check 脚本 + 1 个 agent + 1 个 skill + 42 测全过）。

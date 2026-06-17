@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # RFC-0003: hooks 集成（G3 防漂移落地）
 
 > **状态**：草稿（v0.4.0 P0）

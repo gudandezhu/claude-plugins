@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0004: hooks 防漂移（G3）v0.4.0 P0 落地
 
 > **状态**：✅ 已接受（v0.4.0 P0 实现已落）

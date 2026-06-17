@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # RFC-0005: OPC 介入预算分级归因（CLAUDE.md §1.3 修订）
 
 > **状态**：草稿（v0.4.0 P1）

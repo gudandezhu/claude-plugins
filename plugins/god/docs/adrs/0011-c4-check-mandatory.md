@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0011: prd 阶段 1 末尾 C4 check 边界强制力
 
 > 状态: 已采纳

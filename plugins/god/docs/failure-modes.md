@@ -1,3 +1,12 @@
+---
+type: runbook
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: pr-required
+related: [../CLAUDE.md, conventions.md]
+---
+
 # 失败模式与恢复手册
 
 > god 流程"崩了怎么办"。**目标**：6 个已知崩点 + 等级分类 + 命令行级恢复步骤 + 事后复盘模板。
@@ -345,7 +354,7 @@ git diff HEAD -- spec/spec.feature
 
 ## 4. 事后复盘模板
 
-> 崩了修完之后**强制**写 incident report，沉淀到 `docs/incidents/YYYY-MM-DD-<short-id>.md`（目录 v0.2.0 已建，含 `.gitkeep`）。
+> 崩了修完之后**强制**写 incident report，沉淀到 `docs/incidents/YYYY-MM-DD-<short-id>.md`（目录已建，含 `.gitkeep`）。
 
 ```markdown
 # Incident: <短标题>
@@ -419,4 +428,3 @@ git diff HEAD -- spec/spec.feature
 - **每次崩点发生**：先按 §3 恢复 → 再按 §4 写 incident → 最后决定是否补 §2 崩点描述
 - **每加新机制**：在 [[spec/TESTING]] L5 加对应错误恢复场景
 - **roadmap 推进**：F-01/F-02/F-06 的"hook 阻断 commit"由 spec-drift hook 统一兜底（规划中）
-- **版本**：v0.1.0 (2026-06-16) 与 [[CLAUDE]] §10 同步

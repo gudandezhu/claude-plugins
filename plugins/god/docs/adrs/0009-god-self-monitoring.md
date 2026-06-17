@@ -1,7 +1,16 @@
-# ADR-0009: god 自我监控（plan.md §4 Week 4 E）
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
+# ADR-0009: god 自我监控（god-trends 落地）
 
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
-> **替代**：[`plan.md §4 Week 4 E`](../plan.md) + [ADR-0009-spec-render（同年同号）](../adrs/0009-spec-render.md)
+> **替代 RFC**：[`RFC-0010 god-trends`](../rfcs/0010-god-trends.md)
 > **决议日**：2026-07-13
 > **影响范围**：`spec/scripts/god-trends.js` / `demo/lead-scoring/DASHBOARD.md` / `commands/test.md` S1 出口
 
@@ -9,11 +18,11 @@
 
 ## 1. 上下文
 
-god v0.4.0 有 `measure-opc-cost.js` 算单 feature OPC 介入时长（5 维归因），但**没有跨 feature 趋势**。plan.md §4 Week 4 E 决定补 god 自我监控。
+`measure-opc-cost.js` 算单 feature OPC 介入时长（5 维归因），但**没有跨 feature 趋势**。`god-trends.js` 补 god 自我监控。
 
 ## 2. 决策
 
-**god-trends.js = v0.4.0+ 必做**（plan §4 Week 4 E）。具体约束：
+**god-trends.js 必做**。具体约束：
 
 | 约束 | 决定 |
 |---|---|
@@ -58,6 +67,6 @@ god v0.4.0 有 `measure-opc-cost.js` 算单 feature OPC 介入时长（5 维归�
 ## 5. 关联
 
 - 上一 ADR：[`ADR-0008 test-gen`](0008-test-gen.md)
-- plan：[`docs/plan.md §4 Week 4 E`](../plan.md)
+- plan：[`docs/plan.md §2 路径回看`](../plan.md)
 - 演示：`demo/lead-scoring/DASHBOARD.md`
 - 上一档位定义：[`ADR-0005 OPC 预算分级`](0005-opc-cost-tiered.md)

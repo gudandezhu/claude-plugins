@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: pr-required
+related: [../CLAUDE.md, architecture.md]
+---
+
 # god 开发规范
 
 > god 内部约束：命名、版本、提交、PR、文件结构。
@@ -132,7 +141,7 @@
 ### 2.1 god 插件版本（`.claude-plugin/plugin.json`）
 
 - 字段：`version: "MAJOR.MINOR.PATCH"`（semver）
-- 当前：`0.1.0`（CLAUDE.md §10）
+- 当前：`<项目>/.claude-plugin/plugin.json` 实际值（git 是真相源）
 - 升版触发（**绑 PR 一起改**）：
 
 | 变动 | 升位 |

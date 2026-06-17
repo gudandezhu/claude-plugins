@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # RFC-0006: spec-archive（roadmap G4，提 P0）
 
 > **状态**：草稿（v0.4.0 升级 P0，原 P1）

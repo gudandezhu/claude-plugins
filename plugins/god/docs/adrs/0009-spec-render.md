@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0009: spec-render G7 落地（plan.md §4 B'）
 
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
@@ -82,4 +91,4 @@ roadmap P1 G7 决定实现 spec-render：把 `spec.feature` + `spec/sources.md` 
 
 - 上一 ADR：[`ADR-0008 test-gen`](0008-test-gen.md)（v0.4.0+ G6）
 - RFC：[`RFC-0009`](../rfcs/0009-spec-render.md)
-- 下一 RFC：[`RFC-0010 自我监控趋势`](../rfcs/)（plan.md §4 Week 4 E，待开）
+- 关联 RFC：[`RFC-0010 god-trends`](../rfcs/0010-god-trends.md)

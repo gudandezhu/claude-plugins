@@ -1,3 +1,12 @@
+---
+type: runbook
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../../CLAUDE.md]
+---
+
 # 02 视角：god 插件开发视角（贡献者）
 
 > 读者：god 团队成员、想给 god 提 PR 的开发者、关心"god 自身怎么演进"的架构师。

@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # RFC-0013: prd 一条龙 + 3 签字 Gate + 命令路由化
 
 > **状态**：草稿（v0.7.0 P0）

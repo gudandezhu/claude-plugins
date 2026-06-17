@@ -1,3 +1,12 @@
+---
+type: log
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../../CLAUDE.md]
+---
+
 # Incident 0001: 跨 feature 演练中 ROLLBACK + FORCE 推进真实发生
 
 > 触发: 状态机 ROLLBACK + god-trends L2 档

@@ -1,3 +1,12 @@
+---
+type: runbook
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../../CLAUDE.md]
+---
+
 # 03 · 架构师视角
 
 > **写给谁**：god 后续的架构师 / 文档官 / 打算给 god 贡献 PR 的人。

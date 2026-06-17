@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0000: spec 状态机 6 状态（不是 4 状态）
 
 > **状态**：✅ 已接受（v0.4.0 P0）

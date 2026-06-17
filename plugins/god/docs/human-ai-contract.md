@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../CLAUDE.md, plan.md]
+---
+
 # OPC × AI 协作契约
 
 > **定位**：CLAUDE.md §6 子文档。定义 god 流水线中 **OPC（One Person Company）** 必须在场的介入点 + 介入点之间的 AI 自主区间。
@@ -8,35 +17,21 @@
 
 ## 0. 一句话总则
 
-> **v0.7.0+ 新规约（RFC-0013）**：**3 个签字 Gate + 1 个动态问** = OPC 必介入点。
+> **新规约（RFC-0013）**：**3 个签字 Gate + 1 个动态问** = OPC 必介入点。
 > 介入点之间 AI 全自动，禁止 OPC 打断。
 
 | 项 | 答案 |
 |---|---|
 | 谁来介入 | **OPC**（One Person Company，CLAUDE.md §1.1）|
 | 介入总时长 | **< 30 分钟 / feature**（CLAUDE.md §1.3 预算，L0 档）|
-| 介入多少次 | 简单档 5-6 次 / 复杂档 7-8 次；**上限 8 次**（v0.7.0+ RFC-0013 新规约）|
+| 介入多少次 | 简单档 5-6 次 / 复杂档 7-8 次；**上限 8 次**（RFC-0013 新规约）|
 | 介入多深 | 1 次 ack = 1 道选择题或 1 句确认；不做完整需求写作 |
 | 超预算后果 | 系统失败（不是"OPC 加班"） |
 | 不介入会怎样 | 方向错 / 流程错 / 评审形式化 / 验收走过场 → 返工代价 ≥ 10x |
 
-**v0.6.0 → v0.7.0 变化**：
-
-| 旧（v0.6.0 6 介入点）| 新（v0.7.0 3 Gate + 1 动态问）| 说明 |
-|---|---|---|
-| C1 目标价值 | **保留**（prd 阶段 1 内部）| brainstorm skill 触发 |
-| C2 核心流程 | **保留**（prd 阶段 1 内部）| brainstorm skill 触发 |
-| C3 动态疑问 | **保留** | ask-user skill 封装 |
-| C4 总流程 | **保留**（prd 阶段 1 内部）| brainstorm skill 触发 |
-| P1 评审不通过 | **删除**（自动回 prd 阶段 1/2）| 评审失败不单独问 |
-| S1 验收签字 | **改为 S3** | sign-gate skill 触发 |
-| **新增 S1 Prd 出口** | S1 Gate | sign-gate skill 触发 |
-| **新增 S2 Dev 出口** | S2 Gate | sign-gate skill 触发 |
-| C6 Intent 反述 | **保留** | @intent SC 仍写 C6 锚点 |
-
 ---
 
-## 1. 3 签字 Gate + 1 动态问（速查表，v0.7.0+ RFC-0013 新规约）
+## 1. 3 签字 Gate + 1 动态问（速查表，RFC-0013 新规约）
 
 | # | 名称 | 触发时机 | skill 阶段 | OPC 的决策项 | 跳过风险 |
 |---|------|---------|-----------|----------|---------|
@@ -391,8 +386,3 @@
 | §5 决策边界 | `skills/brainstorm/SKILL.md` §"对用户友好原则" + §"Termination condition" |
 | §6 反模式 | `skills/spec-review/SKILL.md` §"禁止" + `commands/prd.md` 阶段 3b"未结案项" |
 
----
-
-## 9. 文档版本
-
-- **v0.1.0** (2026-06-16)：初版，6 个介入点 + 自主区间 + 介入形式 + 决策边界 + 反模式。

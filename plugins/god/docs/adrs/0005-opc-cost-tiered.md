@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0005: OPC 介入预算改为 3 档分级归因
 
 > **状态**：✅ 已接受（v0.4.0 P1 实现已落）

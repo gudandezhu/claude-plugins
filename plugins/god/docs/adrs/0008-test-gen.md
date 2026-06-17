@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0008: test-gen G6 落地（plan.md §4 Week 3 C）
 
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）

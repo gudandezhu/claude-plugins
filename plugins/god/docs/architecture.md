@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../CLAUDE.md, conventions.md, spec-directory.md]
+---
+
 # god 架构（4 层 + 1 中心 + 1 真相源）
 
 > 兑现 `CLAUDE.md` §2 承诺：定义 L1/L2/L3/L4 + 中心 + 真相源的**职责边界、跨层调用、禁止事项**。

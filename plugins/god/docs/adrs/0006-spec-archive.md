@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0006: spec-archive G4 提 P0 落地（plan.md §4 Week 1 D）
 
 > **状态**：✅ 已接受（v0.4.0 P0 实现已落，原 P1 提级）

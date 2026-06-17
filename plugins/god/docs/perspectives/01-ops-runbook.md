@@ -1,3 +1,12 @@
+---
+type: runbook
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../../CLAUDE.md]
+---
+
 # 01 Ops 视角全景演练 — 小范的 5 天 god 试用日记
 
 > **本文件是 `docs/perspectives/` 第一份视角文档**。身份 = OPC（小范，One Person Company）。

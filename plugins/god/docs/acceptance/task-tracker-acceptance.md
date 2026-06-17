@@ -1,3 +1,12 @@
+---
+type: runbook
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: pr-required
+related: [../../CLAUDE.md, ../../commands/prd.md]
+---
+
 # MVP 验收报告 — 真实新项目 task-tracker
 
 > 验收时间: 2026-06-16
@@ -150,7 +159,7 @@
 
 - **症状**：0006 已被 spec-archive 占用，新 ADR 必须先查重
 - **修复**：本次使用 0011 + 已查重
-- **god 自身 bug**：adrs/ 中 0009 出现两次（god-self-monitoring.md + spec-render.md）——违反 plan §1.0 v0.4.0"4 位补零编号"规约
+- **god 自身 bug**：adrs/ 中 0009 出现两次（god-self-monitoring.md + spec-render.md）——违反 conventions §1.8 "4 位补零编号"规约。内部引用已修正：ADR-0009-god-self-monitoring 现指 RFC-0010 god-trends 为前身。
 - **建议**：v0.5.0 文档同步时清理
 
 ### 4.4 单元测试 fixture 漂移（已修）

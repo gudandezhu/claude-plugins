@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # RFC-0010: god-trends（plan.md §4 Week 4 E，自我监控）
 
 > **状态**：草稿（v0.4.0+）

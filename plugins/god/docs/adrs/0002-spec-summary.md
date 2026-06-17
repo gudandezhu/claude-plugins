@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # ADR-0002: G8 spec-summary 接受为 v0.4.0 P0 落地项
 
 > **状态**：✅ 已接受（v0.4.0 P0 实现已落）

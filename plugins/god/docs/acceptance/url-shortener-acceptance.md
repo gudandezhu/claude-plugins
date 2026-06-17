@@ -1,3 +1,12 @@
+---
+type: runbook
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: pr-required
+related: [../../CLAUDE.md, ../../commands/prd.md]
+---
+
 # MVP 验收报告 — 真实新项目 url-shortener（G13+G13.1 真实跑）
 
 > 验收时间: 2026-06-16

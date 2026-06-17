@@ -1,4 +1,13 @@
-# god v0.4.0+ P1 落地后真实演练报告（lead-scoring 2-feature 闭环）
+---
+type: log
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../../CLAUDE.md]
+---
+
+# god 自我监控 + P1 落地后真实演练报告（lead-scoring 2-feature 闭环）
 
 > **采集日**：2026-08-12
 > **范围**：demo/lead-scoring 跑通 v1.0.0 + v1.1.0 两轮完整 feature 闭环

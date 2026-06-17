@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../../CLAUDE.md]
+---
+
 # RFC-0001: spec-cli 状态机（roadmap G1+G2 捆绑）
 
 > **状态**：草稿（v0.4.0 P0）
