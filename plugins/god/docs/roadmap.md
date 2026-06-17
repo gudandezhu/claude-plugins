@@ -12,7 +12,7 @@
 
 ---
 
-## 1. 真实状态速览（v0.4.0 视角）
+## 1. 真实状态速览
 
 CLAUDE.md §5 把 10 块缺口按性质归并为 4 层。下表是**每块缺口的当前真实状态**。
 
@@ -21,15 +21,16 @@ CLAUDE.md §5 把 10 块缺口按性质归并为 4 层。下表是**每块缺口
 | 规范层 | G1 | spec-cli 状态机 | ✅ 已落（commit `fc31904`）| `spec/scripts/spec-cli.js` |
 | 规范层 | G2 | spec.meta.json | ✅ 已落（commit `fc31904`）| `spec/meta.json` schema + spec-cli 读写 |
 | 呈现层 | G7 | spec-render | ⏳ 规划中（P1）| — |
-| 呈现层 | G8 | spec-summary | ✅ 已落（commit `2644f35`，v0.4.0 升级 P0）| `spec/scripts/spec-summary.js` + `templates/spec-summary/v0.1.0.md` |
+| 呈现层 | G8 | spec-summary | ✅ 已落 | `spec/scripts/spec-summary.js` + `templates/spec-summary/v0.1.0.md` |
 | 驱动层 | G5 | dev-gen | ⏳ 规划中（P1）| — |
 | 驱动层 | G6 | test-gen | ⏳ 规划中（P1）| — |
 | 驱动层 | G4 | spec-archive | ⏳ 规划中（P1）| — |
 | 防护层 | G3 | hooks 防漂移 | ✅ 已落（commit `229ab76`）| `templates/hooks/pre-commit.sh` + `session-end.sh` + `install-hooks.js` |
 | 防护层 | G9 | 4 视角评审 | ⏳ 规划中（P2）| — |
 | 防护层 | G10 | domain.md | ⏳ 规划中（P2）| — |
+| 维护层 | **G14** | **doc-sentinel 后台文档巡检** | **✅ 已落** | **`commands/doc-sentinel.md` + `skills/doc-sentinel/` + `scripts/doc-sentinel/`（9 check + 42 测）** |
 
-**P0 已全部落地**（G1/G2/G3/G8，4 块）。当前剩余 = P1（4 块）+ P2（2 块）。
+**P0 已全部落地**（G1/G2/G3/G8，4 块）。**维护期 G14 已落**。当前剩余 = P1（4 块）+ P2（2 块）。
 
 > **v0.2.x 状态说明**：早版 `scripts/hooks/` 7 个文件因从未挂载到 `settings.json` 而作为孤岛脚本被删除。G3 已用**新形态**（`templates/hooks/` 模板 + `install-hooks.js` 一键安装）重建，**不重建老 7 个脚本**。
 
@@ -110,14 +111,14 @@ P2 启动信号：P1 全部完成 + god 在 ≥ 3 个真实项目跑通过 + 用
 
 ---
 
-## 5. 依赖图（v0.4.0 视角）
+## 5. 依赖图
 
 ```mermaid
 graph TD
-    G1[G1 状态机<br/>✅ v0.4.0] --> G2[G2 meta.json<br/>✅ v0.4.0]
-    G2 --> G3[G3 hooks<br/>✅ v0.4.0]
+    G1[G1 状态机<br/>✅] --> G2[G2 meta.json<br/>✅]
+    G2 --> G3[G3 hooks<br/>✅]
     G1 --> G3
-    G2 --> G8[G8 summary<br/>✅ v0.4.0]
+    G2 --> G8[G8 summary<br/>✅]
 
     G2 --> G4[G4 archive<br/>⏳ P1]
     G2 --> G5[G5 dev-gen<br/>⏳ P1]
@@ -128,10 +129,16 @@ graph TD
     G7 --> G9
     G9 --> G10[G10 domain.md<br/>⏳ P2]
 
+    G1 --> G14[G14 doc-sentinel<br/>✅<br/>维护期]
+    G2 --> G14
+    G3 --> G14
+    G8 --> G14
+
     style G1 fill:#6bcf7f,color:#000
     style G2 fill:#6bcf7f,color:#000
     style G3 fill:#6bcf7f,color:#000
     style G8 fill:#6bcf7f,color:#000
+    style G14 fill:#6bcf7f,color:#000
     style G4 fill:#ffd93d,color:#000
     style G5 fill:#ffd93d,color:#000
     style G6 fill:#ffd93d,color:#000
@@ -140,22 +147,22 @@ graph TD
     style G10 fill:#d0d0d0,color:#000
 ```
 
-> P0 4 块全绿（v0.4.0 已闭环）。P1 4 块可并行启动。P2 等 P1 完。
+> P0 4 块全绿。**维护期 G14 已闭环**。P1 4 块可并行启动。P2 等 P1 完。
 
 ---
 
-## 6. 里程碑（v0.4.0 重新校准）
+## 6. 里程碑
 
-### M1：god 自我闭环（v0.4.0 已完成）
+### M1：god 自我闭环（已完成）
 
-**目标**：god 能跑、能校验、能门禁。✅ **v0.4.0 落地**（commit `229ab76` 封顶）。
+**目标**：god 能跑、能校验、能门禁。
 
 **交付物清单**：
 - [x] `spec/scripts/spec-cli.js`（G1）—— commit `fc31904`
 - [x] `spec/meta.json` schema + 写读逻辑（G2，并入 spec-cli）—— commit `fc31904`
 - [x] `templates/hooks/pre-commit.sh` + `templates/hooks/session-end.sh`（G3）—— commit `229ab76`
 - [x] `spec/scripts/install-hooks.js` 一键安装（G3）—— commit `229ab76`
-- [x] `spec/scripts/spec-summary.js` + 11 单元测试 + 模板 v0.1.0（G8）—— commit `2644f35`
+- [x] `spec/scripts/spec-summary.js` + 11 单元测试 + 模板（G8）—— commit `2644f35`
 - [x] `spec/TESTING.md` 加 L7：spec-cli 状态机测试
 - [x] ADR/RFC 4 位补零编号规约
 
@@ -228,11 +235,3 @@ graph TD
 | §6 M1 验收 | 与 `spec/TESTING.md` 的 L1-L7 集成 |
 | §6 M2 完成 | 与 `spec/TESTING.md` L8 集成（待 M2 启动时加） |
 | §7 反模式 | 与 `commands/prd.md` 的"command 编排 skill 承载"原则对齐 |
-
----
-
-## 9. 文档版本
-
-- **v0.4.1** (2026-06-16)：**状态同步**。P0 4 块（G1/G2/G3/G8）标 ✅，删除 P0 详细定义段（落到 RFC/ADR），里程碑 M1 标"已完成"。剩余 6 块（G4-G7 P1 + G9/G10 P2）保持原状。
-- **v0.4.0** (2026-06-16)：G8 升级 P0，G1+G2 合并入 P0。
-- **v0.1.0** (2026-06-16)：初版路线图。P0 详细设计待 RFC，P1/P2 待 RFC。

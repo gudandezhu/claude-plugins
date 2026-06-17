@@ -13,6 +13,21 @@
 - **新功能 PR 之前**：先看本文 §3 索引图，找到对应子文档，再动笔
 - **改本文档**：需走 RFC（设计变更），不接受随手 PR
 
+### 0.1 文档纪律（必读）
+
+**文档只写当前事实，不写历史版本。**
+
+- ❌ 禁止在文档里写"v0.5.0 时 X" / "v0.6.0 之前是 Y" / "v0.7.0 落地时改了 Z" 这类**历史叙事**
+- ❌ 禁止"撤回说明"段（"v0.6.0 引入的 X 是错的，v0.7.0 撤回"——已撤回的就不写）
+- ❌ 禁止"过渡说明"段（"v0.6.0 过渡用 cron，v0.7.0 主线用 SessionStart"——只写 SessionStart）
+- ❌ 禁止"已变更"注脚（"v0.6.0 老式 X 已于 v0.7.0 取消"）
+- ❌ 禁止"文档版本"段（§10 / "v0.x.0 (YYYY-MM-DD)"——版本信息在 git 里，不在文档里）
+- ✅ **当前事实**直接写："X 是 Y"（不写"X 之前是 Z"）
+- ✅ **git log** 是历史真相源（不在文档里复制）
+- ✅ 删了的东西**就当不存在**（不在文档里留"撤回说明"）
+
+**理由**：版本信息 / 变更历史 / 撤回说明 → AI 读时增加认知负担，**降低文档信噪比**。git 是版本历史权威，文档是当前规范。
+
 ---
 
 ## 1. 目标（god 是什么）
@@ -53,7 +68,7 @@
 ```
 
 **工具**：`node spec/scripts/measure-opc-cost.js <项目>` 自动算 + 报告档位
-**S1 出口**：`commands/test.md` S1 自动跑 measure-opc-cost 写验收报告
+**S3 出口**：`skills/test-pipeline/SKILL.md` 阶段 5 自动跑 measure-opc-cost 写验收报告
 
 预算超限 = 系统失败（不是"OPC 加班"）。
 
@@ -62,14 +77,21 @@
 ## 2. 架构（4 层 + 1 中心 + 1 真相源）
 
 ```
-L1 commands/         编排，subagent 派遣
-L2 skills/           方法论，一份一文件
+L1 commands/         路由表（≤ 30 行/个，v0.7.0 RFC-0013 起）
+L2 skills/           方法论，一份一文件（≤ 100 行/个，PR review 硬卡）
 L3 scripts/          机械工具，可独立 node 跑
 L4 hooks+templates   平台注入 + 产物模板
 
 中心 = scenarios（spec.feature 的 SC 列表）
 真相源 = spec/ 目录
 ```
+
+**v0.7.0+ 命令层变化（RFC-0013）**：
+
+- 命令层 = 路由表，不再是 SOP（不写方法论 / 步骤 / "为什么"）
+- 命令层遇 gate 必停下，调 sign-gate skill 弹 AskUserQuestion
+- 命令层禁止直接拼 AskUserQuestion，必须经 ask-user skill 封装
+- dev / test 命令取消（迁到 skills/dev-pipeline + skills/test-pipeline）
 
 **分层职责 & 禁止事项** → 见 [`docs/architecture.md`](docs/architecture.md)
 
@@ -99,32 +121,36 @@ god/
 │   │   ├── 0001-spec-cli-state-machine.md
 │   │   ├── 0002-spec-summary.md
 │   │   ├── 0003-hooks-integration.md
-│   │   └── 0005-opc-cost-tiered.md
+│   │   ├── 0005-opc-cost-tiered.md
+│   │   └── 0013-prd-pipeline.md
 │   ├── adrs/                       ADR 决议（同编号格式；RFC 合并后改名为 ADR-NNNN）
 │   │   ├── 0000-spec-lifecycle-6-vs-4-states.md
 │   │   ├── 0002-spec-summary.md
 │   │   ├── 0003-spec-cli-state-machine.md
-│   │   └── 0004-hooks-integration.md
+│   │   ├── 0004-hooks-integration.md
+│   │   └── 0013-prd-pipeline.md
 │   └── incidents/                  事后复盘沉淀（v0.2.0 建）
 ├── spec/                           活规格子系统自身的设计
 │   ├── SPEC-FORMAT.md              Gherkin 格式 + SC 绑定规则
-│   ├── scripts/                    spec 子系统自身的 L3 工具（11 脚本 / 150 测全过）
+│   ├── scripts/                    spec 子系统自身的 L3 工具（13 脚本 / 175+ 测全过）
 │   │   ├── spec-validate.js        机械校验（14 项 + 3 sad-path）
 │   │   ├── spec-cli.js             SC 状态机 6 态 + meta.json 读写（v0.4.0 落）
 │   │   ├── spec-summary.js         summary.md 渲染（v0.4.0 落，11 单元测试）
 │   │   ├── spec-render.js          review/<date>.md 渲染（v0.5.0 落 G7）
 │   │   ├── spec-archive.js         快照 / 回滚 / 列出（v0.5.0 落 G4）
-│   │   ├── dev-gen.js              spec → 代码骨架（v0.5.0 落 G5）
+│   │   ├── dev-gen.js              spec → 代码骨架（v0.5.0 落 G5，v0.7.0+ G17 phase 前置校验）
 │   │   ├── test-gen.js             spec → 测试桩（v0.5.0 落 G6）
 │   │   ├── init-spec-dir.js        建好 spec/ 子目录结构（v0.5.1 落 G13.1，5 测）
 │   │   ├── spec-lint.js            spec/ 结构守门，拦 AI 误建（v0.5.1 落 G13.1，8 测）
 │   │   ├── god-trends.js           跨 feature 趋势分析（v0.5.0 落 D5）
 │   │   ├── measure-opc-cost.js     OPC 介入成本 5 维归因（v0.5.0 落 D5）
-│   │   └── install-hooks.js        G3 hook 一键安装（v0.4.0 落）
+│   │   ├── install-hooks.js        G3 hook 一键安装（v0.4.0 落）
+│   │   ├── spec-readiness.js       7 项清晰度校验（v0.7.0 落 G15，17 测）
+│   │   └── sign-gate.js            S1/S2/S3 统一签字管理（v0.7.0 落 G16，18 测）
 │   └── TESTING.md                  spec 系统自身回归手册
-├── commands/                       L1（prd / dev / test）
-├── skills/                         L2（38 个 skill，见各 SKILL.md）
-├── scripts/                        L3（dev/build/test 等领域工具；v0.4.0 起 `hooks/` 是顶层目录）
+├── commands/                       L1 路由表（prd / doc-sentinel，≤ 30 行/个，v0.7.0+ RFC-0013）
+├── skills/                         L2（42 个 skill，v0.7.0+ 新增 6 个：prd / prd-edit / dev-pipeline / test-pipeline / sign-gate / ask-user）
+├── scripts/                        L3（dev/build/test 等领域工具；v0.4.0 起 `hooks/` 是顶层目录；v0.6.0 起 `doc-sentinel/` 是后台文档巡检 agent 的机械 check 脚本）
 ├── workflows/                      L3 workflow（评审/校验/并行）
 ├── hooks/                          L4 hook 模板入口（v0.4.0 G3 落地，install-hooks.js 装到项目侧 .claude/settings.json）
 ├── templates/                      L4 产物模板
@@ -152,13 +178,13 @@ god/
 
 ---
 
-## 5. 系统级缺口（v0.5.1 已闭环）
+## 5. 系统级缺口（v0.6.0 已闭环开发期+维护期）
 
-**P0 4 块 + P1 4 块 + P1 增强 2 块 + G10/G11/G13/G13.1/D5 全部落地**。**剩余 2 块**（P2）详情见 [`docs/roadmap.md`](docs/roadmap.md)：
+**P0 4 块 + P1 4 块 + P1 增强 2 块 + G10/G11/G13/G13.1/D5 + **G14 维护期** 全部落地**。**剩余 2 块**（P2）详情见 [`docs/roadmap.md`](docs/roadmap.md)：
 
 - **P2 锦上添花（2 块）**：G9 4 视角评审 —— 等 ≥ 3 个真实项目验证后启动
 
-**已落地的 P0 + P1**（commit 锚点）：
+**已落地的 P0 + P1 + G14**（commit 锚点）：
 - G1+G2：commit `fc31904`（spec-cli.js + meta.json schema）
 - G8：commit `2644f35`（spec-summary.js + 11 单元测试 + 模板 v0.1.0）
 - G3：commit `229ab76`（templates/hooks/ 3 模板 + install-hooks.js）
@@ -171,15 +197,25 @@ god/
 - **G13**：spec/ 子目录分层（state/review/domain），8 脚本双路径兼容
 - **G13.1**：结构固化（init-spec-dir.js 5 测 + spec-lint.js 8 测，拦 AI 误建文件）
 - **D5**：measure-opc-cost.js + god-trends.js（自我监控）
-- **总测试**：11 单元测试 150/150 全过
+- **G14**：doc-sentinel 后台文档巡检（v0.7.0，[ADR-0012](docs/adrs/0012-doc-sentinel.md)；`commands/doc-sentinel.md` 4 子命令 + `skills/doc-sentinel/` 方法论 + `scripts/doc-sentinel/` 9 check 脚本 + 42 单元测试全过）
+- **G15**：spec-readiness 7 项清晰度校验（v0.7.0 RFC-0013，17 单元测试）
+- **G16**：sign-gate S1/S2/S3 统一签字管理（v0.7.0 RFC-0013，18 单元测试）
+- **G17**：dev-gen phase 前置校验（v0.7.0 RFC-0013，4 单元测试）
+- **总测试**：spec 13 单元测试 175+/175+ + doc-sentinel 6 测试 42/42 全过
 
 ---
 
 ## 6. OPC 在哪介入（OPC 注意力预算的落点）
 
-**6 个必介入点**（C1/C2/C4 Gate + C3 动态问 + 评审不通过决策 + 验收签字）→ 见 [`docs/human-ai-contract.md`](docs/human-ai-contract.md)
+**v0.7.0+ 新规约（RFC-0013）**：
 
-**铁律**：除 6 个必介入点外，其他环节 AI 全自主，**OPC 不需要在场**。
+- **3 签字 Gate**（S1/S2/S3）+ **1 动态问**（C3）→ 见 [`docs/human-ai-contract.md`](docs/human-ai-contract.md)
+- S1 = prd → dev 中间（"这是你想要的 spec 吗？"）
+- S2 = dev → test 中间（"代码实现符合 spec 吗？"）
+- S3 = test → accepted 中间（"跑通能验收吗？"）
+- 拒签必归因：spec 错 → 回 prd；实现错 → 回 dev
+
+**铁律**：除 3 签字 Gate + C3 动态问外，其他环节 AI 全自主，**OPC 不需要在场**。
 **预算**：OPC 介入总时长按 3 档分级（见 §1.3）。L3 = 系统失败。
 
 ---
@@ -215,13 +251,3 @@ god/
 ```
 
 **违反 = PR 不收**。
-
----
-
-## 10. 文档版本
-
-- **v0.4.1** (2026-06-16)：状态同步。`roadmap.md` / `CLAUDE.md §5` / `spec-directory.md §2` 对齐 v0.4.0 真实落地。详细 changelog → [`docs/CHANGELOG.md`](docs/CHANGELOG.md)。
-- **v0.4.0** (2026-06-16)：3 视角全景演练 + G8 真实实现（见 `docs/CHANGELOG.md`）。
-- **v0.3.0** (2026-06-16)：OPC 定位（见 `docs/CHANGELOG.md`）。
-- **v0.2.0** (2026-06-16)：补齐 6 子文档。
-- **v0.1.0** (2026-06-16)：初版索引地图。

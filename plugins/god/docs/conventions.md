@@ -20,7 +20,7 @@
 
 | 目录 | 用途 | 来源 |
 |---|---|---|
-| `commands/` | L1 编排入口（prd / dev / test）| CLAUDE.md §2 |
+| `commands/` | L1 编排入口（prd / dev / test / doc-sentinel）| CLAUDE.md §2 |
 | `skills/` | L2 方法论（一 skill 一目录）| CLAUDE.md §2 |
 | `scripts/` | L3 机械工具（node 可跑）| CLAUDE.md §2 |
 | `workflows/` | L3 评审/校验 workflow | CLAUDE.md §2 |
@@ -31,6 +31,8 @@
 | `.claude-plugin/` | 插件元数据 | Claude Code 平台约定 |
 
 > 顶层不增目录。新增模块先问：放哪个 L？问完仍答不出 = 走 RFC。
+>
+> **例外**：`commands/` 上限 3→4，`doc-sentinel.md` 是第 4 个编排入口（on/off/status/review）。理由：doc-sentinel 是"用户主动开关"的编排动作，不是方法论。详见 [ADR-0012](adrs/0012-doc-sentinel.md)。
 
 ### 1.2 commands/
 
@@ -38,6 +40,7 @@
 - 数量上限 3：`prd.md` / `dev.md` / `test.md`（[[spec/README.md]] 明确）
 - 命名原则：**角色动词**（梳理 / 实现 / 验证），不写技术词（build / generate）
 - 例外：commit `306e0ef` 把 `brainstorm.md` 删了，**因为 brainstorm 是 skill 不是编排入口**（bd51203 定型）
+- **例外**：`doc-sentinel.md` 由 [ADR-0012](adrs/0012-doc-sentinel.md) 提案为第 4 个 command（维护期编排入口：on/off/status/review 4 子命令）。理由：doc-sentinel 的"用户主动开启/关闭/查看"是**编排动作**而非方法论，符合 command 定位。后续编排类 command 走相同 RFC 路径。
 
 ### 1.3 skills/
 
@@ -73,6 +76,7 @@
 - 命名原则：**领域即目录**。新脚本先查 12 个现有子目录，找不到再增（`scripts/lib/` 是工具类，跨领域通用）
 - 历史注意：曾列 `adapters/` 子目录，但当前 god 仓**未建** `scripts/adapters/`，写文档时不引用
 - 测试文件 = `<name>.test.js`，与被测文件同目录（见 `scripts/test/task-cli.test.js` 模式）
+- **例外**：`scripts/doc-sentinel/` 由 [ADR-0012](adrs/0012-doc-sentinel.md) 提案为第 13 个领域子目录（后台文档巡检 agent 的机械 check 脚本）
 
 ### 1.6 templates/
 
@@ -88,7 +92,7 @@
 
 ### 1.8 docs/rfcs/ + docs/adrs/ 编号规约
 
-> **v0.4.0 新增**。原因：3 份 perspectives 演练发现 god 历史 PR/RFC 编号格式混乱（0001/001/0008 三种并存），定死规约。
+> 3 份 perspectives 演练发现 god 历史 PR/RFC 编号格式混乱（0001/001/0008 三种并存），定死规约。
 
 | 项 | 规则 | 例 |
 |---|---|---|
@@ -112,7 +116,7 @@
 | scripts/ 子目录增删 | **是**（conventions §5 改）| RFC（小改动可走 PR）|
 | 命名/版本规则 | 否（走 PR）| — |
 
-**PR 模板必含**（v0.4.0 后启用）：
+**PR 模板必含**：
 
 ```markdown
 ## 关联 RFC / ADR
@@ -342,6 +346,7 @@ scripts/
 ├── auth/                 # 登录 / 鉴权
 ├── db-design/            # DB schema 校验
 ├── dev/                  # 开发期工具
+├── doc-sentinel/         # 文档巡检 agent 的机械 check 脚本，[ADR-0012](adrs/0012-doc-sentinel.md)
 ├── forensic/             # 取证 / 反查
 ├── metrics/              # 指标采集
 ├── test/                 # 测试域核心
@@ -350,9 +355,7 @@ scripts/
 └── workspace/            # 工作区
 ```
 
-> **v0.4.0 修订**：原 `scripts/hooks/` 子目录已废（7 个孤岛脚本未挂载 settings.json，删除）。v0.4.0 G3 把 `hooks/` 提到**顶层目录**（见 [[CLAUDE.md §3 索引图]]），脚本模板在 `templates/hooks/`，安装入口 `spec/scripts/install-hooks.js`。
->
-> 实际 = 12 子目录（少 `hooks/`）。新增 = 先 12 子目录里挑；都不是 = 走 RFC。
+> 实际 = 13 子目录（无 `scripts/hooks/`，含 `doc-sentinel/`）。新增 = 先 13 子目录里挑；都不是 = 走 RFC。
 
 ### 5.4 workflows/ 直平
 
@@ -374,9 +377,9 @@ spec/
 ├── README.md             # 子系统概览
 └── scripts/
     ├── spec-validate.js  # 机械校验（14 项）
-    ├── spec-cli.js       # SC 状态机 6 态 + meta.json 读写（v0.4.0 落）
-    ├── spec-summary.js   # summary.md 渲染（v0.4.0 落）
-    ├── install-hooks.js  # G3 hook 一键安装（v0.4.0 落）
+    ├── spec-cli.js       # SC 状态机 6 态 + meta.json 读写
+    ├── spec-summary.js   # summary.md 渲染
+    ├── install-hooks.js  # G3 hook 一键安装
     ├── spec-render.js    # ⏳ 规划中（P1 G7）
     └── spec-archive.js   # ⏳ 规划中（P1 G4）
 ```
@@ -440,9 +443,3 @@ templates/
 - 改完同步在 `CLAUDE.md §3 索引图` 标 ✅（如有变更）
 - 新增 skill / command / script 子目录时，本文件 §5 同步加一行
 - 版本随 god 插件版本（`.claude-plugin/plugin.json`）绑升
-
----
-
-## 9. 文档版本
-
-- **v0.1.0** (2026-06-16)：初版。从 git log + 现有目录结构反向提炼，非凭空规定。

@@ -122,7 +122,7 @@
 
 ---
 
-> §5 文件组织、§6 决策树、§7 索引图对照表 → 已迁出到 [[conventions.md §1.1 + §5 + §6 + §7]]（v0.4.1 集中收敛）。
+> §5 文件组织、§6 决策树、§7 索引图对照表 → 已迁出到 [[conventions.md §1.1 + §5 + §6 + §7]]。
 >
 > 本文专注"为什么这样分"（职责边界、跨层规则、禁止事项）。具体"放哪/叫啥/多大"看 conventions.md。
 
@@ -140,10 +140,10 @@
 
 | 防什么 | 机制 | 架构落点 |
 |---|---|---|
-| 绕过 build-spec 改 spec | spec-cli.js 强校验 | L3 `spec/scripts/spec-cli.js`（v0.4.0 落） |
+| 绕过 build-spec 改 spec | spec-cli.js 强校验 | L3 `spec/scripts/spec-cli.js` |
 | 代码 `@spec` 标了 spec 没的 SC | spec-validate.js #9 | L3 `spec/scripts/spec-validate.js` |
-| spec 加 SC 漏写 REQ | spec-cli add --req 强校验 | L3 `spec/scripts/spec-cli.js`（v0.4.0 落） |
-| spec 改了代码没改 | pre-commit hook 跑 spec-validate | L4 `templates/hooks/pre-commit.sh`（v0.4.0 G3 落） + `install-hooks.js` 一键装到项目侧 |
+| spec 加 SC 漏写 REQ | spec-cli add --req 强校验 | L3 `spec/scripts/spec-cli.js` |
+| spec 改了代码没改 | pre-commit hook 跑 spec-validate | L4 `templates/hooks/pre-commit.sh` + `install-hooks.js` 一键装到项目侧 |
 | OPC 评审缺失（机制名沿用 PM）| C5 锚点 | L3 `spec-validate.js` #11 + L1 `commands/prd.md` 阶段 3b |
 
 ---
@@ -163,9 +163,3 @@
 - [ ] CLAUDE.md §9 三问（系统意义 / roadmap / 三条铁律）是否答完？
 
 任一未通过 = PR 不收。
-
----
-
-## 10. 版本
-
-- **v0.1.0** (2026-06-16)：初版，定义 L1-L4 + 中心 + 真相源职责边界、跨层调用、13 条禁令、文件组织、决策树、索引对照。
