@@ -38,6 +38,7 @@ CLAUDE.md §5 把 10 块缺口按性质归并为 4 层。下表是**每块缺口
 | 防护层 | G9 | 4 视角评审 | ⏳ 规划中（P2）| — |
 | 防护层 | G10 | domain.md | ✅ 已落 | `templates/domain.md` |
 | 维护层 | **G14** | **doc-sentinel 后台文档巡检** | **✅ 已落** | **`commands/doc-sentinel.md` + `skills/doc-sentinel/` + `scripts/doc-sentinel/`（9 check + `cron.js` 调度器 + 7 测）** |
+| 归因层 | G18 | S 事件归因 | ✅ 已落 | `sign-gate.js` 写 trace + `measure-opc-cost.js` 5 维归因（RFC-0014）|
 
 **P0 + P1 已全部落地**（G1/G2/G3/G4/G5/G6/G7/G8/G10，9 块）。**维护期 G14 已落**。当前剩余 = P2（1 块：G9 4 视角评审）。
 

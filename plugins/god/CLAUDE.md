@@ -201,6 +201,7 @@ god/
 - **G15**：spec-readiness 7 项清晰度校验（RFC-0013，17 单元测试）
 - **G16**：sign-gate S1/S2/S3 统一签字管理（RFC-0013，18 单元测试）
 - **G17**：dev-gen phase 前置校验（RFC-0013，4 单元测试）
+- **G18**：S 事件归因（RFC-0014，sign-gate 拒签事件写 trace + measure-opc-cost 5 维归因）
 - **总测试**：spec 13 单元测试 175+/175+ + doc-sentinel 7 测试（cron + 6 既有）全过
 
 ---

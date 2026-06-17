@@ -104,8 +104,8 @@ spec/
 | `spec/scripts/god-trends.js` | god spec/scripts/ | 跨 feature 趋势 | god 维护者 | 自我监控 |
 | `spec/scripts/measure-opc-cost.js` | god spec/scripts/ | OPC 介入成本归因 | god 维护者 | `test-pipeline` 阶段 6 出口 |
 | `spec/scripts/install-hooks.js` | god spec/scripts/ | 一键装 hooks | god 维护者 | 项目初始化时 |
-| `spec/scripts/spec-readiness.js` | god spec/scripts/ | 7 项清晰度校验（[RFC-0013](../rfcs/0013-prd-pipeline.md)）| god 维护者 | prd 阶段 2.5 硬挂 |
-| `spec/scripts/sign-gate.js` | god spec/scripts/ | S1/S2/S3 统一签字（[RFC-0013](../rfcs/0013-prd-pipeline.md)）| god 维护者 | 3 个 Gate 必走 |
+| `spec/scripts/spec-readiness.js` | god spec/scripts/ | 7 项清晰度校验（[RFC-0013](rfcs/0013-prd-pipeline.md)）| god 维护者 | prd 阶段 2.5 硬挂 |
+| `spec/scripts/sign-gate.js` | god spec/scripts/ | S1/S2/S3 统一签字（[RFC-0013](rfcs/0013-prd-pipeline.md)）| god 维护者 | 3 个 Gate 必走 |
 
 ---
 

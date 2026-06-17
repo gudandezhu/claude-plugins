@@ -389,8 +389,8 @@ spec/
     ├── spec-cli.js       # SC 状态机 6 态 + meta.json 读写
     ├── spec-summary.js   # summary.md 渲染
     ├── install-hooks.js  # G3 hook 一键安装
-    ├── spec-render.js    # ⏳ 规划中（P1 G7）
-    └── spec-archive.js   # ⏳ 规划中（P1 G4）
+    ├── spec-render.js    # review/<date>.md 渲染（G7）
+    └── spec-archive.js   # 快照 / 回滚 / 列出（G4）
 ```
 
 **scripts/ 全部命名 `spec-*.js`**（子系统名前缀），便于一眼区分于 `scripts/` 域脚本。
