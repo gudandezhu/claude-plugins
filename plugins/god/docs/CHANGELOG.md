@@ -10,6 +10,8 @@ related: [../CLAUDE.md]
 # god 文档 changelog
 
 > CLAUDE.md §10 的详细变更历史。**本文件不重复 CLAUDE.md 摘要**，只展开每版做了什么。
+>
+> **日期说明**：本文件单文件累加，**所有 `## vX.Y.Z` 段括号内日期 = 该文件最后修改日**（不一定是该版本首次 commit 日）。各版本首发 commit 日期以 `git log --diff-filter=A -- <versioned-file>` 为准。
 
 ## v0.7.2 (2026-06-16)
 
