@@ -6,7 +6,7 @@ description: doc-sentinel 后台文档巡检 agent 的方法论决策树。CC Cr
 
 # doc-sentinel
 
-> god 插件**维护期外骨骼**。每 4 小时巡检 god 仓库所有文档健康度，自动修复 + git commit（**不 push**）。
+> god 插件**维护期外骨骼**。每 4 小时巡检 god 仓库所有文档健康度，**自动修复 + git commit（不 push）**。不询问用户、不弹 AskUserQuestion、不等 ack —— cron 调度触发即跑，找什么改什么。
 >
 > 设计依据：[`docs/adrs/0012-doc-sentinel.md`](../../adrs/0012-doc-sentinel.md)（前身 RFC-0012 v0.6.0 合并改名）
 > 入口：[`agents/doc-sentinel/AGENT.md`](../../agents/doc-sentinel/AGENT.md)
@@ -18,11 +18,14 @@ description: doc-sentinel 后台文档巡检 agent 的方法论决策树。CC Cr
 
 - **CC CronCreate 调度**：每 4h 触发 1 次（durable=true）
 - **手动触发**：`cd plugins/god && node scripts/doc-sentinel/check-facade.js .` 看报告
-- **修复模拟**：`node scripts/doc-sentinel/check-frontmatter.js . --fix`（仅 F1 支持 dry-fix）
+- **修复是默认行为**：cron 调度时 agent 读 finding 自动按 §1 决策树 + rules/auto-fix-rules.md 修复并 commit
+- **人工触发 dry-run**：`node scripts/doc-sentinel/check-facade.js . --dry-run`（不 commit，仅看 finding）
 
 ---
 
 ## 1. 决策树（每 finding 一棵树）
+
+**自动闭环原则**：本流程**不弹任何 AskUserQuestion / 不等用户 ack**。cron 触发即跑，找到 finding 就改，规则走 rules/auto-fix-rules.md 决策；改不了（MAJOR / 撞车）的写 runs/.json 让用户事后看，**不阻塞流程**。
 
 ```
 finding 来自 9 类 check 中的 1 类

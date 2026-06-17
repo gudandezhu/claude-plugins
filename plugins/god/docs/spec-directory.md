@@ -1,3 +1,12 @@
+---
+type: spec
+status: stable
+owner: god 架构组
+last_reviewed: 2026-06-16
+update_rule: rfc-required
+related: [../CLAUDE.md, architecture.md, ../spec/SPEC-FORMAT.md]
+---
+
 # spec/ 目录约定
 
 > god 活规格子系统的**目录地图**。
@@ -17,7 +26,7 @@ spec/
 └── summary.md              # OPC 验收 1 页纸（顶层，OPC 看的主产物）
 ```
 
-完整结构（v0.5.0+ G13 落地）：
+完整结构（G13 落地）：
 
 ```
 spec/
@@ -36,7 +45,7 @@ spec/
     └── .archive-index      # 索引行
 ```
 
-**目录分组原则**（v0.5.0+）：
+**目录分组原则**：
 
 | 顶层（OPC 直接看）| 子目录（机器/评审/历史）|
 |---|---|
@@ -102,7 +111,7 @@ spec/
 
 ## 3. spec 生命周期（状态机）
 
-由 `/god:prd` 一条龙编排（[RFC-0013](../rfcs/0013-prd-pipeline.md)），skill 承载方法，sign-gate + validator 守门。
+由 `/god:prd` 一条龙编排（[RFC-0013](rfcs/0013-prd-pipeline.md)），skill 承载方法，sign-gate + validator 守门。
 
 ```
                     /god:prd 一条龙
