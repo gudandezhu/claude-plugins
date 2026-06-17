@@ -4,7 +4,7 @@
  *
  * 检测:
  *   - 含 TODO / FIXME / XXX / TBD / 待补充 / 待填充 / 规划中 的行
- *   - 排除 node_modules/ / bdd-gen/ / test-results/ / __tests__/ / .archive/
+ *   - 排除 node_modules/ / bdd-gen/ / test-results/ / __tests__/ / .archive/ / runs/
  *   - 排除设计意图的 dev-gen / test-gen 桩（spec/scripts/dev-gen.js:104 等）
  *
  * 用法:
@@ -33,7 +33,7 @@ const PATTERNS = [
 
 const EXCLUDE_DIRS = new Set([
   'node_modules', '.git', 'bdd-gen', 'test-results', '__tests__',
-  '.archive', 'dist', 'build', 'coverage',
+  '.archive', 'dist', 'build', 'coverage', 'runs',  // runs/ 是 doc-sentinel 自身历史 JSON 报告，TODO 字段是 schema 字段名
 ]);
 
 // 排除"设计意图 TODO"（dev-gen / test-gen 桩是设计要求保留的）
@@ -42,6 +42,7 @@ const EXCLUDE_FILES = [
   /spec\/scripts\/test-gen\.js$/,
   /docs\/rfcs\/000[7-8]-/,
   /docs\/incidents\//,  // incidents 里 TODO 是事故描述
+  /docs\/doc-sentinel\/runs\//,  // 兜底：JSON 报告历史
 ];
 
 function listFilesDeep(dir) {

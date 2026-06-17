@@ -699,7 +699,7 @@ flowchart TD
 - 闭环：v0.3.0 缺 P0 → v0.4.0 解决
 
 ### G3 hooks 防漂移集成
-- `templates/hooks/pre-commit` 模板 + `scripts/hooks/install.js` 一键安装
+- `templates/hooks/pre-commit` 模板 + `spec/scripts/install-hooks.js` 一键安装
 - F-01 / F-02 / F-06 三个崩点现在 hook 自动挡
 - 闭环：v0.3.0 部分实现 → v0.4.0 完整集成
 

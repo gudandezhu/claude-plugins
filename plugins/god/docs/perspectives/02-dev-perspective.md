@@ -72,7 +72,7 @@ prd 阶段 0 调研清单原貌。读 4 个文件再下结论——别脑补。"
 
 ### Day 2（2026-07-02 周四）— 实现 + 第 1 次 PR 被拒
 
-**09:00 分支** `feat/g10-domain-md`。**09:30 实现** `templates/domain/domain.md`（4 节：术语表/角色/业务流程/反模式 + 变更日志）。**11:00 改** commands/prd.md 阶段 0 调研清单加一行"读 domain.md（若有）"。**11:30 跑** god 自身 spec-validate（14/14 ✓）。
+**09:00 分支** `feat/g10-domain-md`。**09:30 实现** `templates/domain.md`（4 节：术语表/角色/业务流程/反模式 + 变更日志）。**11:00 改** commands/prd.md 阶段 0 调研清单加一行"读 domain.md（若有）"。**11:30 跑** god 自身 spec-validate（14/14 ✓）。
 
 **14:00 提交**：
 
@@ -436,7 +436,7 @@ OPC 视角的'看仓库'路径。
 # god 0.2.0 (2026-07-05) — G10 domain.md
 
 ## 新增 (Features)
-- L4 模板：templates/domain/domain.md（术语表/角色/业务流程/反模式 4 节）
+- L4 模板：templates/domain.md（术语表/角色/业务流程/反模式 4 节）
 - commands/prd.md 阶段 0 调研清单：加"读 domain.md"一行
 - commands/prd.md 阶段 1 M1：上下文拼接 domain.md 全文
 

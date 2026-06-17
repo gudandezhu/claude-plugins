@@ -88,7 +88,7 @@ fi
 
 ### 3.3 --no-verify trace 留痕
 
-`templates/hooks/no-verify-trace.sh`：
+`templates/hooks/post-commit-no-verify.sh`：
 
 ```bash
 #!/bin/bash
