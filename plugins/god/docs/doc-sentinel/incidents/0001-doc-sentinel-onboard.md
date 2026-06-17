@@ -1,8 +1,17 @@
+---
+type: log
+status: stable
+owner: god 维护组
+last_reviewed: 2026-06-16
+update_rule: free
+related: [../../../CLAUDE.md, ../USER-GUIDE.md]
+---
+
 # doc-sentinel 启用 incident
 
 > god 插件 v0.6.0 G14 doc-sentinel 后台文档巡检 agent 启用事故沉淀。
 > 关联 ADR：[`../../adrs/0012-doc-sentinel.md`](../../adrs/0012-doc-sentinel.md)
-> 关联 SKILL：[`../../skills/doc-sentinel/SKILL.md`](../../skills/doc-sentinel/SKILL.md)
+> 关联 SKILL：[`../../../skills/doc-sentinel/SKILL.md`](../../../skills/doc-sentinel/SKILL.md)
 
 ---
 
@@ -12,7 +21,7 @@ god 插件 v0.4.0 P0 全闭环后，文档维护期完全空白：
 
 - 根 `README.md` 仍是骨架版（写"待填充"），实际 v0.5.0+ P0 已闭环
 - `docs/CHANGELOG.md` 5 个版本号全标 `2026-06-16` 同日（git log 真实日期确实同日，但说明版本节奏过快，缺自动同步机制）
-- `docs/adrs/0009-spec-render.md` 和 `docs/adrs/0009-god-self-monitoring.md` 编号撞了两次（违反 conventions §1.8）
+- `docs/adrs/0009-spec-render.md` 和 `docs/adrs/0009-god-self-monitoring.md` 编号撞了两次（违反 conventions §1.8）。内部引用已修正：ADR-0009-god-self-monitoring 现指 RFC-0010 god-trends 为前身。
 - 3 个 demo 中仅 lead-scoring 完整（DASHBOARD/summary/.trace/archive 全配齐），task-tracker / url-shortener 半残
 - 38 个 SKILL.md + 3 个 commands.md 全部无 `status:` frontmatter，草稿/稳定态靠人脑推断
 - 0 个 agent 注册（`agents/` 目录不存在），0 个 auto-doc-sync 类脚本/hook

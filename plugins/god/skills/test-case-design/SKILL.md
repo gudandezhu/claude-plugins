@@ -70,7 +70,7 @@ description: |
 
 # 输出格式（JSON-only + 后处理生成 MD）
 
-案例设计阶段**只输出 JSON 文件**。Markdown 文件由后处理脚本 `scripts/json-to-md.js` 从 JSON 自动生成。
+案例设计阶段**只输出 JSON 文件**。Markdown 文件由后处理脚本 `skills/test-case-design/scripts/json-to-md.js` 从 JSON 自动生成。
 
 | 案例类型 | case-designer 输出 | json-to-md.js 生成 |
 |---------|-------------------|-------------------|
@@ -146,7 +146,7 @@ covers 字段是 AC 覆盖率的唯一数据源，verify-case-coverage.js 从 JS
 
 # 评审打分机制（脚本化）
 
-由 `scripts/review-case-quality.js` 执行，检查结构化指标，禁止 AI 主观判断。
+由 `skills/test-case-design/scripts/review-case-quality.js` 执行，检查结构化指标，禁止 AI 主观判断。
 
 **4 维度正交评分（满分 100）**：
 - 结构完整性（25）：步骤编号 + 前置条件
