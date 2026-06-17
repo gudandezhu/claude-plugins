@@ -26,37 +26,43 @@ spec/
 └── summary.md              # OPC 验收 1 页纸（顶层，OPC 看的主产物）
 ```
 
-完整结构（G13 落地 + 业务域拆分）：
+完整结构（G13 落地 + 业务域拆分 + v0.7.4 知识库）：
 
 ```
-spec/
-├── architecture/            # 架构文档（横切关注点，prd / dev 阶段都维护）
-│   ├── business.md          # 业务架构（业务域切分 + 域职责 + 域关系）
-│   └── tech.md              # 技术架构（服务划分 + API 契约 + DB schema + 通信）
-├── domains/                 # 业务域集合（**1 domain 1 spec.feature**）
-│   ├── D-market-data/
-│   │   ├── sources.md       # 母本（domain 内 REQ）
-│   │   ├── spec.feature     # 真相源（domain 内 SC-001~NNN）
-│   │   └── state/
-│   │       └── meta.json    # domain 级 phase
-│   ├── D-ai-report/
-│   └── ...
-├── tasks/                   # task 追踪（type: domain | sc | cross-cutting）
-│   ├── T-001.json
-│   └── index.json
-├── sources.md               # 母本（项目级 brainstorm + C1-C6 锚点）— 兼容老路径
-├── spec.feature             # 真相源（项目级 Gherkin + @SC-xxx）— 兼容老路径
-├── summary.md               # OPC 验收 1 页纸（G8 自动生成）
-├── state/                   # 状态机数据（机器读，不入 git）
-│   ├── meta.json            # phase / version / gates / owner
-│   └── .trace               # 状态机历史（god-trends 数据源）
-├── review/                  # 评审产物（spec-render 产出）
-│   └── review-YYYY-MM-DD.md  # 含 D1-D4 自评草稿 + 4 维度评分
-├── domain/                  # 领域知识（plan §4.1 B 落地）— 单数 domain 兼容
-│   └── domain.md            # 术语表 / 角色 / 业务流程 / 反模式
-└── .archive/                # 历史快照（spec-archive 产出，git 隐藏目录）
-    └── <timestamp>_v<version>.tar.gz
-    └── .archive-index       # 索引行
+project-root/
+├── spec/                    # 活规格子系统
+│   ├── architecture/        # 架构文档（横切关注点，prd / dev 阶段都维护）
+│   │   ├── business.md      # 业务架构（**派生**，由 arch-summary.js 从 D-XXX/README.md 汇总）
+│   │   └── tech.md          # 技术架构（服务划分 + API 契约 + DB schema + 通信）
+│   ├── domains/             # 业务域集合（**1 domain 1 spec.feature + 1 README**）
+│   │   ├── D-market-data/
+│   │   │   ├── README.md    # 业务域职责（**业务架构真相源**）
+│   │   │   ├── sources.md
+│   │   │   ├── spec.feature
+│   │   │   └── state/
+│   │   │       └── meta.json
+│   │   ├── D-ai-report/
+│   │   └── ...
+│   ├── tasks/               # task 追踪（type: domain | sc | cross-cutting）
+│   │   ├── T-001.json
+│   │   └── index.json
+│   ├── sources.md           # 母本（项目级 brainstorm + C1-C6 锚点）— 兼容老路径
+│   ├── spec.feature         # 真相源（项目级 Gherkin + @SC-xxx）— 兼容老路径
+│   ├── summary.md           # OPC 验收 1 页纸（G8 自动生成）
+│   ├── state/               # 状态机数据
+│   │   ├── meta.json
+│   │   └── .trace
+│   ├── review/              # 评审产物
+│   │   └── review-YYYY-MM-DD.md
+│   └── .archive/            # 历史快照
+└── knowledge/               # 项目知识库（v0.7.4 新增，与 spec/ 平级）
+    ├── INDEX.md             # OPC 唯一入口
+    ├── 00-overview/         # 项目总览
+    ├── 10-domain/           # 业务域知识
+    ├── 20-pattern/          # 设计模式
+    ├── 30-decision/         # ADR 决策记录
+    ├── 40-incident/         # 事故复盘
+    └── 90-trash/            # 失效知识
 ```
 
 **目录分组原则**：
@@ -308,11 +314,16 @@ spec/
 | 项 | 约束 |
 |---|---|
 | `spec/` 目录位置 | 项目根目录的 `spec/`，**不可嵌套** |
+| `knowledge/` 目录位置（v0.7.4）| 项目根 `knowledge/`，与 `spec/` 平级，**不可嵌套** |
 | `sources.md` / `spec.feature` / `summary.md` | 顶层，固定文件名（validator 硬编码） |
 | `state/` 子目录 | 收 `meta.json` + `.trace`（机器数据）|
 | `review/` 子目录 | 收 `review-YYYY-MM-DD.md`（评审产物，日期避免覆盖）|
 | `domain/` 子目录 | 收 `domain.md`（领域知识，prd 阶段 0 加载）|
 | `.archive/` 子目录 | 收 `<ts>_v<ver>.tar.gz` + `.archive-index`（git 隐藏，spec-archive 产出）|
+| `knowledge/INDEX.md` | 知识库唯一入口（v0.7.4），OPC 必读 |
+| `knowledge/10-domain/D-XXX.md` | 业务域知识卡（1 domain 1 文件）|
+| `knowledge/30-decision/ADR-NNN.md` | 决策记录（N = 三位零填充数字）|
+| `knowledge/40-incident/INC-NNN.md` | 事故复盘 |
 | 编码 | UTF-8（中文/英文 Gherkin 均可） |
 | 一个项目几个 spec.feature | 默认 1 个；多 feature 用 `spec/<feature>/spec.feature` 扩展（**预留**，未实现）|
 | 兼容老路径 | 脚本读路径时同时尝试 `state/meta.json` + `meta.json` 等，向后兼容 god 老 demo |

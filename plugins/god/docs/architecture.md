@@ -106,13 +106,16 @@ related: [../CLAUDE.md, conventions.md, spec-directory.md]
 
 ### 阶段 × 架构矩阵
 
-| 阶段 | 读 D-XXX/README | 写 D-XXX/README | 跑 arch-summary | 读 tech.md | 写 tech.md |
-|---|---|---|---|---|---|
-| prd 阶段 1 brainstorm | ✅（看现有域）| ✅（新/改/删域）| ✅（重生成 business.md）| △（约束参考）| ❌ |
-| prd 阶段 2 build-spec | ✅（判 SC 业务域归属）| ❌ | ✅ | △（API 契约对齐）| ❌ |
-| prd 阶段 3 review | ✅（验 SC 业务域归属）| ❌ | ✅ | ❌ | ❌ |
-| dev 阶段 | ❌ | ❌ | ❌ | ✅ | ✅（同步）|
-| test 阶段 | ❌ | ❌ | ❌ | ✅（服务边界）| ❌ |
+| 阶段 | 读 D-XXX/README | 写 D-XXX/README | 跑 arch-summary | 读 tech.md | 写 tech.md | 派 knowledge sub | 派 deploy sub |
+|---|---|---|---|---|---|---|---|
+| prd 阶段 0 自助调研 | ✅ | ❌ | ❌ | △ | ❌ | ✅（knowledge-init 首次）| ❌ |
+| prd 阶段 1 brainstorm | ✅（看现有域）| ✅（新/改/删域）| ✅（重生成 business.md）| △（约束参考）| ❌ | ❌ | ❌ |
+| prd 阶段 2 build-spec | ✅（判 SC 业务域归属）| ❌ | ✅ | △（API 契约对齐）| ❌ | ❌ | ❌ |
+| prd 阶段 3 review | ✅（验 SC 业务域归属）| ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| dev 阶段 | ❌ | ❌ | ❌ | ✅ | ✅（同步）| ❌ | ❌ |
+| test 阶段 | ❌ | ❌ | ❌ | ✅（服务边界）| ❌ | ❌ | ❌ |
+| **deploy 阶段**（v0.7.4）| ❌ | ❌ | ❌ | ✅（服务划分）| ❌ | ❌ | ✅（写 Dockerfile + compose）|
+| **knowledge 阶段**（v0.7.4 SC accepted 后）| ✅（判业务域卡）| ❌ | ❌ | ❌ | ❌ | ✅（knowledge-sync）| ❌ |
 
 ### 业务域拆分规则
 

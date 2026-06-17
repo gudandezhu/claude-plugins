@@ -7,11 +7,11 @@ status: stable
 
 | phase | 加载 |
 |---|---|
-| 无 meta | `prd` |
+| 无 meta | `prd`（阶段 0 派 `knowledge-init` subagent 建 knowledge/）|
 | `drafted` / `reviewed` | `prd` |
 | `implemented` | `dev-pipeline` |
-| `verified` | `sign-gate`（S3）|
-| `accepted` | `prd-edit` |
+| `verified` | `sign-gate`（S3）→ 接受后派 `deploy` subagent（v0.7.4）|
+| `accepted` | `prd-edit`（改需求；前置派 `knowledge-sync` subagent 沉淀知识卡）|
 | 其他 | `sign-gate`（当前阶段 gate）|
 
 `--mode edit` → `prd-edit`。
@@ -35,9 +35,26 @@ status: stable
 - **新业务域 = 新建 `spec/domains/D-XXX/README.md` + spec.feature**（不直接改 business.md）
 - dev 阶段写完代码后**同步更新 tech.md**（架构不漂移）
 
+**知识库契约**（v0.7.4 新增）：
+
+- **位置**：项目根 `knowledge/`（与 `spec/` 平级）
+- **初始化**：prd 阶段 0 派 `knowledge-init` subagent 扫项目建 `knowledge/INDEX.md` + 分类目录
+- **维护**：每个 SC accepted 后派 `knowledge-sync` subagent 自动沉淀知识卡到 `knowledge/<topic>/`
+- **消费**：prd 阶段 0 调研读 `knowledge/` 历史经验；failure-modes 写 `knowledge/incidents/`
+- OPC 查知识库 = 看 `knowledge/INDEX.md`（不直接遍历 `knowledge/`）
+
+**deploy 契约**（v0.7.4 新增）：
+
+- **范围**：**本地 docker compose 即可**（v0.7.4 不涉及 k8s / 云 / GitHub Actions）
+- **阶段**：test 阶段末（`phase: verified` 后）派 `deploy` subagent 写 `Dockerfile` + `docker-compose.yml` + `.env.example`
+- **不入用户仓库的产物**：实际部署的 image / volume（用户手动 `docker compose up`）
+- **CI/CD**：v0.8.0 路线图，v0.7.4 不实现
+- **S4 签**：v0.7.4 不加 S4（deploy 不必签字，OPC 看 `docker compose up` 跑通就 OK）
+
 **子规则**：
 
 - dev / test 启动前必加载 `sign-gate` skill
 - 任何 subagent 不能弹签——subagent 完事必回主 agent，由主 agent 弹签
 - OPC 说"结束会话" → 跑 session-end hook 写 `spec/<phase>-checkpoint.md` 断点
 - 禁止绕过 prd 改 spec.feature
+- 禁止在 v0.7.4 范围外加 deploy 产物（k8s / 云 / CI）

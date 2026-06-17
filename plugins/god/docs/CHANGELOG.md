@@ -13,6 +13,31 @@ related: [../CLAUDE.md]
 >
 > **日期说明**：本文件单文件累加，**所有 `## vX.Y.Z` 段括号内日期 = 该文件最后修改日**（不一定是该版本首次 commit 日）。各版本首发 commit 日期以 `git log --diff-filter=A -- <versioned-file>` 为准。
 
+## v0.7.4 (2026-06-17)
+
+**4 项新能力落地**：知识库 / HTML 测试报告 / 本地 deploy / CI/CD（v0.8.0 路线图）。
+
+- **新 skills**：`skills/deploy/SKILL.md`（本地 docker compose 部署）、`skills/knowledge/SKILL.md`（项目级知识库）
+- **新调用契约**：prd 阶段 0 派 `knowledge-init` subagent 建 knowledge/；SC accepted 后派 `knowledge-sync` subagent 沉淀知识卡；test 阶段 verified 后派 `deploy` subagent 写 Dockerfile + compose
+- **新产物**：`Dockerfile` + `docker-compose.yml` + `.env.example` + `knowledge/INDEX.md` + `knowledge/10-domain/*.md` + `knowledge/30-decision/ADR-*.md`
+- **新 HTML 测试报告**：vitest `--reporter=html`（零成本）
+- **范围明确**：v0.7.4 **不涉及** k8s / 云 / GitHub Actions / 监控告警（v0.8.0 路线图）
+- **改** `commands/prd.md`：路由表加 `verified` → `sign-gate` → `deploy`；加"知识库契约"和"deploy 契约"段
+- **改** `docs/architecture.md` §2.5：阶段 × 架构矩阵加 deploy / knowledge 列
+- **改** `docs/spec-directory.md`：§1 目录树加 `knowledge/`；§8 路径约束加 `knowledge/INDEX.md` 规则
+
+## v0.7.3 (2026-06-17)
+
+**主 agent 编排契约 + 业务域拆分 + 多会话断点落地**。
+
+- **新编排铁律**：主 agent 永远只编排不干具体活（subagent 物理隔离干具体活）
+- **新业务域架构**：`spec/domains/D-XXX/` 目录结构（1 domain 1 spec.feature + 1 README）
+- **业务架构真相源修正**：v0.7.4 后 `D-XXX/README.md` 是真相源，`business.md` 由 `arch-summary.js` 派生
+- **新 sign-gate 选项**：S1/S2/S3 必含"通过 + 结束本会话"——OPC 主动断点
+- **新 session-end hook**：写 `<phase>-checkpoint.md` + 推断下一会话命令
+- **新 test-pipeline skill**（之前缺失）：dev → test 链路补齐
+- **新图**：`docs/architecture-flow.drawio`（4 阶段 × 6 横切）+ `docs/artifact-flow.drawio`（4 阶段 × 3 产物桶）
+
 ## v0.7.2 (2026-06-16)
 
 **doc-sentinel 调度从 SessionStart 钩子 + claude -p 脱机跑改为 CC CronCreate（durable=true）**。
