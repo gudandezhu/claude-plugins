@@ -2,6 +2,55 @@
 
 > CLAUDE.md §10 的详细变更历史。**本文件不重复 CLAUDE.md 摘要**，只展开每版做了什么。
 
+## v0.7.1 (2026-06-16)
+
+**dogfooding: god 自身仓启用 doc-sentinel**。
+
+- **撤销 v0.7.0 "god 自身仓不巡检"决定**。`commands/doc-sentinel.md` 硬规则 #3 删除；`docs/doc-sentinel/USER-GUIDE.md §5.6` 改"自身仓可用"。
+- **自身仓 on**：`/god:doc-sentinel on` 跑通 → `.god/doc-sentinel.json` (enabled=true) + `.claude/settings.json` SessionStart 钩子 + `docs/doc-sentinel/runs/` 三个产物落盘。
+- **零代码改动**：`install.js` 用 `isProjectRoot()` 通判，`package.json` + `.git/` 同时存在即通过。自身仓也是普通项目根。
+- **ADR-0012 §11** 追加 v0.7.1 行（撤销 v0.7.0 决定，理由：dogfooding 价值 > pre-commit 独占巡检的纯粹性）。
+
+## v0.7.0 (2026-06-16)
+
+**doc-sentinel 项目级 on/off 开关 + `claude -p` 脱机跑 + commands 上限 3→4**。
+
+- **第 4 个 command**：`commands/doc-sentinel.md`（on/off/status/review 4 子命令）。conventions §1.2 改 3→4 例外条款。
+- **项目级配置**：`scripts/doc-sentinel/config.js` 读写 `<项目根>/.god/doc-sentinel.json`（git tracked），含 enabled/scope/mode/schedule/checks schema。
+- **SessionStart 钩子**：`scripts/doc-sentinel/install.js` 注册到项目级 `.claude/settings.json`（**不**写 `~/.claude/`），`uninstall.js` 移除（**保留其他钩子**）。
+- **脱机跑**：`scripts/doc-sentinel/run-headless.sh` 调 `claude -p "<巡检 prompt>" --plugin-dir ${CLAUDE_PLUGIN_ROOT}`，**不占主 cc 窗口**，内置 4h 去重。
+- **3 个新脚本**：`config.js` / `install.js` / `uninstall.js` / `status.js` + `run-headless.sh`。
+- **plugin.json v0.7.0** 加 `agents` 字段注册 doc-sentinel。
+- **USER-GUIDE.md** 新增（用户视角使用方式）。
+- **e2e 测试通过**：临时项目 install → status → run-headless → status → uninstall 全流程；settings 合并不覆盖既有钩子；非项目根拒绝。
+
+**关键设计**：
+- god 插件安装 ≠ 自动激活（**默认关闭**）
+- 范围 = 单项目（不污染用户全局 / 不污染其他项目）
+- `claude -p` 脱机跑（独立进程，不抢主 cc）
+- 可关闭（off 删钩子 + 保留 audit config）
+
+## v0.6.0 (2026-06-16)
+
+**G14 doc-sentinel 落地 + ADR-0012 合并 + 维护期机制闭环**。
+
+- **新增 `agents/` 顶层目录**（conventions §1.1 走 RFC-0012 例外条款）
+- **新增 `scripts/doc-sentinel/` 第 13 子目录**（conventions §1.5 走 RFC-0012 例外条款）
+- **9 个 check 脚本**：`scripts/doc-sentinel/check-{facade,version-drift,numbering,demo-trio,frontmatter,stale-todo,path-references,g-state-machine,changelog-dates,self}.js` + `report-format.js`
+- **9 类巡检**：V1 版本漂移 / N1 编号规约 / D1 demo 三件套 / F1 frontmatter / T1 stale TODO / P1 路径引用 / G1 G 状态机 / C1 CHANGELOG 日期 / M1 自检
+- **1 个 agent**：`agents/doc-sentinel/AGENT.md`（CC CronCreate 每 4h 调起）—— **v0.7.0 撤回**：CC 平台无 AGENT.md 加载机制，agent 概念错误
+- **1 个 skill**：`skills/doc-sentinel/SKILL.md` + `rules/auto-fix-rules.md` + `checklists/checklist-categories.md`（决策树 + 9 类 auto-fix 规则）
+- **42 单元测试全过**：6 个 test 文件（check-{version-drift,numbering,frontmatter,path-references,changelog-dates}.test.js + report-format.test.js）
+- **巡检报告入 git**：`docs/doc-sentinel/runs/<ISO>.json` 累计
+- **conventions §1.1 / §1.5 / §5.3** 同步加例外条款
+- **roadmap §1 速览表加 G14 行 + §5 依赖图加节点**
+- **CLAUDE.md §3 索引图加 agents/ + §5 加 G14 + §10 加 v0.6.0**
+- **plugin.json version 0.1.0 → 0.6.0**（MINOR 触发，新顶层目录 + 新子目录）
+- **首跑**：9 类 check 全部跑通，1 ok / 8 warn / 0 fail（详情见 incident 0001）
+
+详细设计：[ADR-0012](adrs/0012-doc-sentinel.md)（前身 RFC-0012 v0.6.0 合并改名）
+启用 incident：[docs/doc-sentinel/incidents/0001-doc-sentinel-onboard.md](doc-sentinel/incidents/0001-doc-sentinel-onboard.md)
+
 ## v0.4.1 (2026-06-16)
 
 **状态同步** —— v0.4.0 落地后，文档与实现错位修复。
