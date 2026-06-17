@@ -20,7 +20,6 @@ related: [../../CLAUDE.md]
 
 ## 1. 背景
 
-god 当前 dev 阶段（[commands/dev.md](../../commands/dev.md) v0.4.0 起接入工具链）AI 仍从零开始写代码。问题：
 - 每个 SC AI 都要"读 spec → 想函数签名 → 写 @spec 标注"重复劳动
 - 改 SC 时 AI 容易漏改或重复标注
 - 实现质量参差（新人 AI agent 不知从哪下手）
@@ -118,7 +117,7 @@ $ node spec/scripts/dev-gen.js <项目目录> --force
 
 - [ ] SC 的函数参数怎么推断？当前简化 = 无参数
 - [ ] 多文件拆分（每 SC 一个文件 vs 单文件多函数）？当前单文件
-- [ ] 是否集成到 `commands/dev.md` 阶段 1 自动跑？当前手动
+- [ ] 是否集成到 `skills/dev-pipeline/SKILL.md` 阶段 1 自动跑？当前手动
 
 ## 7. 时间线
 

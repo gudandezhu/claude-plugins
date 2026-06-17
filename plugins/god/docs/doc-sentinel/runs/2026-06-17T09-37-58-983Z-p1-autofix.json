@@ -1,0 +1,19 @@
+{
+  "total": 16,
+  "fixed": 13,
+  "skipped": 3,
+  "byFile": {
+    ".claude/sandbox/subagent-task.md": 1,
+    "docs/CHANGELOG.md": 1,
+    "docs/conventions.md": 1,
+    "docs/doc-sentinel/incidents/0001-doc-sentinel-onboard.md": 1,
+    "docs/perspectives/01-ops-runbook.md": 1,
+    "docs/perspectives/02-dev-perspective.md": 1,
+    "docs/perspectives/03-architect-perspective.md": 2,
+    "docs/rfcs/0007-dev-gen.md": 1,
+    "docs/rfcs/0013-prd-pipeline.md": 2,
+    "templates/task/task-detail-backend.md": 1,
+    "templates/task/task-detail-frontend.md": 1
+  },
+  "timestamp": "2026-06-17T09:37:58.984Z"
+}

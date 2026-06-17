@@ -1,0 +1,300 @@
+{
+  "timestamp": "2026-06-17T09:58:25.697Z",
+  "duration_ms": 482,
+  "checks": [
+    {
+      "id": "V1",
+      "name": "版本漂移",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 178
+    },
+    {
+      "id": "N1",
+      "name": "编号规约",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 1
+    },
+    {
+      "id": "D1",
+      "name": "demo 三件套",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 0
+    },
+    {
+      "id": "F1",
+      "name": "frontmatter status",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 2
+    },
+    {
+      "id": "T1",
+      "name": "stale TODO",
+      "status": "warn",
+      "findings": [
+        {
+          "file": "skills/docs/SKILL.md",
+          "issue": "20 个 TODO/占位符（首例 L58: 2. **业务域自包含**——`context/domain/D-XXX/` 是该域的\"档案夹\"（README + context + incident））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/spec-directory.md",
+          "issue": "18 个 TODO/占位符（首例 L62: │   │   ├── business.md      # 业务架构（**派生**，由 arch-summary.js 从 D-XXX/README.md 汇）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/03-architect-perspective.md",
+          "issue": "16 个 TODO/占位符（首例 L49: > **时间精度**：到小时。**主角**：OPC = 小范。**god 输出**：每个事件标 `[已实现]` / `[规划中 G#]`，区分真假。）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/architecture.md",
+          "issue": "15 个 TODO/占位符（首例 L66: > 各 D-XXX 的 README.md 写本域职责。`spec/architecture/business.md` 由 AI **自动汇总**生成（不手写））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/doc-sentinel/incidents/0001-doc-sentinel-onboard.md",
+          "issue": "14 个 TODO/占位符（首例 L22: - 根 `README.md` 仍是骨架版（写\"待填充\"），实际 v0.5.0+ P0 已闭环）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-stale-todo.js",
+          "issue": "12 个 TODO/占位符（首例 L3: * check-stale-todo.js — T1 stale TODO / 占位符检查）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/01-ops-runbook.md",
+          "issue": "11 个 TODO/占位符（首例 L30: > **本文件不实现 god，只是把 god 当成\"已经装好但还缺 G1/G8 几块\"的样子来用**。未实现的能力会在文中明确标 `[规划中]`，并指出 OPC）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/doc-sentinel/rules/auto-fix-rules.md",
+          "issue": "10 个 TODO/占位符（首例 L79: 4. 跳过骨架文件（含\"当前为骨架/待填充\"关键词））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/CHANGELOG.md",
+          "issue": "7 个 TODO/占位符（首例 L20: - **业务项目目录扩义为 `context/`**（替代旧 `knowledge/` 方案）：`context/README.md` 总览 + `contex）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/failure-modes.md",
+          "issue": "6 个 TODO/占位符（首例 L240: - 或：archive 机制未实现（roadmap 规划中），想对比\"上周版本\"找不到）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/spec-readiness.js",
+          "issue": "5 个 TODO/占位符（首例 L19: *   硬 3: GWT 无 TBD        (spec.feature 无 TBD|待定|...|等等)）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0008-test-gen.md",
+          "issue": "4 个 TODO/占位符（首例 L33: | 用例名 | `SC-XXX: <name>` 严格格式（spec-validate #8 必填） |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/build-spec/SKILL.md",
+          "issue": "4 个 TODO/占位符（首例 L24: 1. 读 `spec/architecture/business.md`（**业务域切分**——决定 spec.feature 拆到哪个 D-XXX））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/prd/SKILL.md",
+          "issue": "4 个 TODO/占位符（首例 L33: | 1 | brainstorm | `brainstorm` subagent | spec/sources.md 草稿 | 读 business.md (新）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/spec-readiness.test.js",
+          "issue": "4 个 TODO/占位符（首例 L114: // ---------- 7. 硬失败 3: GWT 含 TBD ----------）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/02-dev-perspective.md",
+          "issue": "3 个 TODO/占位符（首例 L146: **15:00 新开 PR #43** `fix/g10-ci-fixture`：L7 fixture 改用 node + grep 验 4 节存在性，注释 `）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/dev-pipeline/SKILL.md",
+          "issue": "3 个 TODO/占位符（首例 L36: # 读 spec/domains/D-XXX/spec.feature → 写 src/D-XXX/<feature>.{js,ts}）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/doc-sentinel/checklists/checklist-categories.md",
+          "issue": "3 个 TODO/占位符（首例 L15: | **T1** | stale TODO | 含 TODO/FIXME/待填充/规划中 | 半 | 低 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "commands/prd.md",
+          "issue": "2 个 TODO/占位符（首例 L20: **路径约定**:业务项目用 `context/feature/`(活规格)+ `context/domain/D-XXX/`(业务域);god 自身保留 `s）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0012-doc-sentinel.md",
+          "issue": "2 个 TODO/占位符（首例 L25: - **根 `README.md`** 仍写\"当前为骨架 / 功能待填充\"（实测 v0.5.0+ P0 全闭环），与现状严重漂移）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0013-prd-pipeline.md",
+          "issue": "2 个 TODO/占位符（首例 L153: | 3 | GWT 无 TBD | regex 扫 `TBD\\|待定\\|...\\|等等` 在 spec.feature | 0 命中 | 硬 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/doc-sentinel/USER-GUIDE.md",
+          "issue": "2 个 TODO/占位符（首例 L139: # 关闭 T1 stale TODO（设计意图误判多））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/rfcs/0013-prd-pipeline.md",
+          "issue": "2 个 TODO/占位符（首例 L152: | 3 | GWT 无 TBD | regex 扫 `TBD\\|待定\\|...\\|等等` 在 spec.feature | 0 命中 | 硬 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/roadmap.md",
+          "issue": "2 个 TODO/占位符（首例 L20: - **状态约定**：✅ 已落 / ⏳ 规划中 / ❓ 搁置；G1-G17 是历史编号（按落地顺序）非优先级序号）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-facade.js",
+          "issue": "2 个 TODO/占位符（首例 L29: { id: 'T1', name: 'stale TODO', mod: './check-stale-todo' },）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-version-drift.js",
+          "issue": "2 个 TODO/占位符（首例 L75: return /当前为骨架|待填充|功能待填充/.test(content);）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/dev-gen.test.js",
+          "issue": "2 个 TODO/占位符（首例 L187: test('generateSkeleton: 函数体含 TODO + GWT', () => {）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "README.md",
+          "issue": "1 个 TODO/占位符（首例 L68: - **9 类 check**：V1 版本漂移 / N1 编号规约 / D1 demo 三件套 / F1 frontmatter / T1 stale TODO）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0007-dev-gen.md",
+          "issue": "1 个 TODO/占位符（首例 L33: | 函数体 | 空 + `// TODO: implement SC-NNN — <name>` + GWT 注释 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/conventions.md",
+          "issue": "1 个 TODO/占位符（首例 L427: 3. `references/` 例外（容许长篇）但需在头部加 `<!-- LONG: XXX 行，导航见 §X -->`）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/plan.md",
+          "issue": "1 个 TODO/占位符（首例 L62: **9 类巡检**：V1 版本漂移 / N1 编号规约 / D1 demo 三件套 / F1 frontmatter / T1 stale TODO / P1 ）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-frontmatter.js",
+          "issue": "1 个 TODO/占位符（首例 L56: return /当前为骨架|待填充|功能待填充|TODO\\s*[:：]\\s*实现/.test(content);）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-frontmatter.test.js",
+          "issue": "1 个 TODO/占位符（首例 L68: '---\\nname: foo\\n---\\n# 当前为骨架，待填充');）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-version-drift.test.js",
+          "issue": "1 个 TODO/占位符（首例 L81: fs.writeFileSync(path.join(d, 'README.md'), '当前为骨架，功能待填充。');）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deploy/SKILL.md",
+          "issue": "1 个 TODO/占位符（首例 L32: | 业务架构 | `context/domain/D-XXX/README.md` |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/doc-sentinel/SKILL.md",
+          "issue": "1 个 TODO/占位符（首例 L67: | T1 stale TODO | **半** | 上下文清晰是；设计意图（dev-gen 桩）跳过 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/eval-loop/references/rubric-spec-review.md",
+          "issue": "1 个 TODO/占位符（首例 L53: - \"调用 XXX 方法\"类表述 → -2/处）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        }
+      ],
+      "duration_ms": 16
+    },
+    {
+      "id": "P1",
+      "name": "路径引用",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 6
+    },
+    {
+      "id": "G1",
+      "name": "G 状态机",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 2
+    },
+    {
+      "id": "C1",
+      "name": "CHANGELOG 日期",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 272
+    },
+    {
+      "id": "M1",
+      "name": "自检",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 2
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "ok": 8,
+    "warn": 1,
+    "fail": 0,
+    "skip": 0,
+    "auto_fixed_count": 0
+  }
+}

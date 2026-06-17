@@ -55,10 +55,10 @@ test('findDuplicates: 多撞车', () => {
   assertEqual(findDuplicates(items).length, 1);
 });
 
-test('check: 真实 god 仓库检测 0009 撞车', () => {
+test('check: 真实 god 仓库无编号撞车', () => {
   const result = check('.');
-  const f = result.findings.find(x => x.issue.includes('0009 撞车'));
-  assertTrue(f, '应报 0009 撞车');
+  // v0.7.4 大扫除:0009-spec-render 改 0015,0009 不撞了
+  assertEqual(result.findings.length, 0, '清理后 0 编号撞车');
 });
 
 test('check: 3 位编号残留', () => {

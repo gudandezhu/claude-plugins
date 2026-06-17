@@ -24,7 +24,7 @@ god 插件 G1-G13/D5 全部聚焦**开发期**（prd→dev→test 闭环）：sp
 
 - **根 `README.md`** 仍写"当前为骨架 / 功能待填充"（实测 v0.5.0+ P0 全闭环），与现状严重漂移
 - **`docs/CHANGELOG.md`** 4 个版本号（v0.1.0 / v0.2.0 / v0.3.0 / v0.4.1）全标 `2026-06-16` 同日，但 git log 显示真实 commit 日期分散在 6/14 ~ 6/16 3 天
-- **`docs/adrs/0009-spec-render.md` + `docs/adrs/0009-god-self-monitoring.md`** — 编号撞了两次（违反 conventions §1.8）。内部引用已通过 ADR-0009-god-self-monitoring 改指 RFC-0010 god-trends 修正。
+- **`docs/adrs/0009-spec-render.md` + `docs/adrs/0009-god-self-monitoring.md`** — 编号撞了两次（违反 conventions §1.8）。`spec-render.md` 改 0015。
 - **3 个 demo 中 2 个半残**：仅 `lead-scoring` 完整（DASHBOARD.md / spec/summary.md / spec/state/.trace / spec/.archive/ 全配齐），`task-tracker` / `url-shortener` 缺 DASHBOARD.md 等
 - **0 个 frontmatter status**：38 个 `SKILL.md` + 3 个 `commands/*.md` 全部无 `status:` 字段，草稿/稳定态靠人脑推断
 - **`plugin.json` version 0.1.0** ↔ **`docs/CHANGELOG.md` 最新 v0.4.1** — 漂移 4 个 MINOR 跳
@@ -279,7 +279,7 @@ plugins/god/
 
 ## 8. 开放问题
 
-- [ ] 是否在 `commands/dev.md` 加 "跑 doc-sentinel dry-run" 入口？当前仅 cron 触发
+- [ ] 是否在 `skills/dev-pipeline/SKILL.md` 加 "跑 doc-sentinel dry-run" 入口？当前仅 cron 触发
 - [ ] 是否把 doc-sentinel 巡检报告暴露到 `docs/doc-sentinel/README.md` 顶部 dashboard？当前 runs/ 是 raw JSON
 - [ ] 是否集成到 pre-commit hook（如跑 dry-run 报错则 fail）？当前仅 cron + report
 

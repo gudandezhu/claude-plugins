@@ -12,7 +12,7 @@ related: [../../CLAUDE.md]
 > **状态**：✅ 已接受（v0.4.0 P1 实现已落）
 > **替代**：[`RFC-0005`](../rfcs/0005-opc-cost-tiered.md) + `CLAUDE.md §1.3` 硬阈值版
 > **决议日**：2026-07-13
-> **影响范围**：`CLAUDE.md §1.3` / `spec/scripts/measure-opc-cost.js` / `spec/scripts/measure-opc-cost.test.js` / `spec/TESTING.md L1-D` / `commands/test.md §5`
+> **影响范围**：`CLAUDE.md §1.3` / `spec/scripts/measure-opc-cost.js` / `spec/scripts/measure-opc-cost.test.js` / `spec/TESTING.md L1-D` / `skills/test-pipeline/SKILL.md §5`
 
 ---
 

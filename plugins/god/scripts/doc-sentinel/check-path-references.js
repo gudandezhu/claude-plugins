@@ -58,7 +58,7 @@ function extractMdRefs(content) {
 
 function extractCodePaths(content) {
   // 匹配 scripts/xxx.js, spec/scripts/xxx.js, templates/xxx.sh, etc.
-  const re = /(?<![\w/])(scripts\/[a-zA-Z0-9_/-]+\.(?:js|sh)|spec\/scripts\/[a-zA-Z0-9_/-]+\.js|templates\/[a-zA-Z0-9_/-]+\.(?:sh|md|json)|hooks\/[a-zA-Z0-9_/-]+\.sh)/g;
+  const re = /(?<![\w/])(scripts\/[a-zA-Z0-9_/-]+\.(?:js|sh)|spec\/scripts\/[a-zA-Z0-9_/-]+\.js|templates\/[a-zA-Z0-9_/-]+\.(?:sh|md|json)|hooks\/[a-zA-Z0-9_/-]+\.sh|commands\/[a-zA-Z0-9_-]+\.md)/g;
   const refs = [];
   let m;
   while ((m = re.exec(content)) !== null) refs.push(m[1]);

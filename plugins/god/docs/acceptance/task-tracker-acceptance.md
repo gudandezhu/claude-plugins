@@ -186,7 +186,7 @@ related: [../../CLAUDE.md, ../../commands/prd.md]
   - `init-spec-dir.js`（一次性建好 4 子目录 + 2 placeholder + .gitkeep）—— prd 阶段 0 必跑
   - `spec-lint.js`（白名单守门，5 类违规全报错）—— prd 阶段 3a + dev 阶段 0 必跑
   - `commands/prd.md` § 阶段 0/3a 加这 2 个命令
-  - `commands/dev.md` § 阶段 0 加 spec-lint
+  - `skills/dev-pipeline/SKILL.md` § 阶段 0 加 spec-lint
   - 删 `demo/lead-scoring/spec/sources-lead-tag.md` 残留
 - **回归验证**：11 单元测试 150/150（init-spec-dir 5 + spec-lint 8 + 既有 137）+ 2 demo 端到端通过 + 2 demo spec-lint 通过
 

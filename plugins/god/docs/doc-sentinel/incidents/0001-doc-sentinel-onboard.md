@@ -143,7 +143,6 @@ for f in scripts/doc-sentinel/*.test.js; do node "$f"; done
 ### 5.2 ✅ Phase 7（v0.7.0 落地）— 已完成
 
 - [x] 项目级 on/off 开关：`commands/doc-sentinel.md`（4 子命令）+ `scripts/doc-sentinel/{config,install,uninstall,status}.js`
-- [x] `claude -p` 脱机跑：`scripts/doc-sentinel/run-headless.sh`（不占主 cc 窗口）
 - [x] SessionStart 钩子注册到项目级 `.claude/settings.json`（**不**写 `~/.claude/`）
 - [x] e2e 测试：临时项目 install/status/run-headless/uninstall 全流程通过
 - [x] USER-GUIDE.md 新增

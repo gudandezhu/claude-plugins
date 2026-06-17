@@ -7,7 +7,7 @@ update_rule: rfc-required
 related: [../../CLAUDE.md]
 ---
 
-# ADR-0009: spec-render G7 落地（plan.md §4 B'）
+# ADR-0015: spec-render G7 落地（plan.md §4 B'）
 
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
 > **替代**：[`RFC-0009`](../rfcs/0009-spec-render.md)

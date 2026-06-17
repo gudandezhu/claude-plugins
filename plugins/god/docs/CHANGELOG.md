@@ -15,21 +15,22 @@ related: [../CLAUDE.md]
 
 ## v0.7.4 (2026-06-17)
 
-**4 项新能力落地**：业务项目 `context/` 知识库 / HTML 测试报告 / 本地 deploy / CI/CD（v0.8.0 路线图）。
+**3 项新能力落地**：业务项目 `context/` 知识库 / 本地 deploy / CI/CD（v0.8.0 路线图）。
 
-- **业务项目目录扩义为 `context/`**（替代旧 `knowledge/` 方案）：`context/README.md` 总览 + `context/feature/` 活规格（强校验）+ `context/domain/D-XXX/`（README + context + incident 三件套）+ `context/{adr,pattern,incident}/` 跨域平铺
+- **业务项目目录扩义为 `context/`**（新建 `skills/docs/SKILL.md` + 删 `skills/knowledge/SKILL.md`）：`context/README.md` 总览 + `context/feature/` 活规格（强校验）+ `context/domain/D-XXX/`（README + context + incident 三件套）+ `context/{adr,pattern,incident}/` 跨域平铺
 - **命名澄清**：业务项目用 `context/`（= 项目上下文）；god 自身保留 `spec/`（= 活规格子系统名）—— **目录名只是壳**
 - **新 skills**：`skills/docs/SKILL.md`（业务项目 `context/` 自动整理 + 维护）、`skills/deploy/SKILL.md`（本地 docker compose 部署）
 - **新调用契约**：prd 阶段 0 派 `docs-init` subagent 建 `context/`（无 `context/README.md` 时触发）；SC accepted 后派 `docs-sync` subagent 沉淀到 `context/domain/D-XXX/` 或 `context/{adr,pattern,incident}/`；test 阶段 `verified` 后派 `deploy` subagent 写 `Dockerfile` + `docker-compose.yml` + `.env.example`
 - **新产物**：`Dockerfile`（多阶段构建）+ `docker-compose.yml`（服务 + 网络 + volume）+ `.env.example`（占位环境变量）+ `context/README.md` + `context/domain/D-XXX/{README,context,incident}.md` + `context/adr/ADR-NNN-*.md` + `context/incident/INC-NNN-*.md`
-- **强校验边界**：`context/feature/*.feature` 强校验（spec-validate 14 项） + `context/domain/D-XXX/README.md` 强校验（必填字段）；其他弱
+- **强校验边界（约定）**：`context/feature/*.feature` 强校验（spec-validate 14 项）+ `context/domain/D-XXX/README.md` 强校验（必填字段）。**v0.7.4 仅口头约定，对应 L3 脚本（`context-lint.js`）v0.8.0 落地**。
 - **决策类 ADR 必 OPC 显式确认**才写（避免 AI 替 OPC 决策）
-- **新 HTML 测试报告**：vitest `--reporter=html`（零成本）
 - **范围明确**：v0.7.4 **不涉及** k8s / 云 / GitHub Actions / 监控告警 / 全文检索 / 知识图谱（v0.8.0 路线图）
 - **不弹 S4 签**：deploy 完成后主 agent 跑回显（产物列表 + OPC 手动 `docker compose up` 步骤）
 - **改** `commands/prd.md`：路由表加 `verified` → `sign-gate` → `deploy`；加"知识库契约"和"deploy 契约"段
-- **改** `docs/architecture.md` §2.5：阶段 × 架构矩阵加 deploy / docs 列（重命名 knowledge → docs）
+- **改** `docs/architecture.md` §2.5：阶段 × 架构矩阵加 deploy / docs 列
 - **改** `docs/spec-directory.md` §1 + §8：`context/` 扩义说明（业务项目用 / god 自身保留 `spec/`）+ 路径约束表重写
+
+**v0.7.4 不含 HTML 测试报告**——v0.7.4 旧 CHANGELOG 曾宣称"vitest --reporter=html（零成本）"，但实际未实施。**HTML 报告 = v0.8.0 路线图**（test-pipeline skill 加 vitest 配置 + HTML 产物落点规则）。
 
 ## v0.7.3 (2026-06-17)
 

@@ -183,7 +183,14 @@ Feature: x
 
 // ---------- CLI 测试 ----------
 const CLI = path.join(__dirname, 'spec-render.js');
-const DEMO = path.join(__dirname, '..', '..', 'demo', 'lead-scoring');
+// v0.7.x demo/lead-scoring 已收缩成 demo/_template(单 demo 占位)。
+// 测试用 tmpdir 临时建一个 fake lead-scoring demo,跑完清理。
+const TMP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'god-spec-render-'));
+const DEMO = path.join(TMP, 'lead-scoring');
+fs.mkdirSync(path.join(DEMO, 'spec'), { recursive: true });
+fs.writeFileSync(path.join(DEMO, 'spec', 'spec.feature'), '@spec-version 0.4.0\nFeature: Lead Scoring\n');
+fs.writeFileSync(path.join(DEMO, 'spec', 'sources.md'), '# sources\n');
+fs.writeFileSync(path.join(DEMO, 'spec', 'summary.md'), '# Lead Scoring summary\n');
 
 function runCli(args) {
   try {
@@ -242,5 +249,8 @@ console.log('  ✓ CLI: 默认拒绝覆盖');
 // 清理 demo 里的 review/（不入仓）
 const reviewDir = path.join(DEMO, 'spec', 'review');
 if (fs.existsSync(reviewDir)) fs.rmSync(reviewDir, { recursive: true, force: true });
+
+// 清理 tmpdir
+if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
 
 console.log('\n✅ 全部通过');

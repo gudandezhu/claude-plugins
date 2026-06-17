@@ -12,13 +12,13 @@ related: [../../CLAUDE.md]
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
 > **替代**：[`RFC-0007`](../rfcs/0007-dev-gen.md)
 > **决议日**：2026-07-13
-> **影响范围**：`spec/scripts/dev-gen.js` / `spec/scripts/dev-gen.test.js` / `commands/dev.md` 阶段 1
+> **影响范围**：`spec/scripts/dev-gen.js` / `spec/scripts/dev-gen.test.js` / `skills/dev-pipeline` 阶段 1
 
 ---
 
 ## 1. 上下文
 
-god v0.4.0 dev 阶段（[commands/dev.md](../../commands/dev.md)）接入工具链但 AI 仍从零写代码。plan.md §4 Week 2 B 决定实现 G5 dev-gen 出确定性骨架，AI 在骨架上改而非从零写。
+god v0.4.0 dev 阶段接入工具链但 AI 仍从零写代码。plan.md §4 Week 2 B 决定实现 G5 dev-gen 出确定性骨架，AI 在骨架上改而非从零写。
 
 ## 2. 决策
 

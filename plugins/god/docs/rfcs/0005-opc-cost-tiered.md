@@ -81,7 +81,7 @@ $ node spec/scripts/measure-opc-cost.js <项目目录> --json
 - [ ] `node spec/scripts/measure-opc-cost.js demo/lead-scoring` 输出 5 维归因
 - [ ] L0/L1/L2 3 档判断正确（用 fixture 测试）
 - [ ] `--json` 输出可被验收报告脚本解析
-- [ ] 接入 `commands/test.md` S1 出口自动跑
+- [ ] 接入 `skills/test-pipeline/SKILL.md` S1 出口自动跑
 - [ ] 3 份 perspectives 引用新规约（v0.4.0 文档轮次同步）
 
 ## 5. 反模式（明确不做）

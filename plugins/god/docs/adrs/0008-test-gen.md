@@ -12,7 +12,7 @@ related: [../../CLAUDE.md]
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
 > **替代**：[`RFC-0008`](../rfcs/0008-test-gen.md)
 > **决议日**：2026-07-13
-> **影响范围**：`spec/scripts/test-gen.js` / `spec/scripts/test-gen.test.js` / `commands/test.md` 阶段 2
+> **影响范围**：`spec/scripts/test-gen.js` / `spec/scripts/test-gen.test.js` / `skills/test-pipeline/SKILL.md` 阶段 2
 
 ---
 

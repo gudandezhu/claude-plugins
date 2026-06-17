@@ -185,7 +185,7 @@ reviewer subagent 返回报告后,主 agent 按下表分流:
 - **C5 Spec 评审** (YYYY-MM-DD HH:MM / 未跑 / 免责确认:{用户原话或短摘要})
 ```
 
-**这条锚点的强制消费方**:`/god:dev` 阶段会**读 C5 锚点**,无 C5 → 报错(见 `commands/dev.md`)。  
+**这条锚点的强制消费方**:`/god:dev` 阶段会**读 C5 锚点**,无 C5 → 报错(见 `skills/dev-pipeline/SKILL.md`)。  
 **意义**:spec 历史上任一版本必带 C5 行,不存在"完全没跑过 spec-review"的黑洞。
 
 ## 与 zcode requirement-review 的差异

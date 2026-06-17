@@ -381,7 +381,7 @@ related: [../CLAUDE.md, plan.md]
 | §2.3 C3 | `skills/brainstorm/SKILL.md` §"疑问点清单（C3 跟踪机制）" |
 | §2.4 C4 | `skills/brainstorm/SKILL.md` §"C4 Gate: 总流程" |
 | §2.5 P1 | `skills/spec-review/SKILL.md` §"阶段 3 / 阶段 4" |
-| §2.6 S1 | `commands/test.md` 阶段 3-4 |
+| §2.6 S1 | `skills/test-pipeline/SKILL.md` 阶段 3-4 |
 | §4 介入形式 | `commands/prd.md` 阶段 1（"check 形式"）|
 | §5 决策边界 | `skills/brainstorm/SKILL.md` §"对用户友好原则" + §"Termination condition" |
 | §6 反模式 | `skills/spec-review/SKILL.md` §"禁止" + `commands/prd.md` 阶段 3b"未结案项" |

@@ -1,6 +1,6 @@
 {
   "name": "god",
-  "version": "0.7.2",
+  "version": "0.7.4",
   "description": "活规格驱动的需求→实现→测试闭环系统。规格是唯一真相源，代码/测试是派生产出，三者通过 Scenario ID 强绑定。设计源头见 CLAUDE.md。v0.7.2+ doc-sentinel 调度从 SessionStart+claude -p 改为 CC CronCreate（durable=true，注入当前 session 队列），不依赖任何 hook（commands/doc-sentinel.md 4 子命令 + skills/doc-sentinel/ 方法论 + scripts/doc-sentinel/ 9 check + cron.js 调度器；项目级 on/off 开关，默认关闭）。",
   "author": {
     "name": "fan"

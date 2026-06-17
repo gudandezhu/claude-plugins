@@ -194,7 +194,7 @@ reviewer 在 sources.md 写 C5 锚点：
 
 #### 09:00 — 启动 /god:dev
 
-`commands/dev.md` 加载：
+`skills/dev-pipeline/SKILL.md` 加载：
 - 读 `spec/spec.feature`（AI 自主）
 - 跑 `spec-validate.js` 阶段 3a 校验门禁（已过）
 - AI 派 dev subagent 实现每个 SC，标注 `@spec SC-xxx`
@@ -282,7 +282,7 @@ dev subagent 重跑：改 SC-002 的 ×0.7 → ×0.8 逻辑；加 SC-007 21 天�
 
 #### 09:00 — 启动 /god:test
 
-`commands/test.md` 加载：
+`skills/test-pipeline/SKILL.md` 加载：
 - 读 spec（AI 自主）
 - AI 派 test subagent 写 `tests/lead-scoring.spec.ts`，命名 `SC-xxx: 场景标题`
 - 跑 playwright
@@ -477,9 +477,7 @@ grep -A 3 "@SC-002" spec/spec.feature
 `/god:test` 阶段 4 自动触发 deploy 钩子（`[规划中]` G3 hooks）——目前是手动的：
 
 ```bash
-# scripts/deploy/lead-scoring.sh
 # (AI 写好的部署脚本，OPC 跑一次)
-./scripts/deploy/lead-scoring.sh
 ```
 
 > 上线成功。god 写了一条 `docs/incidents/2026-07-05-s1-reject.md` 记录这次翻脸 + 修复过程。
@@ -918,7 +916,7 @@ flowchart TD
 
 | 本文件章节 | 引用的 god 文档 |
 |---|---|
-| §1 D1 5 天时间线 | `commands/prd.md` / `commands/dev.md` / `commands/test.md`（L1 编排）|
+| §1 D1 5 天时间线 | `commands/prd.md` / `skills/dev-pipeline/SKILL.md` / `skills/test-pipeline/SKILL.md`（L1 编排）|
 | §1 D1 F-02 修复 | `docs/failure-modes.md` §2.2 F-02 / `spec/SPEC-FORMAT.md` §3.2（SC ID 规则）|
 | §1 D1 S1 翻脸 | `docs/human-ai-contract.md` §2.6 S1 验收 |
 | §1 D1 6 介入点 | `docs/human-ai-contract.md` §1 6 个必介入点速查表 |

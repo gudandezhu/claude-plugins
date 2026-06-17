@@ -47,9 +47,10 @@ test('extractCodePaths: 提取 scripts/ 路径', () => {
   assertEqual(refs.sort(), ['scripts/foo.js', 'spec/scripts/bar.js']);
 });
 
-test('check: 真实 god 仓库检测失效路径', () => {
+test('check: 真实 god 仓库无失效路径', () => {
+  // v0.7.4 大扫除:auto-fix 13 个 P1 + sed 批量改 12 个,0 残留
   const result = check('.');
-  assertTrue(result.findings.length > 0, '应报 ≥1 个失效路径');
+  assertEqual(result.findings.length, 0, '清理后 0 失效路径');
 });
 
 test('check: 全部路径有效无 finding', () => {

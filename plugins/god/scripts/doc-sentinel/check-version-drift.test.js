@@ -85,7 +85,10 @@ test('check: README 骨架被识别', () => {
   assertTrue(f, '应报 README 骨架');
 });
 
-test('check: 多版本同日被识别', () => {
+test('check: 多版本同日 + 无 git → 0 finding(同日不算 bug,需 git log 校验)', () => {
+  // v0.7.4 V1 改造:同日不再硬报,用 git log 校验 CHANGELOG 标日 vs 真实 commit 日
+  // 真同日集中发版(>2 个版本同日)不是 bug;只有"标新日但 commit 旧日"才是
+  // mock tmpdir 不在 git repo → git log 抛错 → 跳过,0 finding
   const repo = makeTmpRepo((d) => {
     fs.mkdirSync(path.join(d, 'docs'), { recursive: true });
     fs.writeFileSync(path.join(d, 'docs', 'CHANGELOG.md'),
@@ -93,7 +96,7 @@ test('check: 多版本同日被识别', () => {
   });
   const result = check(repo);
   const f = result.findings.find(x => x.issue.includes('同日'));
-  assertTrue(f, '应报同日');
+  assertTrue(!f, '真同日不再报,需 git log 校验');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

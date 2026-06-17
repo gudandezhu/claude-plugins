@@ -95,7 +95,7 @@ $ node spec/scripts/spec-summary.js check [project]
 - `spec/scripts/spec-summary.test.js`（单元测试，~150 行）
 - `templates/spec-summary/v0.1.0.md`（1 页纸模板）
 - `commands/prd.md` 阶段 2.5 加载 spec-summary
-- `commands/test.md` S1 出口加载 spec-summary check
+- `skills/test-pipeline/SKILL.md` S1 出口加载 spec-summary check
 
 ## 4. 验收
 

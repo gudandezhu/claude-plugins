@@ -12,7 +12,7 @@ related: [../../CLAUDE.md]
 > **状态**：✅ 已接受（v0.4.0+ 实现已落）
 > **替代 RFC**：[`RFC-0010 god-trends`](../rfcs/0010-god-trends.md)
 > **决议日**：2026-07-13
-> **影响范围**：`spec/scripts/god-trends.js` / `demo/lead-scoring/DASHBOARD.md` / `commands/test.md` S1 出口
+> **影响范围**：`spec/scripts/god-trends.js` / `demo/lead-scoring/DASHBOARD.md` / `skills/test-pipeline/SKILL.md` S1 出口
 
 ---
 
@@ -30,7 +30,7 @@ related: [../../CLAUDE.md]
 | 输出维度 | feature 数 / OPC 介入时长 avg/median/min/max / L 档分布 / NO-VERIFY + ROLLBACK 累计 / 最近 3 feature 趋势 |
 | 趋势判断 | 最近 3 feature 的 L 档严格升/降 → 趋势报告 |
 | L3 触发 | 同一 feature 含 ≥ 2 次 NO-VERIFY + ROLLBACK → 升级 L3（系统失败信号）|
-| 接入 | `commands/test.md` S1 出口自动跑（验收报告附录）|
+| 接入 | `skills/test-pipeline/SKILL.md` S1 出口自动跑（验收报告附录）|
 | Demo | `demo/lead-scoring/DASHBOARD.md` OPC 视角仪表盘 |
 
 ## 3. 后果

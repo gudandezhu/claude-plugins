@@ -12,7 +12,7 @@ related: [../../CLAUDE.md]
 > **状态**：✅ 已接受（v0.4.0 P0 实现已落）
 > **替代**：[`RFC-0001`](../rfcs/0001-spec-cli-state-machine.md) + [`RFC-0002`](../rfcs/0002-spec-summary.md)（G8 协同）
 > **决议日**：2026-07-13
-> **影响范围**：`spec/scripts/spec-cli.js` / `spec/scripts/spec-cli.test.js` / `spec/TESTING.md L1-B` / `commands/test.md §5`
+> **影响范围**：`spec/scripts/spec-cli.js` / `spec/scripts/spec-cli.test.js` / `spec/TESTING.md L1-B` / `skills/test-pipeline/SKILL.md §5`
 
 ---
 
@@ -42,7 +42,7 @@ god v0.3.0 已把 G1（spec-cli 状态机）+ G2（meta.json）列为 P0（[road
 - ✅ `spec/scripts/spec-cli.js`（~280 行，含 status/advance/rollback/check/init 5 子命令）
 - ✅ `spec/scripts/spec-cli.test.js`（20 测试全过）
 - ✅ `spec/TESTING.md L1-B` 状态机单元测试段
-- ✅ `commands/test.md §5` S1 出口自动跑 advance 到 accepted
+- ✅ `skills/test-pipeline/SKILL.md §5` S1 出口自动跑 advance 到 accepted
 
 ### 3.2 G8 协同（已纳入）
 

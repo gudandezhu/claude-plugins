@@ -423,7 +423,6 @@ templates/
 | `commands/<cmd>.md` | **300 行** | 抽 SKILL | `prd.md` 120 行 |
 
 **超限处理流程**：
-1. 实测已知超限：`scripts/lib/task-cli.js`（约 600 行）→ 整改拆 `task-cli/`
 2. 任何 commit 导致文件超限 → PR 必含拆分 commit
 3. `references/` 例外（容许长篇）但需在头部加 `<!-- LONG: XXX 行，导航见 §X -->`
 

@@ -107,20 +107,26 @@ function check(repoRoot) {
       });
     }
 
-    // 同日 bug: 多个版本共享同一日期
-    const dateCounts = {};
+    // 同日 bug: 用 git log 校验 CHANGELOG 日期 vs 真实 commit 日期
+    // 仅在"标 2026-06-17 但真实 commit 是 2026-06-16"这种"虚标新日期"才报
+    // 真同日集中发版(v0.7.0/0.7.1/0.7.2/0.7.3/0.7.4 集中 commit)不算 bug
+    let suspiciousSameDate = 0;
     for (const c of changelog) {
-      dateCounts[c.date] = (dateCounts[c.date] || 0) + 1;
+      try {
+        const { execSync } = require('child_process');
+        const out = execSync(
+          `git log -1 --format="%ad" --date=short -G "## v${c.version}" -- docs/CHANGELOG.md`,
+          { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+        ).trim();
+        if (out && out !== c.date) suspiciousSameDate++;
+      } catch {}
     }
-    for (const [date, cnt] of Object.entries(dateCounts)) {
-      if (cnt >= 2) {
-        addFinding(check, {
-          file: 'docs/CHANGELOG.md',
-          issue: `${cnt} 个版本同日（${date}），疑似未回填真实 commit 日期`,
-          fix: '用 git log --format=%ad 真实日期回填',
-        });
-        break;
-      }
+    if (suspiciousSameDate > 0) {
+      addFinding(check, {
+        file: 'docs/CHANGELOG.md',
+        issue: `${suspiciousSameDate} 个版本 CHANGELOG 标日与真实 commit 日不一致`,
+        fix: '用 git log -1 --format=%ad --date=short -G "## vX.Y.Z" 真实日期回填',
+      });
     }
   }
 

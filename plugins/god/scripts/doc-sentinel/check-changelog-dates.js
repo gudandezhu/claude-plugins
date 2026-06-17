@@ -26,16 +26,16 @@ function readFileSafe(p) {
 }
 
 function gitLog(repoRoot, file, version) {
-  // 找该文件含此版本号的首次 commit
+  // 找该版本号首次在 CHANGELOG.md 中出现的 commit（不依赖 diff-filter=A）
   try {
     const out = execSync(
-      `git log --format="%ad|%H" --date=short --diff-filter=A -- "${file}"`,
+      `git log --format="%ad|%H" -G "## v${version}" --date=short -- "${file}"`,
       { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
     );
-    // 取最早一行
-    const lines = out.trim().split('\n').filter(Boolean).reverse();
+    const lines = out.trim().split('\n').filter(Boolean);
     if (lines.length === 0) return null;
-    const [date, hash] = lines[0].split('|');
+    // 取最后一行(最旧一次出现 = 首次引入)
+    const [date, hash] = lines[lines.length - 1].split('|');
     return { date, hash };
   } catch {
     return null;

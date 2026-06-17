@@ -174,7 +174,6 @@ fan 加段：
 
 **10:00 PR #42 LGTM + squash merge**。
 
-**11:00 小李开 PR #44** "feat(docs): domain.md 自动同步到 docs/overview.md"——加 scripts/hooks/domain-sync-detector.js + 改 hooks 配置。
 
 **11:30 架构师（fan 自己）拒稿**——4 条理由：
 

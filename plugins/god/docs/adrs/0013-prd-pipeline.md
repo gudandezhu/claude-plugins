@@ -14,7 +14,7 @@ related: [../../CLAUDE.md]
 > **前身 RFC**：[`docs/rfcs/0013-prd-pipeline.md`](../rfcs/0013-prd-pipeline.md)
 > **关联 3 视角**：[`01-ops-runbook.md §2 D1`](../perspectives/01-ops-runbook.md) / [`02-dev-perspective.md §4-5`](../perspectives/02-dev-perspective.md) / [`03-architect-perspective.md §3`](../perspectives/03-architect-perspective.md)
 > **关联 roadmap**：[`docs/roadmap.md` §3 G15 / G16 / G17](../roadmap.md)
-> **替代**：[`commands/prd.md`](../../commands/prd.md) 167 行 SOP + [`commands/dev.md`](../../commands/dev.md) + [`commands/test.md`](../../commands/test.md) + [`docs/human-ai-contract.md`](../human-ai-contract.md) 6 介入点
+> **替代**：[`commands/prd.md`](../../commands/prd.md) 167 行 SOP + [`skills/dev-pipeline/SKILL.md`](../../skills/dev-pipeline/SKILL.md) + [`skills/test-pipeline/SKILL.md`](../../skills/test-pipeline/SKILL.md) + [`docs/human-ai-contract.md`](../human-ai-contract.md) 6 介入点
 
 ---
 
@@ -61,7 +61,7 @@ CLAUDE.md §1.1 第 3 条核心目标：
 | 2 | 命令层 = 路由表，不含 SOP | 4 关键词 grep："加载" / "跑" / "用" / "如果" — dev/test command 文件中每个 ≤ 1 次 |
 | 3 | 清晰度可机器测 | `spec-readiness.js` 6 项硬指标 + 1 项软指标；不通过则 dev-pipeline 启动 exit 1 |
 | 4 | 3 个签字 Gate | S1（prd→dev 中间）/ S2（dev→test 中间）/ S3（test→accepted 中间）；每个 = 1 次 AskUserQuestion |
-| 5 | dev/test 命令取消 | `commands/dev.md` + `commands/test.md` 删除；逻辑迁�� `skills/dev-pipeline` + `skills/test-pipeline` |
+| 5 | dev/test 命令取消 | `skills/dev-pipeline/SKILL.md` + `skills/test-pipeline/SKILL.md` 删除；逻辑迁至 `skills/dev-pipeline` + `skills/test-pipeline` |
 | 6 | 拒签自动回退 | S1 拒绝 → 自动回 prd 阶段 1/2；S2 拒绝 → 自动回 prd（spec 错）/ dev（实现错）；S3 拒绝 → 自动回 dev |
 | 7 | 三道闸防绕过 | 命令层（决策树）/ 脚本层（spec-cli phase 前置校验）/ hook 层（pre-commit spec-validate）|
 
@@ -217,8 +217,8 @@ $ node sign-gate.js <项目目录> --gate S3 --verdict accept
 | `brainstorm` | 已有，瘦身 | 100 | M1/M2/M3 + 4 Gate（C1/C2/C3/C4 改内部，不暴露给 OPC）|
 | `build-spec` | 已有，瘦身 | 100 | sources.md → spec.feature 翻译 + 双向绑定 |
 | `user-perspective-analyzer` | 已有 | 100 | 角色视角分析（prd 阶段 1 中段加载）|
-| `dev-pipeline` | 由 commands/dev.md 转 | 100 | 读 spec → 写代码 + @spec 标注 + 自检 + S2 |
-| `test-pipeline` | 由 commands/test.md 转 | 100 | 读 spec → 写测试 + 跑测试 + S3 |
+| `dev-pipeline` | 取代历史 `skills/dev-pipeline/SKILL.md` | 100 | 读 spec → 写代码 + @spec 标注 + 自检 + S2 |
+| `test-pipeline` | 取代历史 `skills/test-pipeline/SKILL.md` | 100 | 读 spec → 写测试 + 跑测试 + S3 |
 | `sign-gate` | 新建 | 80 | S1/S2/S3 统一封装（含 AskUserQuestion 选项模板）|
 | `ask-user` | 新建 | 60 | AskUserQuestion 封装（避免 AI 自己在命令层拼选项）|
 
@@ -302,8 +302,8 @@ S1 签字
 
 - [ ] `commands/prd.md` ≤ 30 行（路由型��
 - [ ] `commands/doc-sentinel.md` ≤ 30 行（路由型）
-- [ ] `commands/dev.md` 已删
-- [ ] `commands/test.md` 已删
+- [ ] `skills/dev-pipeline/SKILL.md` 已删（历史命令）
+- [ ] `skills/test-pipeline/SKILL.md` 已删（历史命令）
 - [ ] 命令层 grep 检查：`grep -c "加载" commands/prd.md` ≤ 5（只允许路由表里的"加载"）
 
 ### 4.2 脚本层验收
@@ -344,7 +344,7 @@ S1 签字
 ### 5.1 向后兼容
 
 - 旧 demo（lead-scoring 等）`spec/state/meta.json` 不动——`spec-cli.js` 双路径兼容已落
-- `commands/dev.md` / `commands/test.md` 删除前先确认无 demo 引用
+- 历史 `skills/dev-pipeline/SKILL.md` / `skills/test-pipeline/SKILL.md` 删除前先确认无 demo 引用
 - 旧 prd 4 gate（C1/C2/C3/C4）逻辑下沉到 prd skill 内部，OPC 体验不变
 
 ### 5.2 迁移路径
@@ -395,6 +395,6 @@ v0.8.0（正式发布）
 
 - **Week 1**（2026-06-17 ~ 06-23）：RFC 评审 + 9 skill 拆分 / 新建
 - **Week 2**（2026-06-24 ~ 06-30）：spec-readiness.js + sign-gate.js 实现 + 单元测试
-- **Week 3**（2026-07-01 ~ 07-07）：spec-cli.js 加 phase 前置校验 + commands/prd.md 重写 + commands/dev.md + commands/test.md 删除
+- **Week 3**（2026-07-01 ~ 07-07）：spec-cli.js 加 phase 前置校验 + commands/prd.md 重写 + 历史 skills/dev-pipeline/SKILL.md + skills/test-pipeline/SKILL.md 删除
 - **Week 4**（2026-07-08 ~ 07-14）：文档同步（CLAUDE.md / human-ai-contract.md / spec-directory.md / failure-modes.md）+ RFC 转 ADR
 - **Week 5**（2026-07-15 ~ 07-21）：demo/lead-scoring 完整跑通 + 全量回归

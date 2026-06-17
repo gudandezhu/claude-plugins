@@ -39,8 +39,14 @@ CLAUDE.md §5 把 10 块缺口按性质归并为 4 层。下表是**每块缺口
 | 防护层 | G10 | domain.md | ✅ 已落 | `templates/domain.md` |
 | 维护层 | **G14** | **doc-sentinel 后台文档巡检** | **✅ 已落** | **`commands/doc-sentinel.md` + `skills/doc-sentinel/` + `scripts/doc-sentinel/`（9 check + `cron.js` 调度器 + 7 测）** |
 | 归因层 | G18 | S 事件归因 | ✅ 已落 | `sign-gate.js` 写 trace + `measure-opc-cost.js` 5 维归因（RFC-0014）|
+| 知识层 | G11 | incidents→ADR 沉淀 | ✅ 已落 | `templates/incident.md` + `docs/incidents/` + `docs/adrs/0011` |
+| 架构层 | G13 | spec/ 子目录分层 | ✅ 已落 | `spec/scripts/` 13 工具双路径兼容 |
+| 架构层 | G13.1 | spec/ 结构固化 | ✅ 已落 | `init-spec-dir.js` 5 测 + `spec-lint.js` 8 测 |
+| 编排层 | G15 | spec-readiness 清晰度校验 | ✅ 已落 | `spec/scripts/spec-readiness.js` 17 测（RFC-0013）|
+| 编排层 | G16 | sign-gate S1/S2/S3 统一签字 | ✅ 已落 | `spec/scripts/sign-gate.js` 18 测（RFC-0013）|
+| 编排层 | G17 | dev-gen phase 前置校验 | ✅ 已落 | `spec/scripts/dev-gen.js` 4 测（RFC-0013）|
 
-**P0 + P1 已全部落地**（G1/G2/G3/G4/G5/G6/G7/G8/G10，9 块）。**维护期 G14 已落**。当前剩余 = P2（1 块：G9 4 视角评审）。
+**P0 + P1 已全部落地**（G1/G2/G3/G4/G5/G6/G7/G8/G10，9 块）。**维护期 G14 + 编排层 G15/G16/G17 已落**。当前剩余 = P2（1 块：G9 4 视角评审）。
 
 > G3 用 `templates/hooks/` 模板 + `install-hooks.js` 一键安装形态实现。
 

@@ -161,7 +161,7 @@ $ node spec/scripts/god-trends.js <项目目录> --json
 
 ## 6. 开放问题
 
-- [ ] 是否集成到 `commands/test.md` S1 出口自动跑？当前手动
+- [ ] 是否集成到 `skills/test-pipeline/SKILL.md` S1 出口自动跑？当前手动
 - [ ] 是否加 dashboard（web 视图）？当前只看 stdout + JSON
 - [ ] trace 格式破坏（人工改 .trace）如何防？当前不防（trace 是机器产物）
 

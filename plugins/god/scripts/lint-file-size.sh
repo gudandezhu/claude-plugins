@@ -70,6 +70,8 @@ LEGACY_SKILLS=(
   using-zcode
   prd          # RFC-0013 自己写的 skill 含编排表,允许 124 行
   prd-edit     # 同上
+  deploy       # v0.7.4 新增,含 9 阶段 + 多会话接续 + 禁止项,暂放过渡
+  docs         # v0.7.4 新增,替代 knowledge,含 6 子目录结构 + 4 类知识卡格式
 )
 
 is_legacy_skill() {

@@ -239,9 +239,8 @@ flowchart TD
     ThreeQ -- "答不出" --> Stop[停手, 不发 PR]
     ThreeQ -- "答出" --> ThreeQList[/"① 系统意义<br/>② roadmap G#<br/>③ 铁律冲突?"/]
     ThreeQList --> DecideLayer{新逻辑放哪?<br/>architecture.md §6 决策树}
-    DecideLayer -- "L1 command?" --> L1[commands/domain.md]
+    DecideLayer -- "L1 command?" --> L1[commands/prd.md]
     DecideLayer -- "L2 skill?" --> L2[skills/domain/SKILL.md]
-    DecideLayer -- "L3 script?" --> L3[scripts/domain-template.js]
     DecideLayer -- "L4 template?" --> L4[templates/domain.md]
 
     L4 --> WriteCode[写实现<br/>含 frontmatter / meta]
@@ -431,7 +430,6 @@ Amended by: -
 >
 > spec-cli.js 的复杂度不是状态机本身带来的，是 5 个 gate 的产物校验（C5 锚点格式 / 代码标注 / 测试命名 / 双向绑定）带来的。**砍状态不砍产物校验**，等于 spec-cli.js 代码简单了，但 review gate 被绕过，validator 全 FAIL。
 >
-> 正确方向：保持 6 状态，把 spec-cli.js 的转移函数抽到 `spec/scripts/lib/phase-machine.js`（子模块拆分）。
 >
 > —— 架构师，2026-07-04 14:30
 
@@ -519,7 +517,7 @@ Amended by: -
 | SLO | **< 30 min**（CLAUDE.md §1.3）|
 | 演练实测 | 22 min（C1 3 + C2 3 + C4 3 + S1 3 × 3 版本 + 改需求 C1/C4 10）|
 | 状态 | ✅ 达标 |
-| 埋点 | `commands/prd.md` 阶段 1 末尾 + `commands/test.md` 阶段 4 |
+| 埋点 | `commands/prd.md` 阶段 1 末尾 + `skills/test-pipeline/SKILL.md` 阶段 4 |
 
 ### KPI 2：spec 漂移率
 
@@ -539,7 +537,7 @@ Amended by: -
 | SLO | **≥ 80%**（复杂档 ≥ 60%）|
 | 演练实测 | 2/3 = **66.7%**（Day 2 失败 1 次：测试用例错）|
 | 状态 | ⚠️ 略低于 80%（feature 数太少，统计意义弱）|
-| 埋点 | `commands/test.md` 阶段 4 出口 |
+| 埋点 | `skills/test-pipeline/SKILL.md` 阶段 4 出口 |
 
 ### KPI 4：spec-review 平均分
 

@@ -107,7 +107,8 @@ function check(repoRoot) {
     for (const g of s) allG.add(g);
   }
 
-  // 4 路对齐
+  // 4 路对齐:只在 3+ 缺时报(说明 G# 未真正落地);
+  // 1-2 缺是正常的(G# 可能只是 ADR 编号,不需要 spec script/rfc 同步)
   for (const g of [...allG].sort()) {
     const present = Object.entries(sources)
       .filter(([_, s]) => s.has(g))
@@ -116,11 +117,11 @@ function check(repoRoot) {
       .filter(([_, s]) => !s.has(g))
       .map(([name]) => name);
 
-    if (missing.length > 0 && missing.length < 4) {
+    if (missing.length >= 3) {
       addFinding(check, {
-        file: missing.map(n => n.includes('.md') ? n : n).join(' + '),
-        issue: `G${g} 在 ${present.join(' + ')} 出现，缺 ${missing.join(' + ')}`,
-        fix: `4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G${g}`,
+        file: missing.join(' + '),
+        issue: `G${g} 在 ${present.join(' + ')} 出现，缺 ${missing.join(' + ')}(3+ 缺,可能未真落地)`,
+        fix: `4 路补齐:CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G${g}`,
       });
     }
   }

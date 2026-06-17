@@ -12,7 +12,7 @@ related: [../../CLAUDE.md]
 > **状态**：✅ 已接受（v0.4.0 P0）
 > **替代**：[`RFC-0001 §3.1`](../rfcs/0001-spec-cli-state-machine.md)
 > **决议日**：2026-07-01
-> **影响范围**：`docs/spec-directory.md §3` / `commands/prd.md` / `commands/dev.md` / `commands/test.md` / `spec/SPEC-FORMAT.md` / `spec/scripts/spec-cli.js`
+> **影响范围**：`docs/spec-directory.md §3` / `commands/prd.md` / `skills/dev-pipeline/SKILL.md` / `skills/test-pipeline/SKILL.md` / `spec/SPEC-FORMAT.md` / `spec/scripts/spec-cli.js`
 
 ---
 
