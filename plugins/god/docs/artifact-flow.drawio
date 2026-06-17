@@ -17,43 +17,43 @@
           <mxGeometry x="40" y="120" width="160" height="900" as="geometry" />
         </mxCell>
 
-        <mxCell id="col_prd" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1F2937;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+        <mxCell id="col_prd" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#9CA3AF;strokeWidth=1;" vertex="1" parent="1">
           <mxGeometry x="220" y="110" width="480" height="900" as="geometry" />
         </mxCell>
-        <mxCell id="col_prd_title" value="① prd 阶段" style="text;html=1;strokeColor=none;fillColor=#1F2937;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="col_prd_title" value="① prd 阶段" style="text;html=1;strokeColor=none;fillColor=#1E3A8A;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="220" y="110" width="480" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="col_prd_sub" value="idea → spec.feature（脑 → 纸）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#D1D5DB;" vertex="1" parent="1">
+        <mxCell id="col_prd_sub" value="idea → spec.feature（脑 → 纸）" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="220" y="150" width="480" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="col_ui" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#374151;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+        <mxCell id="col_ui" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#9CA3AF;strokeWidth=1;" vertex="1" parent="1">
           <mxGeometry x="710" y="110" width="480" height="900" as="geometry" />
         </mxCell>
-        <mxCell id="col_ui_title" value="② ui 阶段" style="text;html=1;strokeColor=none;fillColor=#374151;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="col_ui_title" value="② ui 阶段" style="text;html=1;strokeColor=none;fillColor=#1E3A8A;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="710" y="110" width="480" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="col_ui_sub" value="spec → .pen + 交互契约（纸 → 形）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#D1D5DB;" vertex="1" parent="1">
+        <mxCell id="col_ui_sub" value="spec → .pen + 交互契约（纸 → 形）" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="710" y="150" width="480" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="col_dev" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#4B5563;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+        <mxCell id="col_dev" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#9CA3AF;strokeWidth=1;" vertex="1" parent="1">
           <mxGeometry x="1200" y="110" width="480" height="900" as="geometry" />
         </mxCell>
-        <mxCell id="col_dev_title" value="③ dev 阶段" style="text;html=1;strokeColor=none;fillColor=#4B5563;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="col_dev_title" value="③ dev 阶段" style="text;html=1;strokeColor=none;fillColor=#1E3A8A;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="1200" y="110" width="480" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="col_dev_sub" value="spec + ui → src/D-XXX/*（纸 → 码）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#D1D5DB;" vertex="1" parent="1">
+        <mxCell id="col_dev_sub" value="spec + ui → src/D-XXX/*（纸 → 码）" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="1200" y="150" width="480" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="col_test" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#6B7280;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+        <mxCell id="col_test" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#9CA3AF;strokeWidth=1;" vertex="1" parent="1">
           <mxGeometry x="1690" y="110" width="480" height="900" as="geometry" />
         </mxCell>
-        <mxCell id="col_test_title" value="④ test 阶段" style="text;html=1;strokeColor=none;fillColor=#6B7280;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="col_test_title" value="④ test 阶段" style="text;html=1;strokeColor=none;fillColor=#1E3A8A;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="1690" y="110" width="480" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="col_test_sub" value="src + spec → tests/D-XXX/*（码 → 验）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#D1D5DB;" vertex="1" parent="1">
+        <mxCell id="col_test_sub" value="src + spec → tests/D-XXX/*（码 → 验）" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="1690" y="150" width="480" height="20" as="geometry" />
         </mxCell>
 
