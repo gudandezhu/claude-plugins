@@ -1,0 +1,646 @@
+{
+  "timestamp": "2026-06-17T09:07:07.915Z",
+  "duration_ms": 406,
+  "checks": [
+    {
+      "id": "V1",
+      "name": "版本漂移",
+      "status": "warn",
+      "findings": [
+        {
+          "file": "docs/CHANGELOG.md",
+          "issue": "9 个版本同日（2026-06-16），疑似未回填真实 commit 日期",
+          "fix": "用 git log --format=%ad 真实日期回填",
+          "auto_fixed": false
+        }
+      ],
+      "duration_ms": 1
+    },
+    {
+      "id": "N1",
+      "name": "编号规约",
+      "status": "warn",
+      "findings": [
+        {
+          "file": "docs/adrs/",
+          "issue": "编号 0009 撞车（2 个文件）：0009-god-self-monitoring.md, 0009-spec-render.md",
+          "fix": "人工 RFC：保留 1 个，其余改号或合并",
+          "auto_fixed": false
+        }
+      ],
+      "duration_ms": 0
+    },
+    {
+      "id": "D1",
+      "name": "demo 三件套",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 0
+    },
+    {
+      "id": "F1",
+      "name": "frontmatter status",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 18
+    },
+    {
+      "id": "T1",
+      "name": "stale TODO",
+      "status": "warn",
+      "findings": [
+        {
+          "file": "docs/perspectives/03-architect-perspective.md",
+          "issue": "16 个 TODO/占位符（首例 L49: > **时间精度**：到小时。**主角**：OPC = 小范。**god 输出**：每个事件标 `[已实现]` / `[规划中 G#]`，区分真假。）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/doc-sentinel/incidents/0001-doc-sentinel-onboard.md",
+          "issue": "14 个 TODO/占位符（首例 L22: - 根 `README.md` 仍是骨架版（写\"待填充\"），实际 v0.5.0+ P0 已闭环）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/test-design/gen-skeleton.js",
+          "issue": "14 个 TODO/占位符（首例 L1144: `<!-- TODO: 补充异常/边界案例 -->`,）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-stale-todo.js",
+          "issue": "12 个 TODO/占位符（首例 L3: * check-stale-todo.js — T1 stale TODO / 占位符检查）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/01-ops-runbook.md",
+          "issue": "11 个 TODO/占位符（首例 L30: > **本文件不实现 god，只是把 god 当成\"已经装好但还缺 G1/G8 几块\"的样子来用**。未实现的能力会在文中明确标 `[规划中]`，并指出 OPC）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/doc-sentinel/rules/auto-fix-rules.md",
+          "issue": "10 个 TODO/占位符（首例 L79: 4. 跳过骨架文件（含\"当前为骨架/待填充\"关键词））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/pencil/references/prototype-self-test-guide.md",
+          "issue": "7 个 TODO/占位符（首例 L50: | 5.1 XXX列表 | 列表页 | 列表页 | bZ3bj | ✅ 已实现 | — |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/failure-modes.md",
+          "issue": "6 个 TODO/占位符（首例 L240: - 或：archive 机制未实现（roadmap 规划中），想对比\"上周版本\"找不到）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/architecture.md",
+          "issue": "5 个 TODO/占位符（首例 L70: | 物理落地 | 目录结构 `spec/domains/D-XXX/`（**1 domain 1 spec.feature**）|）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/spec-readiness.js",
+          "issue": "5 个 TODO/占位符（首例 L19: *   硬 3: GWT 无 TBD        (spec.feature 无 TBD|待定|...|等等)）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0008-test-gen.md",
+          "issue": "4 个 TODO/占位符（首例 L33: | 用例名 | `SC-XXX: <name>` 严格格式（spec-validate #8 必填） |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/spec-directory.md",
+          "issue": "4 个 TODO/占位符（首例 L176: - 6 硬指标：未决项归零 / REQ 全有 SC / GWT 无 TBD / user-perspectives / summary.md 合规 / C5 锚）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/build-spec/SKILL.md",
+          "issue": "4 个 TODO/占位符（首例 L24: 1. 读 `spec/architecture/business.md`（**业务域切分**——决定 spec.feature 拆到哪个 D-XXX））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/dev-pipeline/SKILL.md",
+          "issue": "4 个 TODO/占位符（首例 L44: # 读 spec/domains/D-XXX/spec.feature → 写 src/D-XXX/<feature>.{js,ts}）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/prd/SKILL.md",
+          "issue": "4 个 TODO/占位符（首例 L33: | 1 | brainstorm | `brainstorm` subagent | spec/sources.md 草稿 | 读 business.md (新）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/product-mgr/types/elmo.md",
+          "issue": "4 个 TODO/占位符（首例 L11: > 填充方式：在各\"待填充\"章节补充与通用 PRD 的差异即可。）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/spec-readiness.test.js",
+          "issue": "4 个 TODO/占位符（首例 L114: // ---------- 7. 硬失败 3: GWT 含 TBD ----------）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/02-dev-perspective.md",
+          "issue": "3 个 TODO/占位符（首例 L146: **15:00 新开 PR #43** `fix/g10-ci-fixture`：L7 fixture 改用 node + grep 验 4 节存在性，注释 `）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/test-design/generate-ac-matrix.js",
+          "issue": "3 个 TODO/占位符（首例 L69: // 按用例块解析（### FE-XXX / ### API-XXX / ### FLOW-XXX））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/doc-sentinel/checklists/checklist-categories.md",
+          "issue": "3 个 TODO/占位符（首例 L15: | **T1** | stale TODO | 含 TODO/FIXME/待填充/规划中 | 半 | 低 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0012-doc-sentinel.md",
+          "issue": "2 个 TODO/占位符（首例 L25: - **根 `README.md`** 仍写\"当前为骨架 / 功能待填充\"（实测 v0.5.0+ P0 全闭环），与现状严重漂移）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0013-prd-pipeline.md",
+          "issue": "2 个 TODO/占位符（首例 L153: | 3 | GWT 无 TBD | regex 扫 `TBD\\|待定\\|...\\|等等` 在 spec.feature | 0 命中 | 硬 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/doc-sentinel/USER-GUIDE.md",
+          "issue": "2 个 TODO/占位符（首例 L139: # 关闭 T1 stale TODO（设计意图误判多））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/rfcs/0013-prd-pipeline.md",
+          "issue": "2 个 TODO/占位符（首例 L153: | 3 | GWT 无 TBD | regex 扫 `TBD\\|待定\\|...\\|等等` 在 spec.feature | 0 命中 | 硬 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/roadmap.md",
+          "issue": "2 个 TODO/占位符（首例 L20: - **状态约定**：✅ 已落 / ⏳ 规划中 / ❓ 搁置；G1-G17 是历史编号（按落地顺序）非优先级序号）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-facade.js",
+          "issue": "2 个 TODO/占位符（首例 L29: { id: 'T1', name: 'stale TODO', mod: './check-stale-todo' },）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-version-drift.js",
+          "issue": "2 个 TODO/占位符（首例 L75: return /当前为骨架|待填充|功能待填充/.test(content);）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/lib/tc-id-extractor.js",
+          "issue": "2 个 TODO/占位符（首例 L37: // 模式 1: ### FE-XXX-001: 描述）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/workspace/merge-proposal.js",
+          "issue": "2 个 TODO/占位符（首例 L11: * 提案格式（feature-tree-proposal/REQ-XXX.md）：）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/test-case-design/prompts/case-designer.md",
+          "issue": "2 个 TODO/占位符（首例 L26: **格式统一要求**：同一文件内必须统一使用一种格式。修正时沿用文件已有的格式——如果原文件使用纯文本 `覆盖AC: AC-XXX`，保持纯文本；如果原文件使用）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/dev-gen.test.js",
+          "issue": "2 个 TODO/占位符（首例 L187: test('generateSkeleton: 函数体含 TODO + GWT', () => {）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "README.md",
+          "issue": "1 个 TODO/占位符（首例 L68: - **9 类 check**：V1 版本漂移 / N1 编号规约 / D1 demo 三件套 / F1 frontmatter / T1 stale TODO）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "commands/prd.md",
+          "issue": "1 个 TODO/占位符（首例 L34: - 业务域用目录结构 `spec/domains/D-XXX/` 表示（**1 domain 1 spec.feature**））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/CHANGELOG.md",
+          "issue": "1 个 TODO/占位符（首例 L72: - **9 类巡检**：V1 版本漂移 / N1 编号规约 / D1 demo 三件套 / F1 frontmatter / T1 stale TODO / P）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0007-dev-gen.md",
+          "issue": "1 个 TODO/占位符（首例 L33: | 函数体 | 空 + `// TODO: implement SC-NNN — <name>` + GWT 注释 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/conventions.md",
+          "issue": "1 个 TODO/占位符（首例 L428: 3. `references/` 例外（容许长篇）但需在头部加 `<!-- LONG: XXX 行，导航见 §X -->`）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/plan.md",
+          "issue": "1 个 TODO/占位符（首例 L62: **9 类巡检**：V1 版本漂移 / N1 编号规约 / D1 demo 三件套 / F1 frontmatter / T1 stale TODO / P1 ）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-frontmatter.js",
+          "issue": "1 个 TODO/占位符（首例 L56: return /当前为骨架|待填充|功能待填充|TODO\\s*[:：]\\s*实现/.test(content);）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-frontmatter.test.js",
+          "issue": "1 个 TODO/占位符（首例 L68: '---\\nname: foo\\n---\\n# 当前为骨架，待填充');）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/doc-sentinel/check-version-drift.test.js",
+          "issue": "1 个 TODO/占位符（首例 L81: fs.writeFileSync(path.join(d, 'README.md'), '当前为骨架，功能待填充。');）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "scripts/lib/case-hash.js",
+          "issue": "1 个 TODO/占位符（首例 L77: // Heading format: ### FE-XXX-001 描述）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/doc-sentinel/SKILL.md",
+          "issue": "1 个 TODO/占位符（首例 L67: | T1 stale TODO | **半** | 上下文清晰是；设计意图（dev-gen 桩）跳过 |）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/eval-loop/references/rubric-spec-review.md",
+          "issue": "1 个 TODO/占位符（首例 L53: - \"调用 XXX 方法\"类表述 → -2/处）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/product-mgr/references/prd-write-workflow.md",
+          "issue": "1 个 TODO/占位符（首例 L13: > 可用设计系统：`dayu`（大禹平台）、`antd`（Ant Design，模板待填充））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/product-mgr/templates/feature-scope-checklist.md",
+          "issue": "1 个 TODO/占位符（首例 L144: - ⭐⭐⭐⭐ 良好（核心功能完整，细节待补充））",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/test-case-design/references/api-case-design.md",
+          "issue": "1 个 TODO/占位符（首例 L18: \"covers\": [\"AC-XXX\"],）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/test-case-design/references/api-flow-case-design.md",
+          "issue": "1 个 TODO/占位符（首例 L85: \"covers\": [\"AC-XXX\"],）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/test-case-design/references/e2e-case-design.md",
+          "issue": "1 个 TODO/占位符（首例 L38: \"covers\": [\"AC-XXX\"],）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/test-case-design/scripts/verify-case-coverage.js",
+          "issue": "1 个 TODO/占位符（首例 L496: console.warn(\"[WARN] 案例文档中未提取到任何 AC 编号，可能是格式不符（期望格式：覆盖AC: AC-XXX）\");）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/test-gate/scripts/checkers/coverage-checker.js",
+          "issue": "1 个 TODO/占位符（首例 L102: details: ['[FAIL] 案例文档中未找到任何 AC-/UI- 格式的\"覆盖AC\"注释，请确认格式为 覆盖AC: AC-XXX 或 UI-XXX（ga）",
+          "fix": "agent 决策：上下文清晰则替换；否则保留 + 加 <!-- TODO: 原因 + 日期 -->",
+          "auto_fixed": false
+        }
+      ],
+      "duration_ms": 82
+    },
+    {
+      "id": "P1",
+      "name": "路径引用",
+      "status": "warn",
+      "findings": [
+        {
+          "file": ".claude/sandbox/subagent-task.md",
+          "issue": "代码路径失效 (templates/rehearsal-report.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/rehearsal-report.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/CHANGELOG.md",
+          "issue": "代码路径失效 (scripts/doc-sentinel/run-headless.sh)",
+          "fix": "删除该引用行或修正路径（target 不存在: scripts/doc-sentinel/run-headless.sh）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0007-dev-gen.md",
+          "issue": "引用失效 (../../commands/dev.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: commands/dev.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0013-prd-pipeline.md",
+          "issue": "引用失效 (../../commands/dev.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: commands/dev.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/adrs/0013-prd-pipeline.md",
+          "issue": "引用失效 (../../commands/test.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: commands/test.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/conventions.md",
+          "issue": "代码路径失效 (scripts/lib/task-cli.js)",
+          "fix": "删除该引用行或修正路径（target 不存在: scripts/lib/task-cli.js）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/doc-sentinel/incidents/0001-doc-sentinel-onboard.md",
+          "issue": "代码路径失效 (scripts/doc-sentinel/run-headless.sh)",
+          "fix": "删除该引用行或修正路径（target 不存在: scripts/doc-sentinel/run-headless.sh）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/01-ops-runbook.md",
+          "issue": "代码路径失效 (scripts/deploy/lead-scoring.sh)",
+          "fix": "删除该引用行或修正路径（target 不存在: scripts/deploy/lead-scoring.sh）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/02-dev-perspective.md",
+          "issue": "代码路径失效 (scripts/hooks/domain-sync-detector.js)",
+          "fix": "删除该引用行或修正路径（target 不存在: scripts/hooks/domain-sync-detector.js）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/03-architect-perspective.md",
+          "issue": "代码路径失效 (scripts/domain-template.js)",
+          "fix": "删除该引用行或修正路径（target 不存在: scripts/domain-template.js）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/perspectives/03-architect-perspective.md",
+          "issue": "代码路径失效 (spec/scripts/lib/phase-machine.js)",
+          "fix": "删除该引用行或修正路径（target 不存在: spec/scripts/lib/phase-machine.js）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/rfcs/0007-dev-gen.md",
+          "issue": "引用失效 (../../commands/dev.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: commands/dev.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/rfcs/0013-prd-pipeline.md",
+          "issue": "引用失效 (../../commands/dev.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: commands/dev.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "docs/rfcs/0013-prd-pipeline.md",
+          "issue": "引用失效 (../../commands/test.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: commands/test.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/api-creator/SKILL.md",
+          "issue": "引用失效 (api/POST-employee-pageQuery.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/api-creator/api/POST-employee-pageQuery.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/api-creator/SKILL.md",
+          "issue": "引用失效 (api/POST-employee-add.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/api-creator/api/POST-employee-add.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/api-creator/SKILL.md",
+          "issue": "代码路径失效 (templates/api-doc.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/api-doc.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/arch-design/SKILL.md",
+          "issue": "代码路径失效 (templates/tech-solution.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/tech-solution.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/arch-design/templates/tech-solution.md",
+          "issue": "引用失效 (../../design/ac.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/design/ac.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/arch-design/templates/tech-solution.md",
+          "issue": "引用失效 (api/POST-xxx.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/arch-design/templates/api/POST-xxx.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/arch-design/templates/tech-solution.md",
+          "issue": "引用失效 (db/db.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/arch-design/templates/db/db.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/db-migration/SKILL.md",
+          "issue": "引用失效 (db/db.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/db-migration/db/db.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/deep-research.md",
+          "issue": "代码路径失效 (templates/research-report.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/research-report.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/engine.md",
+          "issue": "代码路径失效 (templates/research-report.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/research-report.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/engine.md",
+          "issue": "代码路径失效 (templates/report-template.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/report-template.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/engine.md",
+          "issue": "代码路径失效 (templates/apa.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/apa.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/engine.md",
+          "issue": "代码路径失效 (templates/ieee.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/ieee.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/engine.md",
+          "issue": "代码路径失效 (templates/bibtex.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/bibtex.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/github-deep-research.md",
+          "issue": "代码路径失效 (templates/report-template.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/report-template.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/systematic-literature-review.md",
+          "issue": "引用失效 (templates/apa.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/deep-research/references/templates/apa.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/systematic-literature-review.md",
+          "issue": "引用失效 (templates/ieee.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/deep-research/references/templates/ieee.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/deep-research/references/systematic-literature-review.md",
+          "issue": "引用失效 (templates/bibtex.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: skills/deep-research/references/templates/bibtex.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "skills/pencil/SKILL.md",
+          "issue": "代码路径失效 (templates/prototype-self-test-report.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/prototype-self-test-report.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "templates/task/task-detail-backend.md",
+          "issue": "引用失效 (../api/{接口文件名}.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/api/{接口文件名}.md）",
+          "auto_fixed": false
+        },
+        {
+          "file": "templates/task/task-detail-frontend.md",
+          "issue": "引用失效 (../api/{接口文件名}.md)",
+          "fix": "删除该引用行或修正路径（target 不存在: templates/api/{接口文件名}.md）",
+          "auto_fixed": false
+        }
+      ],
+      "duration_ms": 22
+    },
+    {
+      "id": "G1",
+      "name": "G 状态机",
+      "status": "warn",
+      "findings": [
+        {
+          "file": "roadmap.md §1 + spec/scripts/*.js + docs/rfcs/",
+          "issue": "G11 在 CLAUDE.md §5 出现，缺 roadmap.md §1 + spec/scripts/*.js + docs/rfcs/",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G11",
+          "auto_fixed": false
+        },
+        {
+          "file": "roadmap.md §1 + docs/rfcs/",
+          "issue": "G13 在 CLAUDE.md §5 + spec/scripts/*.js 出现，缺 roadmap.md §1 + docs/rfcs/",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G13",
+          "auto_fixed": false
+        },
+        {
+          "file": "roadmap.md §1 + spec/scripts/*.js + docs/rfcs/",
+          "issue": "G13.1 在 CLAUDE.md §5 出现，缺 roadmap.md §1 + spec/scripts/*.js + docs/rfcs/",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G13.1",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/*.js + docs/rfcs/",
+          "issue": "G14 在 CLAUDE.md §5 + roadmap.md §1 出现，缺 spec/scripts/*.js + docs/rfcs/",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G14",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/*.js",
+          "issue": "G2 在 CLAUDE.md §5 + roadmap.md §1 + docs/rfcs/ 出现，缺 spec/scripts/*.js",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G2",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/*.js",
+          "issue": "G3 在 CLAUDE.md §5 + roadmap.md §1 + docs/rfcs/ 出现，缺 spec/scripts/*.js",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G3",
+          "auto_fixed": false
+        },
+        {
+          "file": "spec/scripts/*.js + docs/rfcs/",
+          "issue": "G9 在 CLAUDE.md §5 + roadmap.md §1 出现，缺 spec/scripts/*.js + docs/rfcs/",
+          "fix": "4 路补齐：CLAUDE.md / roadmap.md / spec/scripts / docs/rfcs 需统一提及 G9",
+          "auto_fixed": false
+        }
+      ],
+      "duration_ms": 3
+    },
+    {
+      "id": "C1",
+      "name": "CHANGELOG 日期",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 274
+    },
+    {
+      "id": "M1",
+      "name": "自检",
+      "status": "ok",
+      "findings": [],
+      "duration_ms": 1
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "ok": 4,
+    "warn": 5,
+    "fail": 0,
+    "skip": 0,
+    "auto_fixed_count": 0
+  }
+}
