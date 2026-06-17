@@ -26,11 +26,38 @@ spec/
 └── summary.md              # OPC 验收 1 页纸（顶层，OPC 看的主产物）
 ```
 
-完整结构（G13 落地 + 业务域拆分 + v0.7.4 知识库）：
+完整结构（G13 落地 + 业务域拆分 + v0.7.4 业务项目用 `context/` 扩义）：
+
+> **v0.7.4 命名澄清**：
+> - **业务项目**用 `context/`（= 项目知识库）—— 本节树状图以业务项目为例
+> - **god 自身**保留 `spec/`（= 活规格子系统）—— 兼容历史 spec/scripts/ 12+ 工具
+> - 业务项目 + god 自身 = **目录名只是壳**，结构对称
 
 ```
 project-root/
-├── spec/                    # 活规格子系统
+├── context/                 # 项目知识库（v0.7.4，业务项目专用）
+│   ├── README.md            # 项目总览 + 子目录索引
+│   ├── feature/             # 活规格（合同类，强校验）
+│   │   ├── main.feature     # 主规格
+│   │   ├── state/
+│   │   │   └── meta.json
+│   │   └── domain/          # 业务域活规格
+│   │       ├── D-market-data.feature
+│   │       └── D-ai-report.feature
+│   ├── domain/              # 业务域知识（1 域 1 目录）
+│   │   ├── D-market-data/
+│   │   │   ├── README.md    # 业务架构（结构化，必填字段）
+│   │   │   ├── context.md   # 业务上下文（人话）
+│   │   │   └── incident.md  # 该域事故
+│   │   └── D-ai-report/
+│   │       ├── README.md
+│   │       ├── context.md
+│   │       └── incident.md
+│   ├── adr/                 # 跨域决策
+│   ├── pattern/             # 跨域模式
+│   └── incident/            # 跨域事故
+│
+├── spec/                    # god 自身活规格子系统（**god 自身专用**，业务项目不强制）
 │   ├── architecture/        # 架构文档（横切关注点，prd / dev 阶段都维护）
 │   │   ├── business.md      # 业务架构（**派生**，由 arch-summary.js 从 D-XXX/README.md 汇总）
 │   │   └── tech.md          # 技术架构（服务划分 + API 契约 + DB schema + 通信）
@@ -55,14 +82,6 @@ project-root/
 │   ├── review/              # 评审产物
 │   │   └── review-YYYY-MM-DD.md
 │   └── .archive/            # 历史快照
-└── knowledge/               # 项目知识库（v0.7.4 新增，与 spec/ 平级）
-    ├── INDEX.md             # OPC 唯一入口
-    ├── 00-overview/         # 项目总览
-    ├── 10-domain/           # 业务域知识
-    ├── 20-pattern/          # 设计模式
-    ├── 30-decision/         # ADR 决策记录
-    ├── 40-incident/         # 事故复盘
-    └── 90-trash/            # 失效知识
 ```
 
 **目录分组原则**：
@@ -313,19 +332,25 @@ project-root/
 
 | 项 | 约束 |
 |---|---|
-| `spec/` 目录位置 | 项目根目录的 `spec/`，**不可嵌套** |
-| `knowledge/` 目录位置（v0.7.4）| 项目根 `knowledge/`，与 `spec/` 平级，**不可嵌套** |
-| `sources.md` / `spec.feature` / `summary.md` | 顶层，固定文件名（validator 硬编码） |
-| `state/` 子目录 | 收 `meta.json` + `.trace`（机器数据）|
-| `review/` 子目录 | 收 `review-YYYY-MM-DD.md`（评审产物，日期避免覆盖）|
-| `domain/` 子目录 | 收 `domain.md`（领域知识，prd 阶段 0 加载）|
-| `.archive/` 子目录 | 收 `<ts>_v<ver>.tar.gz` + `.archive-index`（git 隐藏，spec-archive 产出）|
-| `knowledge/INDEX.md` | 知识库唯一入口（v0.7.4），OPC 必读 |
-| `knowledge/10-domain/D-XXX.md` | 业务域知识卡（1 domain 1 文件）|
-| `knowledge/30-decision/ADR-NNN.md` | 决策记录（N = 三位零填充数字）|
-| `knowledge/40-incident/INC-NNN.md` | 事故复盘 |
+| `spec/` 目录位置（god 自身）| god 自身根 `spec/`，**不可嵌套**；业务项目推荐用 `context/`（v0.7.4）|
+| `context/` 目录位置（v0.7.4 业务项目）| 项目根 `context/`，与 `src/` 平级，**不可嵌套** |
+| `context/README.md` | 项目总览 + 子目录索引（业务项目用）|
+| `context/feature/main.feature` | 主活规格（业务项目）|
+| `context/feature/state/meta.json` | 状态机元数据（业务项目）|
+| `context/feature/domain/D-XXX.feature` | 业务域活规格 |
+| `context/domain/D-XXX/README.md` | 业务域架构（必填字段：域ID / 域名称 / 核心职责 / 数据模型 / 输入 / 输出 / 关系）|
+| `context/domain/D-XXX/context.md` | 业务上下文（人话）|
+| `context/domain/D-XXX/incident.md` | 该域事故 |
+| `context/adr/ADR-NNN-<name>.md` | 跨域决策（**OPC 显式确认才写**）|
+| `context/pattern/<name>.md` | 跨域模式 |
+| `context/incident/INC-NNN-<name>.md` | 跨域事故 |
+| `sources.md` / `spec.feature` / `summary.md`（god 自身）| 顶层，固定文件名（validator 硬编码）|
+| `state/` 子目录（god 自身）| 收 `meta.json` + `.trace`（机器数据）|
+| `review/` 子目录（god 自身）| 收 `review-YYYY-MM-DD.md`（评审产物，日期避免覆盖）|
+| `domain/` 子目录（god 自身）| 收 `domain.md`（领域知识，prd 阶段 0 加载）|
+| `.archive/` 子目录（god 自身）| 收 `<ts>_v<ver>.tar.gz` + `.archive-index`（git 隐藏，spec-archive 产出）|
 | 编码 | UTF-8（中文/英文 Gherkin 均可） |
-| 一个项目几个 spec.feature | 默认 1 个；多 feature 用 `spec/<feature>/spec.feature` 扩展（**预留**，未实现）|
+| 一个项目几个 spec.feature | 默认 1 个；多 feature 用 `spec/<feature>/spec.feature` 或 `context/feature/<feature>/main.feature` 扩展（**预留**，未实现）|
 | 兼容老路径 | 脚本读路径时同时尝试 `state/meta.json` + `meta.json` 等，向后兼容 god 老 demo |
 
 ---

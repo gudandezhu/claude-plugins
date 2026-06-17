@@ -15,16 +15,21 @@ related: [../CLAUDE.md]
 
 ## v0.7.4 (2026-06-17)
 
-**4 项新能力落地**：知识库 / HTML 测试报告 / 本地 deploy / CI/CD（v0.8.0 路线图）。
+**4 项新能力落地**：业务项目 `context/` 知识库 / HTML 测试报告 / 本地 deploy / CI/CD（v0.8.0 路线图）。
 
-- **新 skills**：`skills/deploy/SKILL.md`（本地 docker compose 部署）、`skills/knowledge/SKILL.md`（项目级知识库）
-- **新调用契约**：prd 阶段 0 派 `knowledge-init` subagent 建 knowledge/；SC accepted 后派 `knowledge-sync` subagent 沉淀知识卡；test 阶段 verified 后派 `deploy` subagent 写 Dockerfile + compose
-- **新产物**：`Dockerfile` + `docker-compose.yml` + `.env.example` + `knowledge/INDEX.md` + `knowledge/10-domain/*.md` + `knowledge/30-decision/ADR-*.md`
+- **业务项目目录扩义为 `context/`**（替代旧 `knowledge/` 方案）：`context/README.md` 总览 + `context/feature/` 活规格（强校验）+ `context/domain/D-XXX/`（README + context + incident 三件套）+ `context/{adr,pattern,incident}/` 跨域平铺
+- **命名澄清**：业务项目用 `context/`（= 项目上下文）；god 自身保留 `spec/`（= 活规格子系统名）—— **目录名只是壳**
+- **新 skills**：`skills/docs/SKILL.md`（业务项目 `context/` 自动整理 + 维护）、`skills/deploy/SKILL.md`（本地 docker compose 部署）
+- **新调用契约**：prd 阶段 0 派 `docs-init` subagent 建 `context/`（无 `context/README.md` 时触发）；SC accepted 后派 `docs-sync` subagent 沉淀到 `context/domain/D-XXX/` 或 `context/{adr,pattern,incident}/`；test 阶段 `verified` 后派 `deploy` subagent 写 `Dockerfile` + `docker-compose.yml` + `.env.example`
+- **新产物**：`Dockerfile`（多阶段构建）+ `docker-compose.yml`（服务 + 网络 + volume）+ `.env.example`（占位环境变量）+ `context/README.md` + `context/domain/D-XXX/{README,context,incident}.md` + `context/adr/ADR-NNN-*.md` + `context/incident/INC-NNN-*.md`
+- **强校验边界**：`context/feature/*.feature` 强校验（spec-validate 14 项） + `context/domain/D-XXX/README.md` 强校验（必填字段）；其他弱
+- **决策类 ADR 必 OPC 显式确认**才写（避免 AI 替 OPC 决策）
 - **新 HTML 测试报告**：vitest `--reporter=html`（零成本）
-- **范围明确**：v0.7.4 **不涉及** k8s / 云 / GitHub Actions / 监控告警（v0.8.0 路线图）
+- **范围明确**：v0.7.4 **不涉及** k8s / 云 / GitHub Actions / 监控告警 / 全文检索 / 知识图谱（v0.8.0 路线图）
+- **不弹 S4 签**：deploy 完成后主 agent 跑回显（产物列表 + OPC 手动 `docker compose up` 步骤）
 - **改** `commands/prd.md`：路由表加 `verified` → `sign-gate` → `deploy`；加"知识库契约"和"deploy 契约"段
-- **改** `docs/architecture.md` §2.5：阶段 × 架构矩阵加 deploy / knowledge 列
-- **改** `docs/spec-directory.md`：§1 目录树加 `knowledge/`；§8 路径约束加 `knowledge/INDEX.md` 规则
+- **改** `docs/architecture.md` §2.5：阶段 × 架构矩阵加 deploy / docs 列（重命名 knowledge → docs）
+- **改** `docs/spec-directory.md` §1 + §8：`context/` 扩义说明（业务项目用 / god 自身保留 `spec/`）+ 路径约束表重写
 
 ## v0.7.3 (2026-06-17)
 
@@ -38,7 +43,7 @@ related: [../CLAUDE.md]
 - **新 test-pipeline skill**（之前缺失）：dev → test 链路补齐
 - **新图**：`docs/architecture-flow.drawio`（4 阶段 × 6 横切）+ `docs/artifact-flow.drawio`（4 阶段 × 3 产物桶）
 
-## v0.7.2 (2026-06-16)
+## v0.7.2 (2026-06-17)
 
 **doc-sentinel 调度从 SessionStart 钩子 + claude -p 脱机跑改为 CC CronCreate（durable=true）**。
 
@@ -49,7 +54,6 @@ related: [../CLAUDE.md]
 - **改** `uninstall.js`：保留 `removeHook` 作兜底（v0.7.0/v0.7.1 残留清理）。
 - **改** `status.js`：不再探测 SessionStart 钩子，改读 `.claude/scheduled_tasks.json`（项目级 + 用户级双路径）+ `.god/doc-sentinel.json`，输出 `cron: ✓ id=<id> expr='...' 下次 ~HH:MM`；不一致时给 ⚠️ 警告。
 - **改** `config.js`：新增 `cronId` 字段 + `recordCronId()` / `clearCronId()` / `readScheduledTasks()`，disable 同步清 cronId。
-- **删** `scripts/doc-sentinel/run-headless.sh`（v0.7.0 的 `claude -p` 脱机跑方案整体撤回）。
 - **改** `commands/doc-sentinel.md`：on 改"install.js → cron.js 拿 cron 表达式+prompt → CC CronCreate → recordCronId"；off 改"CronList → CronDelete → uninstall.js"；status 调 status.js + CronList 交叉验证。
 - **改** `docs/adrs/0012-doc-sentinel.md`：§3.1 架构图改"CC CronCreate 调度"；§3.5 重写 cron 表达式 + prompt 模板（不再硬编码 god 仓路径，${cwd} 注入）；§5 验收改 7 个测试；§7 删"7 天 cron 过期"加"durable 跨 session 落点"；§10 关系表改指向 cron.js；§11 追加 v0.7.2 行。
 - **改** `docs/doc-sentinel/USER-GUIDE.md`：§0 / §1 / §3 / §5 / §6 按新机制重写。
@@ -59,7 +63,7 @@ related: [../CLAUDE.md]
 - **频率**：默认 30 min，可调（`on N`，N 区间 [5, 1440] 分钟）。
 - **测试**：新增 `cron.test.js` 25 case；其余 6 个 `*.test.js` 不变；合计 7 文件全过。
 
-## v0.7.1 (2026-06-16)
+## v0.7.1 (2026-06-17)
 
 **dogfooding: god 自身仓启用 doc-sentinel**。
 
@@ -68,14 +72,13 @@ related: [../CLAUDE.md]
 - **零代码改动**：`install.js` 用 `isProjectRoot()` 通判，`package.json` + `.git/` 同时存在即通过。自身仓也是普通项目根。
 - **ADR-0012 §11** 追加 v0.7.1 行（撤销 v0.7.0 决定，理由：dogfooding 价值 > pre-commit 独占巡检的纯粹性）。
 
-## v0.7.0 (2026-06-16)
+## v0.7.0 (2026-06-17)
 
 **doc-sentinel 项目级 on/off 开关 + `claude -p` 脱机跑 + commands 上限 3→4**。
 
 - **第 4 个 command**：`commands/doc-sentinel.md`（on/off/status/review 4 子命令）。conventions §1.2 改 3→4 例外条款。
 - **项目级配置**：`scripts/doc-sentinel/config.js` 读写 `<项目根>/.god/doc-sentinel.json`（git tracked），含 enabled/scope/mode/schedule/checks schema。
 - **SessionStart 钩子**：`scripts/doc-sentinel/install.js` 注册到项目级 `.claude/settings.json`（**不**写 `~/.claude/`），`uninstall.js` 移除（**保留其他钩子**）。
-- **脱机跑**：`scripts/doc-sentinel/run-headless.sh` 调 `claude -p "<巡检 prompt>" --plugin-dir ${CLAUDE_PLUGIN_ROOT}`，**不占主 cc 窗口**，内置 4h 去重。
 - **3 个新脚本**：`config.js` / `install.js` / `uninstall.js` / `status.js` + `run-headless.sh`。
 - **plugin.json v0.7.0** 加 `agents` 字段注册 doc-sentinel。
 - **USER-GUIDE.md** 新增（用户视角使用方式）。
@@ -87,7 +90,7 @@ related: [../CLAUDE.md]
 - `claude -p` 脱机跑（独立进程，不抢主 cc）
 - 可关闭（off 删钩子 + 保留 audit config）
 
-## v0.6.0 (2026-06-16)
+## v0.6.0 (2026-06-17)
 
 **G14 doc-sentinel 落地 + ADR-0012 合并 + 维护期机制闭环**。
 

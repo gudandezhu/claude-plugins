@@ -106,16 +106,21 @@ related: [../CLAUDE.md, conventions.md, spec-directory.md]
 
 ### 阶段 × 架构矩阵
 
-| 阶段 | 读 D-XXX/README | 写 D-XXX/README | 跑 arch-summary | 读 tech.md | 写 tech.md | 派 knowledge sub | 派 deploy sub |
+> **v0.7.4 命名澄清**：
+> - 业务项目用 `context/`（= v0.7.4 知识库）—— `context/feature/` 强校验活规格 + `context/domain/D-XXX/` 业务域档案
+> - god 自身保留 `spec/`（= 活规格子系统名）—— 兼容历史 spec/scripts/ 12+ 工具
+> - 下表路径以**业务项目**为例（god 自身路径 `spec/` 等价替换）
+
+| 阶段 | 读 D-XXX/README | 写 D-XXX/README | 跑 arch-summary | 读 tech.md | 写 tech.md | 派 docs sub | 派 deploy sub |
 |---|---|---|---|---|---|---|---|
-| prd 阶段 0 自助调研 | ✅ | ❌ | ❌ | △ | ❌ | ✅（knowledge-init 首次）| ❌ |
+| prd 阶段 0 自助调研 | ✅ | ❌ | ❌ | △ | ❌ | ✅（docs-init 首次建 `context/`）| ❌ |
 | prd 阶段 1 brainstorm | ✅（看现有域）| ✅（新/改/删域）| ✅（重生成 business.md）| △（约束参考）| ❌ | ❌ | ❌ |
 | prd 阶段 2 build-spec | ✅（判 SC 业务域归属）| ❌ | ✅ | △（API 契约对齐）| ❌ | ❌ | ❌ |
 | prd 阶段 3 review | ✅（验 SC 业务域归属）| ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | dev 阶段 | ❌ | ❌ | ❌ | ✅ | ✅（同步）| ❌ | ❌ |
 | test 阶段 | ❌ | ❌ | ❌ | ✅（服务边界）| ❌ | ❌ | ❌ |
 | **deploy 阶段**（v0.7.4）| ❌ | ❌ | ❌ | ✅（服务划分）| ❌ | ❌ | ✅（写 Dockerfile + compose）|
-| **knowledge 阶段**（v0.7.4 SC accepted 后）| ✅（判业务域卡）| ❌ | ❌ | ❌ | ❌ | ✅（knowledge-sync）| ❌ |
+| **docs 阶段**（v0.7.4 SC accepted 后）| ✅（判业务域卡）| ❌ | ❌ | ❌ | ❌ | ✅（docs-sync 沉淀到 `context/`）| ❌ |
 
 ### 业务域拆分规则
 
@@ -185,7 +190,7 @@ task 是 SC 聚合（在 prd / dev 阶段都有）：
 | **L2** | L3（允许）、其他 L2（按 SKILL.md 引用） | L3 = `node`/`bash`；其他 L2 = 在 SKILL.md 中 Read 引用 | `skills/build-spec/SKILL.md` 调 `spec/scripts/spec-validate.js` |
 | **L3** | 无（独立 CLI） | 仅 stdin/stdout/CLI 参数 | `node spec/scripts/spec-validate.js <project>` |
 | **L4 hooks** | L3 工具（CLI 调用） | hook JSON 配置 `command` 字段 | `hooks/spec-drift.json` → 调 `spec-validate.js` |
-| **L4 templates** | 无（被动渲染） | L1/L2 在 prompt 中按模板变量替换 | `templates/task/task-list.json` 被 L1 消费 |
+| **L4 templates** | 无（被动渲染） | L1/L2 在 prompt 中按模板变量替换 | `templates/spec-summary/v0.1.0.md` 被 L1 消费 |
 
 ### 3.3 禁止的调用
 
@@ -210,9 +215,9 @@ task 是 SC 聚合（在 prd / dev 阶段都有）：
 | 1 | L1 command 不得自己写方法论，必须 Read SKILL.md 后内联执行 | `prd.md` 内 30 行"如何做 brainstorm" | PR review 必查 |
 | 2 | L2 skill 不得产出代码或 commit，只能产出方法结论 + 外部化清单（如 sources.md 草稿）| `brainstorm` SKILL.md 写"修改 game.js..." | `<HARD-GATE>` 字段 + PR review |
 | 3 | L3 script 不得内嵌自然语言推理或 LLM 调用 | `spec-validate.js` 调用 claude API 评分 | 人工 review + 零依赖原则（见 [[../spec/SPEC-FORMAT.md#1 设计理念]]）|
-| 4 | 任何层不得直接编辑 `spec/spec.feature` 或 `spec/sources.md`，必须经 build-spec skill | `commands/dev.md` 用 Edit 工具改 spec.feature | `build-spec` 流程 + dev 阶段 validator 校验双向绑定 |
+| 4 | 任何层不得直接编辑 `spec/spec.feature` 或 `spec/sources.md`，必须经 build-spec skill | `skills/dev-pipeline/SKILL.md` 用 Edit 工具改 spec.feature | `build-spec` 流程 + dev 阶段 validator 校验双向绑定 |
 | 5 | 任何层不得复用已废 SC-ID 或给 SC 改 ID | `SC-001` 删除后新建场景仍用 `SC-001` | `spec-validate.js` #4/#5（ID 唯一 + 全文件唯一）|
-| 6 | 任何层不得绕过 C5 锚点直接进入 dev 阶段 | dev 阶段 spec 无 C5 锚点直接读 spec.feature | `spec-validate.js` #11 + `commands/dev.md` 阶段 1 机械门禁 |
+| 6 | 任何层不得绕过 C5 锚点直接进入 dev 阶段 | dev 阶段 spec 无 C5 锚点直接读 spec.feature | `spec-validate.js` #11 + `skills/dev-pipeline/SKILL.md` 阶段 1 机械门禁 |
 | 7 | L1 不得直接写产品代码，必须经 `/god:dev` 编排（且 dev 必以 spec 为输入）| `prd.md` 在阶段 4 直接写 game.js | `commands/prd.md` 流程编排 |
 | 8 | L2 skill 不得调 L1 command（skill 非入口）| build-spec SKILL.md 内调用 `/god:dev` | 流程边界 + 入口唯一 |
 | 9 | L3 workflow 不得在无 inputs/outputs schema 的情况下被 L1 调用 | `eval-loop-review.js` 无 `meta` 字段 | workflow 文件必含 `meta` 导出（见 [[../workflows/eval-loop-review.js#L1]] 现有范式）|
